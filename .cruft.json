@@ -1,0 +1,23 @@
+{
+  "template": "git@github.com:juanmcristobal/pypackage-basic.git",
+  "commit": "e061e82a6dede343c59a780e66d7865a5d0e23af",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "full_name": "Juan Manuel Cristóbal Moreno",
+      "email": "juanmcristobal@gmail.com",
+      "github_username": "juanmcristobal",
+      "project_name": "domdown",
+      "project_slug": "domdown",
+      "project_short_description": "extracts the main content from web pages and returns cleaned HTML, optional markdown, and structured metadata.",
+      "version": "0.1.0",
+      "private_repo": "n",
+      "package_type": "python",
+      "command_line_interface": "Click",
+      "__pypackage_version": "0.1.0",
+      "_template": "git@github.com:juanmcristobal/pypackage-basic.git",
+      "_commit": "e061e82a6dede343c59a780e66d7865a5d0e23af"
+    }
+  },
+  "directory": null
+}
