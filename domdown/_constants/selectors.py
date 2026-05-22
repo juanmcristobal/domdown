@@ -107,3 +107,29 @@ NOISE_MARKERS = (
     "note-b",
     "dog_two",
 )
+
+# Structural chrome markers for top-of-article wrappers that repeat metadata.
+HEADER_MARKERS = (
+    "hero",
+    "meta",
+    "byline",
+    "author",
+    "date",
+    "time",
+    "intro",
+    "teaser",
+    "kicker",
+    "standfirst",
+    "deck",
+)
+
+# Phrases commonly used to label related-link blocks.
+RELATED_PHRASES = (
+    "related categories",
+    "related topics",
+    "related articles",
+    "related posts",
+    "recommended",
+    "you may also like",
+    "more from",
+)

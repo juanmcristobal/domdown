@@ -103,6 +103,55 @@ def test_clean_root_removes_social_follow_and_sponsored_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
+    """Cleanup should drop top-of-article chrome like repeated headers and related links."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="article-header">
+            <h1>Example Title</h1>
+            <p>By Example Author</p>
+            <time datetime="2026-05-22">May 22, 2026</time>
+          </div>
+          <section class="related-categories">
+            <h2>Related Categories</h2>
+            <ul>
+              <li><a href="/news">News</a></li>
+              <li><a href="/tips">Tips &amp; advice</a></li>
+            </ul>
+          </section>
+          <p>Body</p>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(
+        soup.article,
+        (
+            "[class*='share']",
+            "[id*='share']",
+            "[class*='follow']",
+            "[class*='social']",
+            "[class*='sponsored']",
+            "[rel*='sponsored']",
+            "[class*='note-b']",
+            "[class*='dog_two']",
+        ),
+        SKIP_TAGS,
+    )
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Example Title" not in text
+    assert "By Example Author" not in text
+    assert "Related Categories" not in text
+    assert "News" not in text
+    assert "Tips & advice" not in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_html_comments() -> None:
     """Cleanup should drop HTML comments like more markers."""
 
