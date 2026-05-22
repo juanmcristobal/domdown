@@ -5,8 +5,7 @@ from difflib import SequenceMatcher
 import pytest
 
 from domdown import html_to_markdown
-
-from . import RealExampleCase, load_real_cases
+from domdown.real import RealExampleCase, load_real_cases
 
 
 def _case_param(case: RealExampleCase) -> pytest.ParameterSet:
@@ -25,4 +24,3 @@ def test_real_example_cases_stay_above_their_threshold(case: RealExampleCase) ->
     ratio = SequenceMatcher(None, actual, expected).ratio()
 
     assert ratio >= case.min_ratio, f"{case.id} fell below {case.min_ratio:.2f} with ratio {ratio:.4f}"
-
