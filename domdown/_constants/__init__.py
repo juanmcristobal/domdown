@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .selectors import (
+    BOILERPLATE_PHRASES,
     CONTENT_SELECTORS,
     CONTENT_SELECTORS_EXACT,
     CONTENT_SELECTORS_FALLBACK,
@@ -9,11 +10,14 @@ from .selectors import (
     HEADER_MARKERS,
     NOISE_MARKERS,
     RELATED_PHRASES,
+    REFINABLE_CHILD_TAGS,
+    ROOT_SELECTORS,
     SHARE_SELECTORS,
     SKIP_TAGS,
 )
 
 __all__ = [
+    "BOILERPLATE_PHRASES",
     "CONTENT_SELECTORS",
     "CONTENT_SELECTORS_EXACT",
     "CONTENT_SELECTORS_FALLBACK",
@@ -22,6 +26,8 @@ __all__ = [
     "HEADER_MARKERS",
     "NOISE_MARKERS",
     "RELATED_PHRASES",
+    "REFINABLE_CHILD_TAGS",
+    "ROOT_SELECTORS",
     "SHARE_SELECTORS",
     "SKIP_TAGS",
 ]

@@ -2,69 +2,227 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup, Tag
 
-from .._constants import CONTENT_SELECTORS_EXACT, CONTENT_SELECTORS_FALLBACK, NOISE_MARKERS
+from .._constants import CONTENT_SELECTORS_EXACT, CONTENT_SELECTORS_FALLBACK, NOISE_MARKERS, REFINABLE_CHILD_TAGS, ROOT_SELECTORS
 
 
 def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
     """Choose the most relevant content root from a parsed document."""
 
-    selectors = [".post-body", ".articlebody", "article", "main", "body"] if prefer_article_body else [
-        ".articlebody",
-        ".post-body",
-        "article",
-        "main",
-        "body",
-    ]
-    for selector in selectors:
-        for root in soup.select(selector):
-            if isinstance(root, Tag) and not _looks_like_chrome(root):
-                return _best_content_subtree(root)
-    return soup.body if isinstance(soup.body, Tag) else soup
+    selectors = _root_selectors(prefer_article_body)
+    candidates = _collect_root_candidates(soup, selectors)
+    if candidates:
+        candidate = _pick_best_root_candidate(candidates)
+        if candidate is not None:
+            return _refine_content_root(candidate)
+    if isinstance(soup.body, Tag):
+        return _refine_content_root(_best_content_subtree(soup.body))
+    return soup
 
 
 def _best_content_subtree(root: Tag) -> Tag:
     """Prefer the most content-dense subtree inside a shell element."""
 
     container_names = {"article", "body", "div", "main", "section"}
-    exact = _collect_candidates(root, CONTENT_SELECTORS_EXACT, container_names)
-    if exact:
-        candidate = _pick_best_candidate(root, exact)
-        if candidate is not None:
-            return candidate
-
-    fallback = _collect_candidates(root, CONTENT_SELECTORS_FALLBACK, container_names)
-    if fallback:
-        candidate = _pick_best_candidate(root, fallback)
+    candidates = _collect_candidates(root, CONTENT_SELECTORS_EXACT, container_names, tier=2)
+    candidates.extend(_collect_direct_candidates(root, container_names, tier=1))
+    candidates.extend(_collect_candidates(root, CONTENT_SELECTORS_FALLBACK, container_names, tier=0))
+    if candidates:
+        candidate = _pick_best_candidate(root, candidates)
         if candidate is not None:
             return candidate
     return root
 
 
-def _collect_candidates(root: Tag, selectors: tuple[str, ...], container_names: set[str]) -> list[Tag]:
+def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
+    """Walk down one more level when a selected shell still contains a better content subtree."""
+
+    current = root
+    current_words = len(current.get_text(" ", strip=True).split())
+    for _ in range(max_depth):
+        candidate = _best_content_subtree(current)
+        if candidate is current:
+            break
+        if candidate.name in {"p", "li", "span"}:
+            break
+        if _looks_like_layout_shell(candidate):
+            break
+        candidate_words = len(candidate.get_text(" ", strip=True).split())
+        if candidate_words < 20:
+            break
+        if current_words and candidate_words < current_words * 0.75:
+            break
+        current = candidate
+        current_words = candidate_words
+    return current
+
+
+def _root_selectors(prefer_article_body: bool) -> tuple[str, ...]:
+    """Return the ordered selector list used to pick the page shell."""
+
+    selectors = list(ROOT_SELECTORS)
+    post_index = selectors.index(".post-body")
+    article_index = selectors.index(".articlebody")
+    if not prefer_article_body:
+        selectors[post_index], selectors[article_index] = selectors[article_index], selectors[post_index]
+    return tuple(selectors)
+
+
+def _collect_root_candidates(soup: BeautifulSoup, selectors: tuple[str, ...]) -> list[tuple[Tag, float, int]]:
+    """Collect the best candidate subtree for each matching shell."""
+
+    candidates: dict[int, tuple[Tag, float, int]] = {}
+    for selector_index, selector in enumerate(selectors):
+        for root in soup.select(selector):
+            if not isinstance(root, Tag) or _looks_like_chrome(root):
+                continue
+            selector_weight = _root_selector_weight(selector)
+            root_entry = (root, selector_weight * 0.9, selector_index)
+            previous = candidates.get(id(root))
+            if previous is None or (root_entry[1], -root_entry[2]) > (previous[1], -previous[2]):
+                candidates[id(root)] = root_entry
+
+            candidate = _best_content_subtree(root)
+            if not isinstance(candidate, Tag) or _looks_like_chrome(candidate):
+                continue
+            candidate_id = id(candidate)
+            subtree_entry = (candidate, selector_weight, selector_index)
+            previous = candidates.get(candidate_id)
+            if previous is None or (subtree_entry[1], -subtree_entry[2]) > (previous[1], -previous[2]):
+                candidates[candidate_id] = subtree_entry
+    return list(candidates.values())
+
+
+def _collect_candidates(root: Tag, selectors: tuple[str, ...], container_names: set[str], tier: int) -> list[tuple[Tag, int, int]]:
     """Collect unique content candidates for a given selector tier."""
 
-    candidates: list[Tag] = []
-    seen: set[int] = {id(root)}
-    for selector in selectors:
+    candidates: list[tuple[Tag, int, int]] = []
+    seen: set[int] = set()
+    if root.name in container_names:
+        candidates.append((root, tier - 1, -1))
+        seen.add(id(root))
+    for selector_index, selector in enumerate(selectors):
         for node in root.select(selector):
             if isinstance(node, Tag) and node.name in container_names and id(node) not in seen:
-                candidates.append(node)
+                candidates.append((node, tier, selector_index))
                 seen.add(id(node))
     return candidates
 
 
-def _pick_best_candidate(root: Tag, candidates: list[Tag]) -> Tag | None:
+def _collect_direct_candidates(root: Tag, container_names: set[str], tier: int) -> list[tuple[Tag, int, int]]:
+    """Collect direct child container nodes when selector matching is too weak."""
+
+    candidates: list[tuple[Tag, int, int]] = []
+    seen: set[int] = set()
+    for index, node in enumerate(root.find_all(recursive=False)):
+        if isinstance(node, Tag) and node.name in REFINABLE_CHILD_TAGS and (node.name in container_names or _is_dense_content(node)):
+            if id(node) in seen:
+                continue
+            candidates.append((node, tier, index))
+            seen.add(id(node))
+    return candidates
+
+
+def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag | None:
+    """Return the best root candidate across all shell matches."""
+
+    ranked = sorted(
+        candidates,
+        key=lambda item: (
+            _score_content(item[0]) + item[1] + _root_candidate_penalty(item[0]),
+            len(item[0].get_text(" ", strip=True)),
+            -item[2],
+        ),
+        reverse=True,
+    )
+    non_body_candidates = [item for item in ranked if item[0].name != "body"]
+    for candidate, _, _ in (non_body_candidates or ranked):
+        if not _looks_like_chrome(candidate):
+            return candidate
+    return None
+
+
+def _root_candidate_penalty(candidate: Tag) -> float:
+    """Penalize generic layout wrappers when selecting the top-level shell."""
+
+    classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
+    marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
+    if marker_tokens & {"wrapper", "container-fluid", "page-wrapper"}:
+        return -25.0
+    return 0.0
+
+
+def _looks_like_layout_shell(tag: Tag) -> bool:
+    """Detect generic layout wrappers that should not become the final content root."""
+
+    classes = tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]
+    marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
+    marker_tokens |= {str(tag.get("id", "")).lower()} if tag.get("id") else set()
+    return bool(marker_tokens & {"wrapper", "container-fluid", "page-wrapper"})
+
+
+def _pick_best_candidate(root: Tag, candidates: list[tuple[Tag, int, int]]) -> Tag | None:
     """Return the most plausible non-chrome candidate from a tier."""
 
     ranked = sorted(
         candidates,
-        key=lambda tag: (_score_content(tag), _subtree_depth(root, tag), len(tag.get_text(" ", strip=True))),
+        key=lambda item: (
+            _score_content(item[0]) + (item[1] * 0.75) + (_root_penalty(root, item[0], len(candidates))),
+            _subtree_depth(root, item[0]),
+            len(item[0].get_text(" ", strip=True)),
+            -item[2],
+        ),
         reverse=True,
     )
-    for candidate in ranked:
+    for candidate, _, _ in ranked:
         if not _looks_like_chrome(candidate):
             return candidate
     return None
+
+
+def _root_selector_weight(selector: str) -> float:
+    """Assign a broad specificity weight to top-level shell selectors."""
+
+    if selector in {"article", "main", "[role='article']", "[role='main']"}:
+        return 3.0
+    if selector in CONTENT_SELECTORS_EXACT:
+        return 2.0
+    if selector in CONTENT_SELECTORS_FALLBACK:
+        return 1.0
+    if selector == "body":
+        return -2.5
+    return 0.0
+
+
+def _root_penalty(root: Tag, candidate: Tag, candidate_count: int) -> float:
+    """Penalize the shell node itself when a more specific descendant competes."""
+
+    classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
+    marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
+    if candidate_count > 1 and marker_tokens & {"wrapper", "container-fluid", "page-wrapper"}:
+        return -25.0
+    if candidate_count > 1 and candidate.name == "body":
+        return -200.0
+    if candidate_count > 1 and candidate is root:
+        return -30.0
+    return 0.0
+
+
+def _is_dense_content(node: Tag) -> bool:
+    """Recognize direct child wrappers that likely carry article text."""
+
+    if not isinstance(node, Tag):
+        return False
+    class_text = " ".join(node.get("class", []) if isinstance(node.get("class"), list) else [str(node.get("class", ""))]).lower()
+    id_text = str(node.get("id", "")).lower()
+    class_tokens = {token for token in class_text.split() if token}
+    marker_tokens = class_tokens | ({id_text} if id_text else set())
+    if marker_tokens & {"wrapper", "row", "sidebar", "footer", "nav", "promo"}:
+        return False
+    text_words = len(node.get_text(" ", strip=True).split())
+    structural_children = sum(1 for child in node.find_all(recursive=False) if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "table", "pre", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"})
+    return text_words >= 20 or structural_children >= 2
 
 
 def _score_content(tag: Tag) -> float:
@@ -74,6 +232,7 @@ def _score_content(tag: Tag) -> float:
     class_text = " ".join(tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]).lower()
     id_text = str(tag.get("id", "")).lower()
     marker_text = f"{class_text} {id_text}"
+    marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
 
     positive = 0.0
     positive += len(tag.find_all("p")) * 4.0
@@ -85,8 +244,29 @@ def _score_content(tag: Tag) -> float:
     positive += len(tag.find_all(["pre", "code"])) * 2.0
     positive += min(len(text) / 400.0, 12.0)
 
-    if any(marker in marker_text for marker in ("content", "body", "entry")):
+    if any(
+        marker in marker_text
+        for marker in (
+            "markdown-body",
+            "articlebody",
+            "post-body",
+            "entry-content",
+            "post-content",
+            "story-body",
+            "content-body",
+            "bodytext",
+            "hb-content__text",
+            "s-blog-post__body",
+        )
+    ):
         positive += 10.0
+    elif any(
+        token
+        and not token.startswith("site-")
+        and (token == "content" or token.endswith(("-content", "_content", "__content")))
+        for token in marker_tokens
+    ):
+        positive += 6.0
     elif "article" in marker_text:
         positive += 6.0
     elif "post" in marker_text:
@@ -94,7 +274,42 @@ def _score_content(tag: Tag) -> float:
 
     noise = 0.0
     noise += len(tag.find_all(["a", "button", "form", "iframe", "input", "select", "textarea"])) * 0.3
-    if any(marker in marker_text for marker in ("share", "social", "breadcrumb", "related", "recommend", "newsletter", "subscribe", "promo", "debug", "cta", "widget", "sidebar", "nav", "footer", "tags", "postmeta", "story-title", "post-head")):
+    if "row" in marker_tokens:
+        noise += 8.0
+    if any(
+        marker in marker_text
+        for marker in (
+            "share",
+            "social",
+            "breadcrumb",
+            "related",
+            "recommend",
+            "newsletter",
+            "subscribe",
+            "promo",
+            "debug",
+            "cta",
+            "widget",
+            "sidebar",
+            "nav",
+            "footer",
+            "tags",
+            "postmeta",
+            "story-title",
+            "post-head",
+            "author",
+            "bio",
+            "profile",
+            "hero",
+            "lead",
+            "deck",
+            "standfirst",
+            "teaser",
+            "excerpt",
+            "card",
+            "feature",
+        )
+    ):
         noise += 10.0
     noise += len(tag.find_all(True)) * 0.08
 
@@ -118,8 +333,12 @@ def _subtree_depth(root: Tag, tag: Tag) -> int:
 def _looks_like_chrome(tag: Tag) -> bool:
     """Identify obvious page chrome from class or id markers."""
 
-    marker_text = " ".join([
-        " ".join(tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]),
-        str(tag.get("id", "")),
-    ]).lower()
-    return any(marker in marker_text for marker in NOISE_MARKERS)
+    classes = tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]
+    class_text = " ".join(classes).lower()
+    id_text = str(tag.get("id", "")).lower()
+    marker_text = f"{class_text} {id_text}".strip()
+    marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
+    exact_layout_markers = {"row", "sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
+    if marker_tokens & exact_layout_markers:
+        return True
+    return any(marker in marker_text for marker in NOISE_MARKERS if marker not in exact_layout_markers)

@@ -17,5 +17,5 @@ class PostProcessStage:
     def run(self, context: PipelineContext) -> PipelineContext:
         """Apply final Markdown cleanup to the current document text."""
 
-        context.markdown = postprocess_markdown(context.markdown)
+        context.markdown = postprocess_markdown(context.markdown, context.metadata)
         return context

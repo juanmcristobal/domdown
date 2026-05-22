@@ -10,7 +10,7 @@ def test_render_table_outputs_gfm_table() -> None:
     """Table rendering should produce a GitHub-flavored Markdown table."""
 
     soup = BeautifulSoup(
-        "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>",
+        "<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>",
         "lxml",
     )
 

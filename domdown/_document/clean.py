@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from bs4 import Comment, Tag
 
-from .._constants import HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
+from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
 
 
 def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str], preserve_chrome: bool = False) -> Tag:
@@ -55,7 +55,9 @@ def _remove_structural_chrome(root: Tag) -> None:
     for node in reversed(list(root.find_all(True))):
         if not isinstance(node, Tag) or node is root:
             continue
-        if _is_small_structural_block(node) and (_looks_like_header_block(node) or _looks_like_related_block(node)):
+        if _is_small_structural_block(node) and (
+            _looks_like_header_block(node) or _looks_like_related_block(node) or _looks_like_boilerplate(node)
+        ):
             node.decompose()
 
 
@@ -67,7 +69,9 @@ def _looks_like_header_block(node: Tag) -> bool:
         return True
     has_title_like_heading = bool(node.find(["h1", "h2"], recursive=False))
     has_metadata = bool(node.find("time", recursive=False)) or any(token in marker_text for token in ("byline", "author", "date", "time", "meta"))
-    return has_title_like_heading and has_metadata
+    text_words = len(node.get_text(" ", strip=True).split())
+    paragraph_count = len(node.find_all("p"))
+    return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
 
 
 def _looks_like_related_block(node: Tag) -> bool:
@@ -78,6 +82,13 @@ def _looks_like_related_block(node: Tag) -> bool:
         return True
     marker_text = _marker_text(node)
     return any(marker in marker_text for marker in ("related", "recommend"))
+
+
+def _looks_like_boilerplate(node: Tag) -> bool:
+    """Detect compact documentation or feedback boilerplate blocks."""
+
+    text = node.get_text(" ", strip=True).lower()
+    return any(phrase in text for phrase in BOILERPLATE_PHRASES)
 
 
 def _is_small_structural_block(node: Tag) -> bool:

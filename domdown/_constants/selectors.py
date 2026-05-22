@@ -29,7 +29,23 @@ SHARE_SELECTORS = (
     "[id*='social']",
 )
 
+# Direct children that are still broad enough to be considered content shells
+# during subtree refinement.
+REFINABLE_CHILD_TAGS = (
+    "article",
+    "aside",
+    "blockquote",
+    "div",
+    "figure",
+    "main",
+    "ol",
+    "section",
+    "table",
+    "ul",
+)
+
 DEFAULT_REMOVE_SELECTORS = (
+    ".ad-fixed__wrapper",
     ".float-share",
     ".mobile-share",
     ".post-head",
@@ -76,20 +92,65 @@ CONTENT_SELECTORS_FALLBACK = (
 
 CONTENT_SELECTORS = CONTENT_SELECTORS_EXACT + CONTENT_SELECTORS_FALLBACK
 
+# Root selectors used to choose the most relevant content shell before cleanup.
+ROOT_SELECTORS = (
+    "article",
+    "main",
+    "[role='article']",
+    "[role='main']",
+    ".post-body",
+    ".articlebody",
+    ".entry-content",
+    ".content",
+    "#content",
+    ".content-body",
+    ".post-content",
+    ".post__body",
+    ".post__content",
+    ".s-blog-post__body",
+    ".BodyText__content",
+    ".hb-content__text",
+    ".markdown-body",
+    ".story-body",
+    ".story-shell",
+    "[class*='body']",
+    "[id*='body']",
+    "[class*='entry']",
+    "[id*='entry']",
+    "body",
+)
+
 # Class or id markers that usually indicate page chrome, ads, or engagement widgets.
 NOISE_MARKERS = (
+    "announcement",
+    "banner",
+    "brand",
+    "author",
+    "bio",
+    "cookie",
     "share",
     "social",
     "breadcrumb",
+    "hero",
+    "lead",
+    "deck",
+    "standfirst",
+    "teaser",
+    "excerpt",
     "related",
     "recommend",
+    "feedback",
     "newsletter",
     "subscribe",
     "promo",
+    "toolbar",
+    "pagination",
+    "pager",
+    "toc",
+    "table-of-contents",
     "debug",
     "cta",
     "widget",
-    "sidebar",
     "nav",
     "footer",
     "tags",
@@ -103,6 +164,10 @@ NOISE_MARKERS = (
     "modal",
     "advert",
     "sponsor",
+    "logo",
+    "masthead",
+    "notice",
+    "overlay",
     "follow",
     "sponsored",
     "note-b",
@@ -131,8 +196,23 @@ RELATED_PHRASES = (
     "related articles",
     "related posts",
     "recommended",
+    "latest news",
     "you may also like",
     "more from",
+)
+
+# Common boilerplate phrases that appear in documentation and feedback shells.
+BOILERPLATE_PHRASES = (
+    "thanks for letting us know this page needs work",
+    "we're sorry we let you down",
+    "help improve",
+    "learn how to contribute",
+    "view this page on github",
+    "report a problem with this content",
+    "if you've got a moment",
+    "how we can make the documentation better",
+    "search results",
+    "no results found",
 )
 
 # Placeholder phrases used by portal-style shells that require JavaScript

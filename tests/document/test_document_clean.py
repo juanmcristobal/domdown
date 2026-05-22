@@ -103,6 +103,33 @@ def test_clean_root_removes_social_follow_and_sponsored_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_fixed_ad_wrappers() -> None:
+    """Cleanup should strip fixed ad wrappers that sit outside the article body."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="ad-fixed__wrapper">
+            <div>Advertisement</div>
+            <a href="/pricing">Go ad free</a>
+            <button>Hide</button>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (".ad-fixed__wrapper",), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Advertisement" not in text
+    assert "Go ad free" not in text
+    assert "Hide" not in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
     """Cleanup should drop top-of-article chrome like repeated headers and related links."""
 
@@ -161,3 +188,30 @@ def test_clean_root_removes_html_comments() -> None:
 
     assert "more" not in cleaned.get_text(" ", strip=True)
     assert "Content" in cleaned.get_text(" ", strip=True)
+
+
+def test_clean_root_removes_generic_boilerplate_phrases() -> None:
+    """Cleanup should drop compact docs and feedback boilerplate blocks."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="docs-feedback">
+            Thanks for letting us know this page needs work.
+            Help improve this page.
+            Learn how to contribute.
+          </div>
+          <p>Body</p>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Thanks for letting us know this page needs work" not in text
+    assert "Help improve this page" not in text
+    assert "Learn how to contribute" not in text
+    assert "Body" in text

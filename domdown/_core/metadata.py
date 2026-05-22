@@ -8,6 +8,7 @@ class HtmlMetadata:
     """Normalized article metadata extracted from the source HTML."""
 
     title: str | None = None
+    site_name: str | None = None
     source: str | None = None
     author: tuple[str, ...] = ()
     published: str | None = None

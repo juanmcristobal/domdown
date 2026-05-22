@@ -43,6 +43,7 @@ def test_extract_metadata_reads_article_fields() -> None:
     assert metadata.language == "en"
     assert metadata.canonical_url == "https://example.com/posts/example-article"
     assert metadata.image == "https://example.com/image.png"
+    assert metadata.site_name is None
 
 
 def test_extract_metadata_strips_site_suffixes_and_resolves_relative_source_against_base_url() -> None:
@@ -73,6 +74,7 @@ def test_extract_metadata_strips_site_suffixes_and_resolves_relative_source_agai
     assert metadata.source == "https://example.com/posts/example-release-note"
     assert metadata.canonical_url == "https://example.com/posts/example-release-note"
     assert metadata.description == "Example runtime release note."
+    assert metadata.site_name == "Example Platform"
 
 
 def test_extract_metadata_reads_visible_published_time_when_meta_is_missing() -> None:

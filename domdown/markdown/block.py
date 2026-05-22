@@ -5,6 +5,7 @@ from bs4 import NavigableString, Tag
 from .._constants import SKIP_TAGS
 from .._core import DomdownOptions
 from .._text import normalize_inline_text, normalize_markdown_text
+from .code import render_code_block
 from .images import render_image
 from .inline import render_inline_children
 from .links import render_link
@@ -32,6 +33,8 @@ def render_block(node: object, options: DomdownOptions) -> str:
         return render_link(node, options)
     if name == "br":
         return ""
+    if name == "pre":
+        return render_code_block(node, options)
     if name == "ul":
         return render_list(node, options, ordered=False)
     if name == "ol":

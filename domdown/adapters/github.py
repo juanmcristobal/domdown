@@ -74,10 +74,14 @@ class GitHubAdapter:
             blob_root = _select_first(context.document, GITHUB_BLOB_ROOT_SELECTORS)
             if blob_root is not None:
                 context.document = blob_root
-        if kind == "issue" and context.metadata is not None:
+        if kind == "issue":
             issue_author = _meta_content(context.document, "meta[property='og:author:username']")
-            if issue_author:
-                context.metadata = replace(context.metadata, author=(issue_author,))
+            issue_root = _select_first(context.document, (".repository-content", ".js-repo-pjax-container"))
+            if issue_root is not None:
+                context.document = issue_root
+            if context.metadata is not None:
+                if issue_author:
+                    context.metadata = replace(context.metadata, author=(issue_author,))
         return context
 
     def postprocess(self, context: PipelineContext) -> PipelineContext:

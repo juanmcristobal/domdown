@@ -72,6 +72,7 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
     return HtmlMetadata(
         title=title or None,
+        site_name=site_name or None,
         source=source or None,
         author=author,
         published=published or None,
