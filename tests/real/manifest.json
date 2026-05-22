@@ -5,36 +5,30 @@
       "id": "zimperium_android_malware_bypass_detection",
       "html": "html/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.html",
       "markdown": "raw/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.md",
-      "min_ratio": 0.99,
       "description": "Structured security article with headings, lists, and images."
     },
     {
       "id": "404media_secure_chat_encryption",
       "html": "html/404media.co_a-secure-chat-apps-encryption-is-so-bad-it-is-meaningless.html",
       "markdown": "raw/404media.co_a-secure-chat-apps-encryption-is-so-bad-it-is-meaningless.md",
-      "min_ratio": 0.95,
       "description": "Concise newsroom-style article with inline links and author metadata."
     },
     {
       "id": "bitdefender_dll_sideloading",
       "html": "html/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.html",
       "markdown": "raw/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.md",
-      "min_ratio": 0.98,
       "description": "Long technical explainer with diagrams and preserved code-like structure."
     },
     {
       "id": "nisos_remote_worker_fraud",
       "html": "html/nisos.com_blog_dprk-remote-worker-fraud-interview.html",
       "markdown": "raw/nisos.com_blog_dprk-remote-worker-fraud-interview.md",
-      "min_ratio": 0.98,
       "description": "Interview-style article with strong frontmatter and inline formatting."
     },
     {
       "id": "redhat_security_advisories_portal_shell",
       "html": "html/access.redhat.com_security_security-updates_security-advisories.html",
       "markdown": "raw/access.redhat.com_security_security-updates_security-advisories.md",
-      "min_ratio": 0.5,
-      "xfail_reason": "Portal shell handling is tracked separately; keep this as a live regression marker.",
       "description": "Portal-style page with a JS shell and broad page chrome."
     }
   ]

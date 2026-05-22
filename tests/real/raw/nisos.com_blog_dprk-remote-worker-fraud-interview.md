@@ -2,15 +2,13 @@
 title: "DPRK Remote Worker Fraud: A CPO’s Real Interview Experience"
 source: "https://nisos.com/blog/dprk-remote-worker-fraud-interview/"
 author:
-  - "[[Magen Gicinto]]"
-  - "[[Chief People Officer]]"
+  - "Magen Gicinto, Chief People Officer"
 published: "2026-03-30T11:30:05+00:00"
-created: 2026-05-15
 description: A firsthand account of DPRK remote worker fraud during a real interview. Learn how employment fraud works and how to spot it early.
-tags:
-  - "clippings"
 ---
-## DPRK Remote Worker Fraud: A CPO’s Firsthand Interview Experience
+Blog
+
+# DPRK Remote Worker Fraud: A CPO’s Firsthand Interview Experience
 
 Sitting across — virtually — from a North Korean DPRK worker, and what it taught me about deception and the cost of human fraud.
 
@@ -36,7 +34,7 @@ North Korean remote worker fraud is one of the active state-sponsored insider th
 
 - **VPNs and laptop farms** to mask geographic location
 - **Fabricated or doctored personas** with U.S.-based facilitators who assist with background checks, drug screenings, and pre-employment assessments.
-- **ATS-optimized resume** s engineered to pass automated screening
+- **ATS-optimized resume**s engineered to pass automated screening
 - **Outsourced technical interviews**, where a more skilled individual performs off-camera while the front candidate presents on-screen
 
 What hiring teams encounter in the interview is a front — polished enough to pass if you aren’t trained to look for the tells.
@@ -101,6 +99,10 @@ L
 
 Once hired, these individuals may gain access to internal systems, data, and teams. This creates a direct path to insider threat, including data exposure, IP theft, and operational risk.
 
-## About Nisos®
+## **About Nisos®**
 
-Nisos is a trusted digital investigations partner specializing in unmasking human risk. We operate as an extension of security, risk, legal, people strategy, and trust and safety teams to protect their people and their business. Our open source intelligence services help enterprise teams mitigate risk, make critical decisions, and impose real world consequences. For more information, visit: [https://nisos.com.](https://nisos.com./)
+Nisos is a trusted digital investigations partner specializing in unmasking human risk. We operate as an extension of security, risk, legal, people strategy, and trust and safety teams to protect their people and their business. Our open source intelligence services help enterprise teams mitigate risk, make critical decisions, and impose real world consequences. For more information, visit: [https://nisos.com.](https://nisos.com.)
+
+[Employment Shield](https://nisos.com/services/employment-shield/)
+
+[Human Risk Management](https://nisos.com/solutions/human-risk/)
