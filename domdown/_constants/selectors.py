@@ -60,6 +60,7 @@ CONTENT_SELECTORS_EXACT = (
     ".s-blog-post__body",
     ".BodyText__content",
     ".hb-content__text",
+    ".markdown-body",
     ".story-body",
     ".story-shell",
 )

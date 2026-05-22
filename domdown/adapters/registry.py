@@ -25,6 +25,13 @@ class AdapterRegistry:
             context = adapter.preprocess(context)
         return context
 
+    def refine_metadata(self, context: PipelineContext) -> PipelineContext:
+        """Run metadata refinement hooks for matching adapters."""
+
+        for adapter in self.matching(context):
+            context = adapter.refine_metadata(context)
+        return context
+
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Run post-processing hooks for matching adapters."""
 

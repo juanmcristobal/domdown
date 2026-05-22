@@ -25,6 +25,11 @@ class FakeAdapter:
         context.warnings.append(f"pre:{self.name}")
         return context
 
+    def refine_metadata(self, context: PipelineContext) -> PipelineContext:
+        """Leave metadata unchanged while still satisfying the adapter contract."""
+
+        return context
+
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Record that postprocessing ran."""
 

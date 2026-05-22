@@ -13,6 +13,12 @@ SOURCE_SELECTORS = (
     "meta[property='og:url']",
 )
 
+# Selectors for site name metadata used to normalize title and source suffixes.
+SITE_NAME_SELECTORS = (
+    "meta[property='og:site_name']",
+    "meta[name='application-name']",
+)
+
 # Selectors for visible author metadata.
 AUTHOR_VISIBLE_SELECTORS = (
     ".postmeta .p-author .author",
@@ -37,6 +43,7 @@ PUBLISHED_SELECTORS = (
     "meta[itemprop='datePublished']",
     "meta[property='article:published_time']",
     "meta[name='date']",
+    "time[datetime]",
 )
 
 # Selectors for description metadata.

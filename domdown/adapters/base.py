@@ -20,6 +20,11 @@ class ArticleAdapter(Protocol):
 
         raise NotImplementedError
 
+    def refine_metadata(self, context: PipelineContext) -> PipelineContext:
+        """Adjust extracted metadata after the metadata stage has run."""
+
+        raise NotImplementedError
+
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Adjust the context after the core stages have finished."""
 

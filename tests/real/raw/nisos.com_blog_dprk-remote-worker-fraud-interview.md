@@ -6,8 +6,6 @@ author:
 published: "2026-03-30T11:30:05+00:00"
 description: A firsthand account of DPRK remote worker fraud during a real interview. Learn how employment fraud works and how to spot it early.
 ---
-Blog
-
 # DPRK Remote Worker Fraud: A CPO’s Firsthand Interview Experience
 
 Sitting across — virtually — from a North Korean DPRK worker, and what it taught me about deception and the cost of human fraud.
@@ -59,50 +57,22 @@ Read more about our [DPRK IT Worker investigations](https://nisos.com/dprk-it-wo
 
 ## Frequently Asked Questions (FAQs) about North Korean Remote Worker Fraud
 
-K
-
-L
-
 #### What is DPRK remote worker fraud?
 
 DPRK remote worker fraud involves individuals posing as legitimate job candidates using fabricated identities, AI-assisted interviews, and technical infrastructure to gain employment and access to organizations.
-
-K
-
-L
 
 #### How does DPRK remote worker fraud appear in interviews?
 
 It often looks subtle. Candidates may give delayed or fragmented answers, avoid direct demonstrations of their work, or rely on off-screen assistance to respond in real time.
 
-K
-
-L
-
 #### Why is DPRK remote worker fraud difficult to detect?
 
 Because candidates are designed to appear credible. Resumes are optimized, identities are built to pass checks, and interviews are often supported by external tools or additional operators.
-
-K
-
-L
 
 #### What are the early signs hiring teams should look for?
 
 Common signals include inconsistent communication, limited digital presence, overly polished resumes, and difficulty answering unexpected or technical questions in real time.
 
-K
-
-L
-
 #### How does DPRK remote worker fraud create insider threat risk?
 
 Once hired, these individuals may gain access to internal systems, data, and teams. This creates a direct path to insider threat, including data exposure, IP theft, and operational risk.
-
-## **About Nisos®**
-
-Nisos is a trusted digital investigations partner specializing in unmasking human risk. We operate as an extension of security, risk, legal, people strategy, and trust and safety teams to protect their people and their business. Our open source intelligence services help enterprise teams mitigate risk, make critical decisions, and impose real world consequences. For more information, visit: [https://nisos.com.](https://nisos.com.)
-
-[Employment Shield](https://nisos.com/services/employment-shield/)
-
-[Human Risk Management](https://nisos.com/solutions/human-risk/)

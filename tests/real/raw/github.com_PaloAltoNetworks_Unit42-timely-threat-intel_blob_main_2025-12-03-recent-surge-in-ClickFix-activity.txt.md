@@ -1,0 +1,238 @@
+---
+title: Unit42-timely-threat-intel/2025-12-03-recent-surge-in-ClickFix-activity.txt at main
+source: "https://github.com/PaloAltoNetworks/Unit42-timely-threat-intel/blob/main/2025-12-03-recent-surge-in-ClickFix-activity.txt"
+author:
+  - "PaloAltoNetworks"
+description: "A collection of files with indicators supporting social media posts from Palo Alto Network's Unit 42 team to disseminate timely threat intelligence. - Unit42-timely-threat-intel/2025-12-03-recent-surge-in-ClickFix-activity.txt at main · PaloAltoNetworks/Unit42-timely-threat-intel"
+---
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+32
+
+33
+
+34
+
+35
+
+36
+
+37
+
+38
+
+39
+
+40
+
+41
+
+42
+
+43
+
+44
+
+45
+
+46
+
+47
+
+48
+
+49
+
+50
+
+51
+
+52
+
+53
+
+54
+
+55
+
+56
+
+57
+
+58
+
+59
+
+60
+
+61
+
+62
+
+63
+
+64
+
+65
+
+2025-12-03 (WEDNESDAY): RECENT SURGE IN CLICKFIX ACTIVITY
+
+AUTHORS:
+
+- Shresta Bellary Seetharam, Billy Melicher, Shehroze Farooqi, Nabeel Mohamed, Alex Starov
+
+REFERENCES:
+
+- https://www.linkedin.com/posts/unit42_clickfix-pastejacking-activity-7402128778161750016-O4RU/
+
+- https://x.com/Unit42_Intel/status/1996363155237187909
+
+NOTES:
+
+- Browser update lures are fueling a recent surge in ClickFix activity
+
+- We found 10K+ hits on legitimate but compromised sites leading to ClickFix lures in the past 3 months.
+
+- Through pastejacking, these ClickFix pages lead to various types of malware.
+
+DETAILS:
+
+- ClickFix is a social engineering technique to convince potential victims to run a malicious script that will infect their computers.
+
+- These web pages inject the malicious content into a user's clipboard in a technique referred to as pastejacking.
+
+- ClickFix pages display instructions directing the user to paste content into a run window or terminal window.
+
+- Since September 2025, our telemetry has revealed at least 200 detections of compromised sites every day, showing a surge in activity.
+
+- Attackers are utilizing various lures for the ClickFix pages, including:
+
+-- Mimicking Google's "Aw Snap!" error
+
+-- Mimicking browser updates
+
+- We noted fake "Aw Snap!" pages that ask users to paste script into 'Windows Power Shell Admin' ('Windows Terminal').
+
+- Pages mimicking browser updates present multiple screens before displaying ClickFix instructions.
+
+- A variety of malware is delivered through these ClickFix lures, including droppers, downloaders and malicious browser extensions.
+
+INCICATORS:
+
+RECENT URLS FROM CLICKFIX ACTIVITY:
+
+- hxxp[:]//45.59.114[.]133/test.exe
+
+- hxxp[:]//52.14.189[.]234/424.php
+
+- hxxp[:]//77.0x6E.107[.]232/only/floid.gz
+
+- hxxp[:]//89.23.107[.]240:7777/confirmm2.com/Capcha
+
+- hxxp[:]//93.152.230[.]54/
+
+- hxxp[:]//94.74.164[.]136/fifx[.]odd
+
+- hxxp[:]//194.87.55[.]59/rex.odd
+
+- hxxps[:]//ab7r3c[.]top/921tgE/ps1.php
+
+- hxxp[:]//acsolucionessa[.]com/1
+
+- hxxps[:]//channelengine-market1[.]app/
+
+- hxxps[:]//cutt[.]ly/keIDO0T5
+
+- hxxps[:]//elonpx[.]com/build.exe
+
+- hxxps[:]//files.catbox[.]moe/uaa9w6[.]txt
+
+- hxxps[:]//gvh.b-3-aconz[.]ru/
+
+- hxxps[:]//hafen.auricfluss[.]ru/9ctsqhi9
+
+- hxxps[:]//hafen.auricfluss[.]ru/teeyde9u
+
+- hxxps[:]//krone.frostweald[.]ru/g490ngrc
+
+- hxxps[:]//movarana[.]com/HuagW13_1.txt
+
+- hxxps[:]//softwaretech[.]pro/r9
+
+- hxxps[:]//update.coinmarketsap[.]com/
+
+- hxxp[:]//updatesbrows[.]app/appp.bat
+
+- hxxps[:]//wald.rowanstead[.]ru/gu5ngeu0
+
+RECENT EXAMPLES OF MALWARE DELIVERED THROUGH CLICKFIX ACTIVITY:
+
+(Read: SHA256 hash - file name)
+
+- 39eba783cb48bd00415b75f5b9d0678c4508d2ba0970c394913df3d38c652cf2 - r9.exe
+
+- 4853a6eed666bd3ed28653de68576948d72e54df00adf3d49de63400bf728baa - thunderbird.exe
+
+- 4574c18b6c8aad7d36939a7a19cc8103d2adb093a1f70f2ae54cd97c44b9b22c - extension.zip (note: for Chrome)
+
+- 05bfa05140fffee6027d23a926c37d0e8cf88079bb51b01eb190f5aaaec9b946 - extension.zip (note: for Edge)

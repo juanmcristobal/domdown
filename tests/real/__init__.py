@@ -29,12 +29,14 @@ class RealExampleCase:
         return self.markdown_path.read_text(encoding="utf-8")
 
 
-def load_real_cases() -> list[RealExampleCase]:
+def load_real_cases(layer: str | None = "core") -> list[RealExampleCase]:
     """Load the curated real-world regression cases from the manifest."""
 
     payload = json.loads(REAL_MANIFEST_PATH.read_text(encoding="utf-8"))
     cases: list[RealExampleCase] = []
     for item in payload.get("cases", []):
+        if layer is not None and item.get("layer", "core") != layer:
+            continue
         cases.append(
             RealExampleCase(
                 id=item["id"],
@@ -44,4 +46,3 @@ def load_real_cases() -> list[RealExampleCase]:
             )
         )
     return cases
-

@@ -45,6 +45,72 @@ def test_extract_metadata_reads_article_fields() -> None:
     assert metadata.image == "https://example.com/image.png"
 
 
+def test_extract_metadata_strips_site_suffixes_and_resolves_relative_source_against_base_url() -> None:
+    """Metadata extraction should clean common site suffixes without inventing fields."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head>
+            <meta property="og:site_name" content="Example Platform" />
+            <meta property="og:title" content="Example Release Note · Example Platform" />
+            <meta property="og:url" content="/posts/example-release-note" />
+            <meta name="description" content="Example runtime release note." />
+          </head>
+          <body>
+            <article>
+              <h1>Example Release Note · Example Platform</h1>
+            </article>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    metadata = extract_metadata(soup, DomdownOptions(base_url="https://example.com"))
+
+    assert metadata.title == "Example Release Note"
+    assert metadata.source == "https://example.com/posts/example-release-note"
+    assert metadata.canonical_url == "https://example.com/posts/example-release-note"
+    assert metadata.description == "Example runtime release note."
+
+
+def test_extract_metadata_reads_visible_published_time_when_meta_is_missing() -> None:
+    """Published time should fall back to a visible datetime when no meta tag exists."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head>
+            <meta property="og:site_name" content="Example News" />
+            <meta property="og:title" content="Example Alert Title · Example News" />
+            <meta property="og:url" content="https://example.com/news/example-alert" />
+          </head>
+          <body>
+            <div class="c-page-title__fields">
+              <div class="c-field c-field--name-field-release-date c-field--type-datetime c-field--label-above">
+                <div class="c-field__label">Release Date</div>
+                <div class="c-field__content"><time datetime="2026-03-03T12:00:00Z">March 03, 2026</time></div>
+              </div>
+            </div>
+            <div class="l-page-section l-page-section--rich-text csaf-imported">
+              <div class="l-page-section__content">
+                <p>Example alert content.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    metadata = extract_metadata(soup, DomdownOptions())
+
+    assert metadata.title == "Example Alert Title"
+    assert metadata.source == "https://example.com/news/example-alert"
+    assert metadata.published == "2026-03-03T12:00:00Z"
+
+
 def test_extract_metadata_prefers_visible_author_and_tags() -> None:
     """Visible article metadata should win over generic HTML metatags."""
 

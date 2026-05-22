@@ -13,6 +13,8 @@ from .helpers import (
     looks_like_date,
     looks_like_url,
     meta_content,
+    normalize_source,
+    normalize_title,
     split_tags,
     tag_text,
 )
@@ -23,6 +25,7 @@ from .selectors import (
     IMAGE_SELECTORS,
     PUBLISHED_SELECTORS,
     SOURCE_SELECTORS,
+    SITE_NAME_SELECTORS,
     TAG_META_SELECTORS,
     TAG_VISIBLE_SELECTORS,
     TITLE_SELECTORS,
@@ -42,12 +45,16 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     """Extract normalized article metadata from parsed HTML."""
 
     html_tag = soup.find("html")
-    title = first_text(
-        *(meta_content(soup, selector) for selector in TITLE_SELECTORS),
-        tag_text(soup.select_one("h1.story-title")),
-        tag_text(soup.title),
+    site_name = first_text(*(meta_content(soup, selector) for selector in SITE_NAME_SELECTORS))
+    title = normalize_title(
+        first_text(
+            *(meta_content(soup, selector) for selector in TITLE_SELECTORS),
+            tag_text(soup.select_one("h1.story-title")),
+            tag_text(soup.title),
+        ),
+        site_name,
     )
-    source = first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS), options.base_url)
+    source = normalize_source(first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url)
     visible_author = collect_texts(soup, AUTHOR_VISIBLE_SELECTORS)
     meta_author = tuple(
         value
@@ -61,7 +68,7 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     description = first_text(*(meta_content(soup, selector) for selector in DESCRIPTION_SELECTORS))
     tags = options.frontmatter_tags
     language = html_tag.get("lang") if html_tag and html_tag.get("lang") else None
-    canonical_url = first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS))
+    canonical_url = normalize_source(first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url)
     image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
     return HtmlMetadata(
         title=title or None,

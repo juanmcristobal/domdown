@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup, Tag
 
@@ -16,6 +16,8 @@ def meta_content(soup: BeautifulSoup, selector: str) -> str | None:
         return None
     if tag.name == "link":
         return tag.get("href")
+    if tag.name == "time":
+        return tag.get("datetime") or normalize_inline_text(tag.get_text(" ", strip=True))
     return tag.get("content")
 
 
@@ -102,6 +104,33 @@ def split_tags(values: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(tags)
 
 
+def normalize_title(value: str, site_name: str | None = None) -> str:
+    """Strip common site-name suffixes from a document title when present."""
+
+    title = normalize_inline_text(value)
+    if not title:
+        return ""
+    site_tokens = _site_name_tokens(site_name)
+    if not site_tokens:
+        return title
+    while True:
+        stripped = _strip_title_suffix(title, site_tokens)
+        if stripped == title:
+            return title
+        title = stripped
+
+
+def normalize_source(value: str | None, base_url: str | None = None) -> str:
+    """Normalize a source URL without inventing missing metadata."""
+
+    source = (value or "").strip()
+    if not source:
+        return ""
+    if base_url and source.startswith("/"):
+        return urljoin(base_url, source)
+    return source
+
+
 def looks_like_date(value: str) -> bool:
     """Heuristically detect whether a string looks like a short date."""
 
@@ -123,3 +152,29 @@ def first_image_src(soup: BeautifulSoup) -> str | None:
         return None
     src = img.get("data-src") or img.get("data-original") or img.get("src")
     return src or None
+
+
+def _site_name_tokens(site_name: str | None) -> set[str]:
+    """Break a site name into lowercase tokens used for suffix stripping."""
+
+    if not site_name:
+        return set()
+    return {token for token in re.split(r"[^a-z0-9]+", site_name.lower()) if token}
+
+
+def _strip_title_suffix(title: str, site_tokens: set[str]) -> str:
+    """Remove a single trailing title suffix when it matches a site marker."""
+
+    for separator in (" | ", " · ", " — ", " - "):
+        if separator not in title:
+            continue
+        head, tail = title.rsplit(separator, 1)
+        tail = tail.strip()
+        if not tail:
+            continue
+        tail_tokens = {token for token in re.split(r"[^a-z0-9]+", tail.lower()) if token}
+        if tail_tokens & site_tokens:
+            return head.strip()
+        if "github" in site_tokens and "/" in tail and " " not in tail:
+            return head.strip()
+    return title

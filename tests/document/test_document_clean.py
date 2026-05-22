@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup
 
-from domdown._constants import SKIP_TAGS
+from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
 from domdown._document import clean_root, choose_root, parse_html
 from tests.fixtures import ARTICLE_SHELL_HTML
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Sequence
 
 from .._core import DomdownOptions, HtmlToMarkdownResult, PipelineContext
-from ..adapters import AdapterRegistry, ArticleAdapter, build_default_registry
+from ..adapters import AdapterRegistry, ArticleAdapter, GitHubAdapter, build_default_registry
 from ..stages.base import PipelineStage
 from ..stages.clean import CleanStage
 from ..stages.frontmatter import FrontmatterStage
@@ -27,6 +27,8 @@ class HtmlToMarkdownPipeline:
     def __post_init__(self) -> None:
         """Populate the default stage chain when none is supplied."""
 
+        if not self.adapters:
+            self.adapters = (GitHubAdapter(),)
         self.adapter_registry = build_default_registry(self.adapters)
         if not self.stages:
             self.stages = (
@@ -47,7 +49,10 @@ class HtmlToMarkdownPipeline:
             context = stage.run(context)
             if getattr(stage, "name", "") == "parse":
                 context = self.adapter_registry.preprocess(context)
-        context = self.adapter_registry.postprocess(context)
+            elif getattr(stage, "name", "") == "metadata":
+                context = self.adapter_registry.refine_metadata(context)
+            elif getattr(stage, "name", "") == "postprocess":
+                context = self.adapter_registry.postprocess(context)
         return HtmlToMarkdownResult(
             markdown=context.markdown,
             cleaned_html=context.cleaned_html,

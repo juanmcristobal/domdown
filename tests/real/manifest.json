@@ -20,16 +20,39 @@
       "description": "Long technical explainer with diagrams and preserved code-like structure."
     },
     {
+      "id": "cisa_alert_kev_catalog",
+      "html": "html/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.html",
+      "markdown": "raw/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.md",
+      "description": "Government alert page with concise body text and simple metadata.",
+      "layer": "adapter"
+    },
+    {
+      "id": "node_release_tag_v2530",
+      "html": "html/github.com_nodejs_node_releases_tag_v25.3.0.html",
+      "markdown": "raw/github.com_nodejs_node_releases_tag_v25.3.0.md",
+      "description": "GitHub release page with long release notes and commit listings.",
+      "layer": "adapter"
+    },
+    {
+      "id": "github_issue_security_timeline",
+      "html": "html/github.com_BerriAI_litellm_issues_24518.html",
+      "markdown": "raw/github.com_BerriAI_litellm_issues_24518.md",
+      "description": "GitHub issue page with long-form security timeline content.",
+      "layer": "adapter"
+    },
+    {
+      "id": "github_blob_release_notes",
+      "html": "html/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.html",
+      "markdown": "raw/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.md",
+      "description": "GitHub blob page with plain-text release note content.",
+      "layer": "adapter"
+    },
+    {
       "id": "nisos_remote_worker_fraud",
       "html": "html/nisos.com_blog_dprk-remote-worker-fraud-interview.html",
       "markdown": "raw/nisos.com_blog_dprk-remote-worker-fraud-interview.md",
-      "description": "Interview-style article with strong frontmatter and inline formatting."
-    },
-    {
-      "id": "redhat_security_advisories_portal_shell",
-      "html": "html/access.redhat.com_security_security-updates_security-advisories.html",
-      "markdown": "raw/access.redhat.com_security_security-updates_security-advisories.md",
-      "description": "Portal-style page with a JS shell and broad page chrome."
+      "description": "Interview-style article with strong frontmatter and inline formatting.",
+      "layer": "adapter"
     }
   ]
 }
