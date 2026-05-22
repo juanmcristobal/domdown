@@ -33,8 +33,8 @@ class HtmlToMarkdownPipeline:
                 CleanStage(),
                 PreserveStage(),
                 MarkdownStage(),
-                FrontmatterStage(),
                 PostProcessStage(),
+                FrontmatterStage(),
             )
 
     def run(self, html: str) -> HtmlToMarkdownResult:
@@ -48,5 +48,6 @@ class HtmlToMarkdownPipeline:
             cleaned_html=context.cleaned_html,
             metadata=context.metadata,
             frontmatter=context.frontmatter,
+            document=context.rendered_document,
             warnings=tuple(context.warnings),
         )

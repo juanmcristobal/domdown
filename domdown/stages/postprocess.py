@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import postprocess_markdown
 from ..types import PipelineContext
 
 
@@ -14,4 +15,5 @@ class PostProcessStage:
     name: str = "postprocess"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("PostProcessStage is not implemented yet")
+        context.markdown = postprocess_markdown(context.markdown)
+        return context

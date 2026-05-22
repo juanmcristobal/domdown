@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import extract_metadata
 from ..types import PipelineContext
 
 
@@ -14,4 +15,7 @@ class MetadataStage:
     name: str = "metadata"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("MetadataStage is not implemented yet")
+        if context.document is None:
+            return context
+        context.metadata = extract_metadata(context.document, context.options)
+        return context

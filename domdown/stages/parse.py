@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import parse_html
 from ..types import PipelineContext
 
 
@@ -14,4 +15,5 @@ class ParseStage:
     name: str = "parse"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("ParseStage is not implemented yet")
+        context.document = parse_html(context.html)
+        return context

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import render_markdown
 from ..types import PipelineContext
 
 
@@ -14,4 +15,7 @@ class MarkdownStage:
     name: str = "markdown"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("MarkdownStage is not implemented yet")
+        if context.document is None:
+            return context
+        context.markdown = render_markdown(context.document, context.options)
+        return context

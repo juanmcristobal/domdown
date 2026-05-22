@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import choose_root, clean_root
 from ..types import PipelineContext
 
 
@@ -14,4 +15,10 @@ class CleanStage:
     name: str = "clean"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("CleanStage is not implemented yet")
+        if context.document is None:
+            return context
+        root = choose_root(context.document, context.options.prefer_article_body)
+        root = clean_root(root)
+        context.document = root
+        context.cleaned_html = str(root)
+        return context

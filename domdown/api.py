@@ -5,11 +5,11 @@ from .types import DomdownOptions
 
 
 def html_to_markdown(html: str, options: DomdownOptions | None = None) -> str:
-    """Convert raw HTML into cleaned Markdown text.
+    """Convert raw HTML into a cleaned Markdown document.
 
-    This is the smallest public API surface for callers that only need the
-    final markdown string and do not need to interact with the pipeline
-    stages directly.
+    When frontmatter emission is enabled, the returned string includes the
+    rendered frontmatter block followed by the cleaned Markdown body.
     """
 
-    return HtmlToMarkdownPipeline(options=options).run(html).markdown
+    result = HtmlToMarkdownPipeline(options=options).run(html)
+    return result.document or result.markdown

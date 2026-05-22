@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import _resolve_url
 from ..types import PipelineContext
 
 
@@ -14,4 +15,14 @@ class PreserveStage:
     name: str = "preserve"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("PreserveStage is not implemented yet")
+        if context.document is None:
+            return context
+        for img in context.document.find_all("img"):
+            data_src = img.get("data-src") or img.get("data-original") or img.get("data-lazy-src")
+            if data_src and (not img.get("src") or str(img.get("src", "")).startswith("data:")):
+                img["src"] = _resolve_url(data_src, context.options.base_url)
+        for anchor in context.document.find_all("a"):
+            href = anchor.get("href")
+            if href:
+                anchor["href"] = _resolve_url(href, context.options.base_url)
+        return context

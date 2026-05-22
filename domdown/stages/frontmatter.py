@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..rendering import compose_document, render_frontmatter
 from ..types import PipelineContext
 
 
@@ -14,4 +15,9 @@ class FrontmatterStage:
     name: str = "frontmatter"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        raise NotImplementedError("FrontmatterStage is not implemented yet")
+        if context.metadata is None or not context.options.emit_frontmatter:
+            context.rendered_document = context.markdown
+            return context
+        context.frontmatter = render_frontmatter(context.metadata)
+        context.rendered_document = compose_document(context.frontmatter, context.markdown)
+        return context
