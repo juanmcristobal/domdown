@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup, Tag
 
-from .._constants import CONTENT_SELECTORS
+from .._constants import CONTENT_SELECTORS_EXACT, CONTENT_SELECTORS_FALLBACK, NOISE_MARKERS
 
 
 def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
@@ -16,9 +16,9 @@ def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
         "body",
     ]
     for selector in selectors:
-        root = soup.select_one(selector)
-        if isinstance(root, Tag):
-            return _best_content_subtree(root)
+        for root in soup.select(selector):
+            if isinstance(root, Tag) and not _looks_like_chrome(root):
+                return _best_content_subtree(root)
     return soup.body if isinstance(soup.body, Tag) else soup
 
 
@@ -26,16 +26,45 @@ def _best_content_subtree(root: Tag) -> Tag:
     """Prefer the most content-dense subtree inside a shell element."""
 
     container_names = {"article", "body", "div", "main", "section"}
-    candidates = []
+    exact = _collect_candidates(root, CONTENT_SELECTORS_EXACT, container_names)
+    if exact:
+        candidate = _pick_best_candidate(root, exact)
+        if candidate is not None:
+            return candidate
+
+    fallback = _collect_candidates(root, CONTENT_SELECTORS_FALLBACK, container_names)
+    if fallback:
+        candidate = _pick_best_candidate(root, fallback)
+        if candidate is not None:
+            return candidate
+    return root
+
+
+def _collect_candidates(root: Tag, selectors: tuple[str, ...], container_names: set[str]) -> list[Tag]:
+    """Collect unique content candidates for a given selector tier."""
+
+    candidates: list[Tag] = []
     seen: set[int] = {id(root)}
-    for selector in CONTENT_SELECTORS:
+    for selector in selectors:
         for node in root.select(selector):
             if isinstance(node, Tag) and node.name in container_names and id(node) not in seen:
                 candidates.append(node)
                 seen.add(id(node))
-    if candidates:
-        return max(candidates, key=lambda tag: (_score_content(tag), _subtree_depth(root, tag), len(tag.get_text(" ", strip=True))))
-    return root
+    return candidates
+
+
+def _pick_best_candidate(root: Tag, candidates: list[Tag]) -> Tag | None:
+    """Return the most plausible non-chrome candidate from a tier."""
+
+    ranked = sorted(
+        candidates,
+        key=lambda tag: (_score_content(tag), _subtree_depth(root, tag), len(tag.get_text(" ", strip=True))),
+        reverse=True,
+    )
+    for candidate in ranked:
+        if not _looks_like_chrome(candidate):
+            return candidate
+    return None
 
 
 def _score_content(tag: Tag) -> float:
@@ -84,3 +113,13 @@ def _subtree_depth(root: Tag, tag: Tag) -> int:
             break
         current = parent
     return depth
+
+
+def _looks_like_chrome(tag: Tag) -> bool:
+    """Identify obvious page chrome from class or id markers."""
+
+    marker_text = " ".join([
+        " ".join(tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]),
+        str(tag.get("id", "")),
+    ]).lower()
+    return any(marker in marker_text for marker in NOISE_MARKERS)

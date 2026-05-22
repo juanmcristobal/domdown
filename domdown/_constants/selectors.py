@@ -46,26 +46,34 @@ DEFAULT_REMOVE_SELECTORS = (
 ) + SHARE_SELECTORS
 
 # Selectors that usually point at the content subtree inside a larger page shell.
-CONTENT_SELECTORS = (
+# Exact selectors are preferred first because substring selectors can match chrome.
+CONTENT_SELECTORS_EXACT = (
     ".articlebody",
     ".post-body",
     ".entry-content",
     ".content",
+    "#content",
     ".content-body",
     ".post-content",
     ".post__body",
+    ".post__content",
     ".s-blog-post__body",
-    "[class*='content']",
-    "[id*='content']",
+    ".BodyText__content",
+    ".hb-content__text",
+    ".story-body",
+    ".story-shell",
+)
+
+# Broad selectors are only used as a fallback when exact selectors do not find
+# a confident content subtree.
+CONTENT_SELECTORS_FALLBACK = (
     "[class*='body']",
     "[id*='body']",
-    "[class*='article']",
-    "[id*='article']",
-    "[class*='post']",
-    "[id*='post']",
     "[class*='entry']",
     "[id*='entry']",
 )
+
+CONTENT_SELECTORS = CONTENT_SELECTORS_EXACT + CONTENT_SELECTORS_FALLBACK
 
 # Class or id markers that usually indicate page chrome, ads, or engagement widgets.
 NOISE_MARKERS = (
@@ -87,6 +95,7 @@ NOISE_MARKERS = (
     "postmeta",
     "story-title",
     "post-head",
+    "navigation",
     "cookie",
     "consent",
     "popup",
