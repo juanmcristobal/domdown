@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from bs4 import NavigableString, Tag
 
-from ..constants import SKIP_TAGS
-from ..text_utils import normalize_inline_text, normalize_markdown_text
-from ..types import DomdownOptions
+from .._constants import SKIP_TAGS
+from .._core import DomdownOptions
+from .._text import normalize_inline_text, normalize_markdown_text
 from .images import render_image
 from .inline import render_inline_children
 from .links import render_link
@@ -13,6 +13,8 @@ from .tables import render_table
 
 
 def render_block(node: object, options: DomdownOptions) -> str:
+    """Render a single block-level HTML node to Markdown."""
+
     if isinstance(node, NavigableString):
         return normalize_inline_text(str(node))
     if not isinstance(node, Tag):
@@ -47,5 +49,7 @@ def render_block(node: object, options: DomdownOptions) -> str:
 
 
 def render_container(node: Tag, options: DomdownOptions) -> str:
+    """Render a tag by recursively rendering each child block."""
+
     parts = [part for part in (render_block(child, options) for child in node.children) if part]
     return normalize_markdown_text("\n\n".join(parts))

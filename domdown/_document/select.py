@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup, Tag
 
 
 def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
+    """Choose the most relevant content root from a parsed document."""
+
     selectors = [".post-body", ".articlebody", "article", "main", "body"] if prefer_article_body else [
         ".articlebody",
         ".post-body",

@@ -4,6 +4,8 @@ from bs4 import Tag
 
 
 def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]) -> Tag:
+    """Remove obvious noise and normalize lazy-loaded images in place."""
+
     for selector in remove_selectors:
         for node in root.select(selector):
             node.decompose()

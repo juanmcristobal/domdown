@@ -15,6 +15,8 @@ class PreserveStage:
     name: str = "preserve"
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Resolve image and link URLs before Markdown rendering."""
+
         if context.document is None:
             return context
         for img in context.document.find_all("img"):

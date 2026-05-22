@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from bs4 import Tag
 
-from ..text_utils import normalize_inline_text
-from ..types import DomdownOptions
+from .._core import DomdownOptions
+from .._text import normalize_inline_text
 from .inline import render_inline
 
 
 def render_list(node: Tag, options: DomdownOptions, ordered: bool) -> str:
+    """Render a list tag and its direct list items."""
+
     items = []
     for index, li in enumerate(node.find_all("li", recursive=False), 1):
         item = render_list_item(li, options, ordered=ordered, index=index)
@@ -17,6 +19,8 @@ def render_list(node: Tag, options: DomdownOptions, ordered: bool) -> str:
 
 
 def render_list_item(node: Tag, options: DomdownOptions, ordered: bool, index: int | None = None) -> str:
+    """Render a single list item including nested lists."""
+
     prefix = f"{index}." if ordered and index is not None else "-"
     inline_parts = []
     nested_parts = []

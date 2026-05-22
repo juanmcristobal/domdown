@@ -5,11 +5,13 @@ import re
 
 from bs4 import NavigableString, Tag
 
-from ..text_utils import normalize_inline_text
-from ..types import DomdownOptions
+from .._core import DomdownOptions
+from .._text import normalize_inline_text
 
 
 def render_inline_children(node: Tag, options: DomdownOptions) -> str:
+    """Render all inline descendants of a tag and normalize whitespace."""
+
     parts = []
     for child in node.children:
         rendered = render_inline(child, options)
@@ -19,6 +21,8 @@ def render_inline_children(node: Tag, options: DomdownOptions) -> str:
 
 
 def render_inline(node: object, options: DomdownOptions) -> str:
+    """Render an inline HTML node into Markdown-compatible text."""
+
     if isinstance(node, NavigableString):
         return re.sub(r"\s+", " ", html_lib.unescape(str(node)))
     if not isinstance(node, Tag):

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from .api import html_to_markdown
-from .pipeline import HtmlToMarkdownPipeline
-from .types import DomdownOptions, HtmlMetadata, HtmlToMarkdownResult
+from ._core import DomdownOptions, HtmlMetadata, HtmlToMarkdownResult
+from ._pipeline import HtmlToMarkdownPipeline
 
 __version__ = "0.1.0"
 
@@ -10,7 +10,7 @@ __all__ = [
     "__version__",
     "DomdownOptions",
     "HtmlMetadata",
-    "HtmlToMarkdownPipeline",
     "HtmlToMarkdownResult",
+    "HtmlToMarkdownPipeline",
     "html_to_markdown",
 ]

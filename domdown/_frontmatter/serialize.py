@@ -5,6 +5,8 @@ from .._text.frontmatter import format_scalar, format_tag, quote_string
 
 
 def render_frontmatter(metadata: HtmlMetadata) -> str:
+    """Serialize article metadata as YAML-like frontmatter."""
+
     lines = ["---"]
     scalar_fields = [
         ("title", metadata.title),

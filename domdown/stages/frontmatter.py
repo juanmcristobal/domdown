@@ -15,6 +15,8 @@ class FrontmatterStage:
     name: str = "frontmatter"
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Emit frontmatter and combine it with the Markdown body."""
+
         if context.metadata is None or not context.options.emit_frontmatter:
             context.rendered_document = context.markdown
             return context

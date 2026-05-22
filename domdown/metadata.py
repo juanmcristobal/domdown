@@ -1,5 +1,0 @@
-from __future__ import annotations
-
-from ._metadata import extract_metadata
-
-__all__ = ["extract_metadata"]

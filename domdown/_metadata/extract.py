@@ -26,6 +26,8 @@ from .selectors import (
 
 
 def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetadata:
+    """Extract normalized article metadata from parsed HTML."""
+
     html_tag = soup.find("html")
     title = first_text(
         *(meta_content(soup, selector) for selector in TITLE_SELECTORS),

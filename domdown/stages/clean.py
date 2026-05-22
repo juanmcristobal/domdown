@@ -16,6 +16,8 @@ class CleanStage:
     name: str = "clean"
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Choose the main content root and strip irrelevant nodes."""
+
         if context.document is None:
             return context
         root = choose_root(context.document, context.options.prefer_article_body)

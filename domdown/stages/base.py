@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from ..types import PipelineContext
+from .._core import PipelineContext
 
 
 class PipelineStage(Protocol):

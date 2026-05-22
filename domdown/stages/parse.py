@@ -15,5 +15,7 @@ class ParseStage:
     name: str = "parse"
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Parse the input HTML and store the document in the context."""
+
         context.document = parse_html(context.html)
         return context

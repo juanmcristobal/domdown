@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from bs4 import Tag
 
-from ..text_utils import normalize_inline_text
-from ..types import DomdownOptions
+from .._core import DomdownOptions
+from .._text import normalize_inline_text
 from .inline import render_inline_children
 
 
 def render_table(node: Tag, options: DomdownOptions) -> str:
+    """Render an HTML table as GitHub-flavored Markdown."""
+
     rows = []
     for tr in node.find_all("tr", recursive=True):
         cells = []

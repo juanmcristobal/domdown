@@ -15,6 +15,8 @@ class MarkdownStage:
     name: str = "markdown"
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Render the cleaned document subtree into Markdown."""
+
         if context.document is None:
             return context
         context.markdown = render_markdown(context.document, context.options)

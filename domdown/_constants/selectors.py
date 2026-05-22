@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+# Tags that should be dropped entirely during cleanup and rendering.
 SKIP_TAGS = {
     "aside",
     "button",
@@ -16,6 +17,7 @@ SKIP_TAGS = {
     "textarea",
 }
 
+# Selectors that are typically noise in article-like pages.
 DEFAULT_REMOVE_SELECTORS = (
     ".float-share",
     ".mobile-share",
