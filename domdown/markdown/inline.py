@@ -43,7 +43,13 @@ def render_inline(node: object, options: DomdownOptions) -> str:
     if name in {"code", "kbd", "samp"}:
         content = render_inline_children(node, options)
         return f"`{content}`" if content else ""
-    if name in {"strong", "b", "em", "i", "span"}:
+    if name in {"strong", "b"}:
+        content = render_inline_children(node, options)
+        return f"**{content}**" if content else ""
+    if name in {"em", "i"}:
+        content = render_inline_children(node, options)
+        return f"_{content}_" if content else ""
+    if name == "span":
         return render_inline_children(node, options)
     if name in {"p", "div", "li"}:
         return render_inline_children(node, options)
