@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..frontmatter import compose_document, render_frontmatter
-from ..types import PipelineContext
+from .._core import PipelineContext
+from .._frontmatter import compose_document, render_frontmatter
 
 
 @dataclass(slots=True)

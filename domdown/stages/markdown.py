@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .._core import PipelineContext
 from ..markdown import render_markdown
-from ..types import PipelineContext
 
 
 @dataclass(slots=True)

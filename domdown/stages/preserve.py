@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..text_utils import resolve_url
-from ..types import PipelineContext
+from .._core import PipelineContext
+from .._text import resolve_url
 
 
 @dataclass(slots=True)

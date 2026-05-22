@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..metadata import extract_metadata
-from ..types import PipelineContext
+from .._core import PipelineContext
+from .._metadata import extract_metadata
 
 
 @dataclass(slots=True)

@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from ._pipeline import HtmlToMarkdownPipeline
+from .runner import HtmlToMarkdownPipeline
 
 __all__ = ["HtmlToMarkdownPipeline"]

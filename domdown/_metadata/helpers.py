@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import re
+
+from bs4 import BeautifulSoup, Tag
+
+from .._text.normalize import normalize_inline_text
+
+
+def meta_content(soup: BeautifulSoup, selector: str) -> str | None:
+    tag = soup.select_one(selector)
+    if not isinstance(tag, Tag):
+        return None
+    if tag.name == "link":
+        return tag.get("href")
+    return tag.get("content")
+
+
+def tag_text(tag: Tag | None) -> str | None:
+    if not isinstance(tag, Tag):
+        return None
+    return normalize_inline_text(tag.get_text(" ", strip=True))
+
+
+def select_texts(soup: BeautifulSoup, selector: str) -> tuple[str, ...]:
+    values = []
+    for tag in soup.select(selector):
+        if isinstance(tag, Tag):
+            value = normalize_inline_text(tag.get_text(" ", strip=True))
+            if value:
+                values.append(value)
+    return tuple(values)
+
+
+def first_text(*values: object) -> str:
+    for value in values:
+        if isinstance(value, tuple):
+            if value:
+                return value[0]
+        elif isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def first_list(*values: object) -> tuple[str, ...]:
+    for value in values:
+        if isinstance(value, tuple) and value:
+            return value
+        if isinstance(value, str) and value.strip():
+            return (value.strip(),)
+    return ()
+
+
+def split_tags(values: tuple[str, ...]) -> tuple[str, ...]:
+    tags: list[str] = []
+    for value in values:
+        for part in value.replace(",", "/").split("/"):
+            part = part.strip()
+            if part:
+                tags.append(part)
+    return tuple(tags)
+
+
+def looks_like_date(value: str) -> bool:
+    return bool(re.match(r"^\w{3}\s+\d{1,2},\s+\d{4}$", value))
+
+
+def first_image_src(soup: BeautifulSoup) -> str | None:
+    img = soup.find("img")
+    if not isinstance(img, Tag):
+        return None
+    src = img.get("data-src") or img.get("data-original") or img.get("src")
+    return src or None

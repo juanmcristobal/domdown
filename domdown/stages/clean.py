@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
-from ..document import choose_root, clean_root
-from ..types import PipelineContext
+from .._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
+from .._core import PipelineContext
+from .._document import choose_root, clean_root
 
 
 @dataclass(slots=True)

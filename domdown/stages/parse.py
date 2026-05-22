@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..document import parse_html
-from ..types import PipelineContext
+from .._core import PipelineContext
+from .._document import parse_html
 
 
 @dataclass(slots=True)
