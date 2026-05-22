@@ -7,6 +7,7 @@ import domdown
 
 def test_public_api_exports_pipeline_interfaces() -> None:
     assert hasattr(domdown, "DomdownOptions")
+    assert hasattr(domdown, "HtmlMetadata")
     assert hasattr(domdown, "HtmlToMarkdownResult")
     assert hasattr(domdown, "HtmlToMarkdownPipeline")
     assert hasattr(domdown, "html_to_markdown")
@@ -18,3 +19,10 @@ def test_html_to_markdown_signature_is_html_first() -> None:
     assert list(signature.parameters) == ["html", "options"]
     assert signature.parameters["html"].annotation is str
 
+
+def test_pipeline_exports_stage_contracts() -> None:
+    from domdown import stages
+
+    assert hasattr(stages, "MetadataStage")
+    assert hasattr(stages, "FrontmatterStage")
+    assert hasattr(stages, "PostProcessStage")
