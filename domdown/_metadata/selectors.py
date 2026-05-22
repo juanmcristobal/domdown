@@ -68,4 +68,5 @@ TAG_META_SELECTORS = (
     "meta[property='article:tag']",
     "meta[name='keywords']",
     "meta[name='news_keywords']",
+    "meta[property='article:section']",
 )

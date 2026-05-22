@@ -17,6 +17,7 @@ def test_options_include_pipeline_controls() -> None:
         "extract_metadata",
         "emit_frontmatter",
         "prefer_article_body",
+        "author_priority",
         "frontmatter_tags",
         "preserve_images",
         "preserve_tables",

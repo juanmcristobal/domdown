@@ -3,7 +3,7 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions
-from domdown._metadata import extract_metadata
+from domdown._metadata import extract_metadata, extract_tags
 
 
 def test_extract_metadata_reads_article_fields() -> None:
@@ -39,7 +39,7 @@ def test_extract_metadata_reads_article_fields() -> None:
     assert metadata.published == "2025-12-29T15:14:00+05:30"
     assert metadata.created == "2026-05-15"
     assert metadata.description == "Example description."
-    assert metadata.tags == ("Threat Intelligence", "Cloud Security")
+    assert metadata.tags == ()
     assert metadata.language == "en"
     assert metadata.canonical_url == "https://example.com/posts/example-article"
     assert metadata.image == "https://example.com/image.png"
@@ -74,4 +74,82 @@ def test_extract_metadata_prefers_visible_author_and_tags() -> None:
     metadata = extract_metadata(soup, DomdownOptions())
 
     assert metadata.author == ("Visible Author",)
-    assert metadata.tags == ("Visible Tag A", "Visible Tag B")
+    assert metadata.tags == ()
+
+
+def test_extract_metadata_can_prefer_metadata_author_without_affecting_visible_tags() -> None:
+    """Author priority should be configurable without changing tag extraction."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head>
+            <meta property="og:title" content="Example Article" />
+            <meta name="author" content="The Hacker News" />
+          </head>
+          <body>
+            <article>
+              <div class="postmeta">
+                <a rel="author" href="/authors/example-author">Visible Author</a>
+              </div>
+              <div class="tags">
+                <a rel="tag" href="/tags/a">Tag A</a>,
+                <a rel="tag" href="/tags/b">Tag B</a>
+              </div>
+            </article>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    metadata = extract_metadata(soup, DomdownOptions(author_priority="metadata"))
+
+    assert metadata.author == ("The Hacker News",)
+    assert metadata.tags == ()
+
+
+def test_extract_tags_uses_visible_tags_before_metadata_fallback() -> None:
+    """Tag extraction should prefer visible tag blocks and deduplicate tokens."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head>
+            <meta name="keywords" content="Meta Tag A, Meta Tag B" />
+            <meta property="article:tag" content="Meta Tag A, Meta Tag C" />
+          </head>
+          <body>
+            <div class="tags">
+              <a rel="tag" href="/tags/a">Visible Tag A</a>,
+              <a rel="tag" href="/tags/b">Visible Tag B</a>,
+              <a rel="tag" href="/tags/a">Visible Tag A</a>
+            </div>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    assert extract_tags(soup) == ("Visible Tag A", "Visible Tag B")
+
+
+def test_extract_tags_falls_back_to_metadata_when_visible_tags_are_absent() -> None:
+    """Tag extraction should use metadata when visible tags are not present."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head>
+            <meta name="keywords" content="Meta Tag A, Meta Tag B" />
+            <meta property="article:section" content="Meta Tag C" />
+          </head>
+          <body>
+            <article><p>Body only.</p></article>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    assert extract_tags(soup) == ("Meta Tag A", "Meta Tag B", "Meta Tag C")

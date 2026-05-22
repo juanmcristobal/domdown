@@ -12,6 +12,7 @@ class DomdownOptions:
     extract_metadata: bool = True
     emit_frontmatter: bool = True
     prefer_article_body: bool = True
+    author_priority: str = "visible"
     frontmatter_tags: tuple[str, ...] = ()
     preserve_images: bool = True
     preserve_tables: bool = True

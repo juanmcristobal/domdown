@@ -60,6 +60,49 @@ def test_clean_root_removes_generic_share_and_debug_chrome_from_article_shell() 
     assert "One paragraph of article content appears here." in text
 
 
+def test_clean_root_removes_social_follow_and_sponsored_blocks() -> None:
+    """Cleanup should drop generic follow and sponsored chrome wrappers."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="cf note-b">Found this article interesting? Follow us on <a href="https://example.com/news">News</a> and <a href="https://example.com/social">Social</a> to read more exclusive content we post.</div>
+          <div class="dog_two clear">
+            <div class="cf">
+              <a href="https://example.com/ad" rel="nofollow sponsored" target="_blank">
+                <img src="https://example.com/ad.png" alt="Ad" />
+              </a>
+            </div>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(
+        soup.article,
+        (
+            "[class*='share']",
+            "[id*='share']",
+            "[class*='follow']",
+            "[class*='social']",
+            "[class*='sponsored']",
+            "[rel*='sponsored']",
+            "[class*='note-b']",
+            "[class*='dog_two']",
+        ),
+        SKIP_TAGS,
+    )
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Found this article interesting?" not in text
+    assert "exclusive content we post" not in text
+    assert "ad.png" not in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_html_comments() -> None:
     """Cleanup should drop HTML comments like more markers."""
 

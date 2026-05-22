@@ -38,6 +38,11 @@ DEFAULT_REMOVE_SELECTORS = (
     ".tags",
     ".story-title",
     ".postmeta",
+    "[class*='follow']",
+    "[class*='sponsored']",
+    "[rel*='sponsored']",
+    "[class*='note-b']",
+    "[class*='dog_two']",
 ) + SHARE_SELECTORS
 
 # Selectors that usually point at the content subtree inside a larger page shell.
@@ -88,4 +93,8 @@ NOISE_MARKERS = (
     "modal",
     "advert",
     "sponsor",
+    "follow",
+    "sponsored",
+    "note-b",
+    "dog_two",
 )
