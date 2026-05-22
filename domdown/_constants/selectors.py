@@ -133,3 +133,11 @@ RELATED_PHRASES = (
     "you may also like",
     "more from",
 )
+
+# Placeholder phrases used by portal-style shells that require JavaScript
+# before the real body is rendered.
+JS_SHELL_PHRASES = (
+    "this app needs javascript to run",
+    "please enable javascript in your browser and try again",
+    "javascript is required",
+)

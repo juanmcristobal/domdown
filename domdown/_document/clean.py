@@ -5,7 +5,7 @@ from bs4 import Comment, Tag
 from .._constants import HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
 
 
-def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]) -> Tag:
+def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str], preserve_chrome: bool = False) -> Tag:
     """Remove obvious noise and normalize lazy-loaded images in place."""
 
     for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
@@ -15,13 +15,14 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         for node in root.select(selector):
             node.decompose()
 
-    for node in list(root.find_all(True)):
-        if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
-            continue
-        if node.name in skip_tags or _looks_like_noise(node):
-            node.decompose()
+    if not preserve_chrome:
+        for node in list(root.find_all(True)):
+            if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
+                continue
+            if node.name in skip_tags or _looks_like_noise(node):
+                node.decompose()
 
-    _remove_structural_chrome(root)
+        _remove_structural_chrome(root)
 
     for node in list(root.find_all(skip_tags)):
         node.decompose()

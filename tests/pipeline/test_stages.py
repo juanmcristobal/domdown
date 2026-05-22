@@ -3,7 +3,7 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
-from domdown.stages import FrontmatterStage, MarkdownStage, MetadataStage, ParseStage, PostProcessStage, PreserveStage
+from domdown.stages import CleanStage, FrontmatterStage, MarkdownStage, MetadataStage, ParseStage, PostProcessStage, PreserveStage
 
 
 def test_parse_stage_builds_the_document_tree() -> None:
@@ -81,3 +81,43 @@ def test_frontmatter_stage_combines_metadata_and_body() -> None:
 
     assert context.frontmatter == "---\ntitle: Title\n---"
     assert context.rendered_document == "---\ntitle: Title\n---\nBody"
+
+
+def test_clean_stage_keeps_full_page_when_the_selected_root_is_only_a_javascript_shell() -> None:
+    """Portal pages with placeholder main shells should fall back to the full body."""
+
+    soup = BeautifulSoup(
+        """
+        <html>
+          <body>
+            <header class="masthead">
+              <nav>Skip to navigation Main content</nav>
+            </header>
+            <main id="cp-main" class="portal-content-area">
+              <div id="cp-content">
+                <div id="searchbrowseapp">
+                  <div data-ui-view="">
+                    This app needs JavaScript to run. Please enable JavaScript in your browser and try again.
+                  </div>
+                </div>
+              </div>
+            </main>
+            <nav class="pfe-navigation">Utilities Subscriptions Downloads</nav>
+            <section class="advisory-list">
+              <h1>Security Advisories</h1>
+              <p>Advisory one</p>
+            </section>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    context = PipelineContext(html="", options=DomdownOptions(), document=soup)
+
+    context = CleanStage().run(context)
+
+    assert context.cleaned_html is not None
+    assert "This app needs JavaScript to run" not in context.cleaned_html
+    assert "Utilities Subscriptions Downloads" in context.cleaned_html
+    assert "Security Advisories" in context.cleaned_html
