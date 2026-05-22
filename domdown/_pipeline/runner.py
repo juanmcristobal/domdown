@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Sequence
 
 from .._core import DomdownOptions, HtmlToMarkdownResult, PipelineContext
+from ..adapters import AdapterRegistry, ArticleAdapter, build_default_registry
 from ..stages.base import PipelineStage
 from ..stages.clean import CleanStage
 from ..stages.frontmatter import FrontmatterStage
@@ -20,10 +21,13 @@ class HtmlToMarkdownPipeline:
 
     options: DomdownOptions | None = None
     stages: Sequence[PipelineStage] = field(default_factory=tuple)
+    adapters: Sequence[ArticleAdapter] = field(default_factory=tuple)
+    adapter_registry: AdapterRegistry = field(init=False)
 
     def __post_init__(self) -> None:
         """Populate the default stage chain when none is supplied."""
 
+        self.adapter_registry = build_default_registry(self.adapters)
         if not self.stages:
             self.stages = (
                 ParseStage(),
@@ -41,6 +45,9 @@ class HtmlToMarkdownPipeline:
         context = PipelineContext(html=html, options=self.options or DomdownOptions())
         for stage in self.stages:
             context = stage.run(context)
+            if getattr(stage, "name", "") == "parse":
+                context = self.adapter_registry.preprocess(context)
+        context = self.adapter_registry.postprocess(context)
         return HtmlToMarkdownResult(
             markdown=context.markdown,
             cleaned_html=context.cleaned_html,
