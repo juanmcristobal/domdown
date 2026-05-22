@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..rendering import render_markdown
+from ..markdown import render_markdown
 from ..types import PipelineContext
 
 

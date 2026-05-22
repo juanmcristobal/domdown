@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..rendering import parse_html
+from ..document import parse_html
 from ..types import PipelineContext
 
 

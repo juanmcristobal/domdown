@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..rendering import extract_metadata
+from ..metadata import extract_metadata
 from ..types import PipelineContext
 
 

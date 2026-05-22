@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..rendering import _resolve_url
+from ..text_utils import resolve_url
 from ..types import PipelineContext
 
 
@@ -20,9 +20,9 @@ class PreserveStage:
         for img in context.document.find_all("img"):
             data_src = img.get("data-src") or img.get("data-original") or img.get("data-lazy-src")
             if data_src and (not img.get("src") or str(img.get("src", "")).startswith("data:")):
-                img["src"] = _resolve_url(data_src, context.options.base_url)
+                img["src"] = resolve_url(data_src, context.options.base_url)
         for anchor in context.document.find_all("a"):
             href = anchor.get("href")
             if href:
-                anchor["href"] = _resolve_url(href, context.options.base_url)
+                anchor["href"] = resolve_url(href, context.options.base_url)
         return context
