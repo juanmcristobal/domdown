@@ -38,6 +38,19 @@ def select_texts(soup: BeautifulSoup, selector: str) -> tuple[str, ...]:
     return tuple(values)
 
 
+def collect_texts(soup: BeautifulSoup, selectors: tuple[str, ...]) -> tuple[str, ...]:
+    """Collect normalized text from a sequence of selectors without duplicates."""
+
+    values: list[str] = []
+    seen: set[str] = set()
+    for selector in selectors:
+        for value in select_texts(soup, selector):
+            if value and value not in seen:
+                seen.add(value)
+                values.append(value)
+    return tuple(values)
+
+
 def first_text(*values: object) -> str:
     """Return the first non-empty string-like value from a sequence."""
 
