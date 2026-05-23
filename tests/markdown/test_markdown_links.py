@@ -10,11 +10,13 @@ def test_render_link_formats_normal_and_image_links() -> None:
     """Link rendering should preserve content and linked images."""
 
     soup = BeautifulSoup(
-        "<div><a href='https://example.com'>Example</a><a href='https://example.com'><img alt='Alt' src='https://example.com/image.png' /></a></div>",
+        "<div><a href='https://example.com'>Example</a><a class='cursor-zoom-in' href='https://example.com'><img alt='Alt' src='https://example.com/image.png' /></a><a class='cursor-zoom-in' href='https://example.com/gallery'><img src='https://example.com/gallery.png' /></a><a href='https://example.com/gallery'><img alt='Gallery' src='https://example.com/gallery.png' /></a></div>",
         "lxml",
     )
 
     links = soup.find_all("a")
 
     assert render_link(links[0], DomdownOptions()) == "[Example](https://example.com)"
-    assert render_link(links[1], DomdownOptions()) == "[![Alt](https://example.com/image.png)](https://example.com)"
+    assert render_link(links[1], DomdownOptions()) == "https://example.com/image.png"
+    assert render_link(links[2], DomdownOptions()) == "[![](https://example.com/gallery.png)](https://example.com/gallery)"
+    assert render_link(links[3], DomdownOptions()) == "[![Gallery](https://example.com/gallery.png)](https://example.com/gallery)"

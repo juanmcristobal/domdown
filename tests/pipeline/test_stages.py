@@ -33,7 +33,10 @@ def test_metadata_stage_extracts_metadata() -> None:
 def test_preserve_stage_resolves_relative_links_and_images() -> None:
     """The preserve stage should resolve URLs against the configured base."""
 
-    soup = BeautifulSoup("<div><a href='/story'>Story</a><img data-src='/img.png' src='data:image/gif;base64,x' /></div>", "lxml")
+    soup = BeautifulSoup(
+        "<div><a href='/story'>Story</a><img srcset='/img-1x.png 1x, /img-2x.png 2x' data-src='/img.png' src='data:image/gif;base64,x' /></div>",
+        "lxml",
+    )
     context = PipelineContext(
         html="",
         options=DomdownOptions(base_url="https://example.com"),
@@ -44,6 +47,28 @@ def test_preserve_stage_resolves_relative_links_and_images() -> None:
 
     assert context.document.a["href"] == "https://example.com/story"
     assert context.document.img["src"] == "https://example.com/img.png"
+    assert context.document.img["srcset"] == "https://example.com/img-1x.png 1x, https://example.com/img-2x.png 2x"
+
+
+def test_preserve_stage_can_derive_a_base_url_from_metadata_when_options_do_not_provide_one() -> None:
+    """Document metadata should provide a fallback base for relative links and images."""
+
+    soup = BeautifulSoup(
+        "<div><a href='/story'>Story</a><img srcset='/img-1x.png 1x, /img-2x.png 2x' data-src='/img.png' src='data:image/gif;base64,x' /></div>",
+        "lxml",
+    )
+    context = PipelineContext(
+        html="",
+        options=DomdownOptions(),
+        document=soup.div,
+        metadata=HtmlMetadata(source="https://example.com/articles/feature/"),
+    )
+
+    context = PreserveStage().run(context)
+
+    assert context.document.a["href"] == "https://example.com/story"
+    assert context.document.img["src"] == "https://example.com/img.png"
+    assert context.document.img["srcset"] == "https://example.com/img-1x.png 1x, https://example.com/img-2x.png 2x"
 
 
 def test_markdown_stage_renders_markdown_text() -> None:

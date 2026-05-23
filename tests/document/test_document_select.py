@@ -253,3 +253,38 @@ def test_choose_root_prefers_semantic_article_over_layout_shell() -> None:
 
     assert root.name == "div"
     assert root.get("class") == ["content"]
+
+
+def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
+    """A full page shell should not beat a semantic main content block."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="page">
+                  <header class="global-header">
+                    <nav><a href="/">Home</a></nav>
+                  </header>
+                  <main>
+                    <section class="hero">
+                      <p>Interactive malware analysis sandbox for SOC teams</p>
+                    </section>
+                    <section class="feature">
+                      <h2>Fast access to knowledge</h2>
+                      <p>Our VMs start in under 10s.</p>
+                      <p>And it takes just 40s until the report.</p>
+                    </section>
+                  </main>
+                  <footer class="footer">
+                    <p>Footer links</p>
+                  </footer>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.name == "main"

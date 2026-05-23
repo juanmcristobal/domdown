@@ -91,6 +91,26 @@ ARTICLE_PAID_ACCESS_HTML = """
 </html>
 """
 
+ARTICLE_HERO_SUBTITLE_HTML = """
+<html>
+  <body>
+    <main>
+      <section class="sandbox-intro">
+        <div class="sandbox-intro__content">
+          <div class="heading heading--sub heading--center heading--primary sandbox-intro__title-sub">Malware sandbox</div>
+          <h1 class="heading heading--center sandbox-intro__title">Analyze malware and phishing in a safe environment</h1>
+          <p class="paragraph paragraph--largest sandbox-intro__text">Easy to use. Configurable. Quick to deliver the verdict.</p>
+          <div class="sandbox-intro__actions">
+            <a href="https://example.test/get-started/">Get started</a>
+            <a href="https://example.test/contact/">Contact sales</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+"""
+
 ARTICLE_ARTICLE_CHROME_HTML = """
 <html>
   <body>
@@ -201,6 +221,7 @@ __all__ = [
     "ARTICLE_META_AND_ABOUT_HTML",
     "ARTICLE_FAQ_HTML",
     "ARTICLE_PAID_ACCESS_HTML",
+    "ARTICLE_HERO_SUBTITLE_HTML",
     "ARTICLE_ARTICLE_CHROME_HTML",
     "ARTICLE_HUBSPOT_ROW_WRAPPER_HTML",
     "ARTICLE_DIVI_ABOUT_AND_FAQ_HTML",

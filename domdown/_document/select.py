@@ -39,7 +39,8 @@ def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
     current = root
     current_words = len(current.get_text(" ", strip=True).split())
     for _ in range(max_depth):
-        candidate = _best_content_subtree(current)
+        shell_child = _best_page_shell_child(current)
+        candidate = shell_child or _best_content_subtree(current)
         if candidate is current:
             break
         if candidate.name in {"p", "li", "span"}:
@@ -144,6 +145,10 @@ def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag |
 def _root_candidate_penalty(candidate: Tag) -> float:
     """Penalize generic layout wrappers when selecting the top-level shell."""
 
+    if _looks_like_page_shell(candidate):
+        return -120.0
+    if _contains_page_shell_child(candidate):
+        return -90.0
     classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
@@ -220,6 +225,10 @@ def _root_selector_weight(selector: str) -> float:
 def _root_penalty(root: Tag, candidate: Tag, candidate_count: int) -> float:
     """Penalize the shell node itself when a more specific descendant competes."""
 
+    if _looks_like_page_shell(candidate):
+        return -120.0
+    if _contains_page_shell_child(candidate):
+        return -90.0
     classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
@@ -237,6 +246,10 @@ def _is_dense_content(node: Tag) -> bool:
 
     if not isinstance(node, Tag):
         return False
+    if _looks_like_page_shell(node):
+        return False
+    if _contains_page_shell_child(node):
+        return False
     class_text = " ".join(node.get("class", []) if isinstance(node.get("class"), list) else [str(node.get("class", ""))]).lower()
     id_text = str(node.get("id", "")).lower()
     class_tokens = {token for token in class_text.split() if token}
@@ -246,6 +259,49 @@ def _is_dense_content(node: Tag) -> bool:
     text_words = len(node.get_text(" ", strip=True).split())
     structural_children = sum(1 for child in node.find_all(recursive=False) if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "table", "pre", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"})
     return text_words >= 20 or structural_children >= 2
+
+
+def _looks_like_page_shell(tag: Tag) -> bool:
+    """Detect wrappers that mostly combine chrome around a single main body."""
+
+    if not isinstance(tag, Tag):
+        return False
+    direct_child_names = {
+        child.name
+        for child in tag.find_all(recursive=False)
+        if isinstance(child, Tag) and child.name
+    }
+    if "main" not in direct_child_names or tag.name in {"main", "article"}:
+        return False
+    chrome_names = {"header", "footer", "nav", "aside"}
+    if not (direct_child_names & chrome_names):
+        return False
+    content_names = {"article", "section", "div"}
+    if direct_child_names & content_names:
+        return True
+    return True
+
+
+def _contains_page_shell_child(tag: Tag) -> bool:
+    """Detect wrappers that contain a page-shell child instead of content directly."""
+
+    if not isinstance(tag, Tag):
+        return False
+    for child in tag.find_all(recursive=False):
+        if isinstance(child, Tag) and _looks_like_page_shell(child):
+            return True
+    return False
+
+
+def _best_page_shell_child(tag: Tag) -> Tag | None:
+    """Return the most plausible direct page-shell child, if one exists."""
+
+    if not isinstance(tag, Tag):
+        return None
+    for child in tag.find_all(recursive=False):
+        if isinstance(child, Tag) and _looks_like_page_shell(child):
+            return child
+    return None
 
 
 def _score_content(tag: Tag) -> float:

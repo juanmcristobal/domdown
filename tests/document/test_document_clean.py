@@ -7,6 +7,7 @@ from domdown._document import clean_root, choose_root, parse_html
 from tests.fixtures import (
     ARTICLE_ARTICLE_CHROME_HTML,
     ARTICLE_DIVI_ABOUT_AND_FAQ_HTML,
+    ARTICLE_HERO_SUBTITLE_HTML,
     ARTICLE_HUBSPOT_ROW_WRAPPER_HTML,
     ARTICLE_PAID_ACCESS_HTML,
     ARTICLE_SHELL_HTML,
@@ -436,3 +437,17 @@ def test_clean_root_keeps_linked_images_wrapped_in_popup_anchors() -> None:
     assert cleaned.find("img") is not None
     assert cleaned.find("a") is not None
     assert "Real body paragraph." in text
+
+
+def test_clean_root_keeps_intro_heading_but_drops_eyebrow_label() -> None:
+    """Cleanup should remove a compact intro label but keep the visible article intro."""
+
+    soup = parse_html(ARTICLE_HERO_SUBTITLE_HTML)
+    root = soup.body
+
+    cleaned = clean_root(root, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Malware sandbox" not in text
+    assert "Analyze malware and phishing in a safe environment" in text
+    assert "Easy to use. Configurable. Quick to deliver the verdict." in text
