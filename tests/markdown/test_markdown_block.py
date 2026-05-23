@@ -49,3 +49,19 @@ def test_render_block_ignores_permalink_icons_in_headings() -> None:
     )
 
     assert render_block(soup.h2, DomdownOptions()) == "## Example Section"
+
+
+def test_render_block_ignores_bracket_permalink_markers_in_headings() -> None:
+    """Bracket markers used around permalink headings should not appear in markdown."""
+
+    soup = BeautifulSoup(
+        """
+        <h2 id="inside-the-attack">
+          <a class="header-anchor" href="#inside-the-attack"></a>
+          [[Inside the attack]]
+        </h2>
+        """,
+        "lxml",
+    )
+
+    assert render_block(soup.h2, DomdownOptions()) == "## Inside the attack"

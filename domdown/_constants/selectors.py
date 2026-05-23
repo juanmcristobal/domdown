@@ -46,6 +46,13 @@ REFINABLE_CHILD_TAGS = (
 
 DEFAULT_REMOVE_SELECTORS = (
     ".ad-fixed__wrapper",
+    ".post-hero__ad",
+    ".post-hero__content",
+    ".post-hero__image",
+    ".ad-leaderboard",
+    ".ad__disclaimer",
+    ".ad__title",
+    ".ad__upsell",
     ".float-share",
     ".mobile-share",
     "a[href='#main']",
@@ -162,7 +169,6 @@ NOISE_MARKERS = (
     "share",
     "social",
     "breadcrumb",
-    "hero",
     "lead",
     "deck",
     "standfirst",
@@ -206,7 +212,6 @@ NOISE_MARKERS = (
 
 # Structural chrome markers for top-of-article wrappers that repeat metadata.
 HEADER_MARKERS = (
-    "hero",
     "byline",
     "author",
     "date",

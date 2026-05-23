@@ -29,6 +29,12 @@ def _best_content_subtree(root: Tag) -> Tag:
     if candidates:
         candidate = _pick_best_candidate(root, candidates)
         if candidate is not None:
+            if candidate is root and _looks_like_page_shell(root):
+                shell_children = [item for item in candidates if item[0] is not root and not _looks_like_chrome(item[0])]
+                if shell_children:
+                    child_candidate = _pick_best_candidate(root, shell_children)
+                    if child_candidate is not None:
+                        return child_candidate
             return candidate
     return root
 
@@ -271,15 +277,14 @@ def _looks_like_page_shell(tag: Tag) -> bool:
         for child in tag.find_all(recursive=False)
         if isinstance(child, Tag) and child.name
     }
-    if "main" not in direct_child_names or tag.name in {"main", "article"}:
+    if tag.name in {"main", "article"}:
         return False
     chrome_names = {"header", "footer", "nav", "aside"}
-    if not (direct_child_names & chrome_names):
-        return False
-    content_names = {"article", "section", "div"}
-    if direct_child_names & content_names:
-        return True
-    return True
+    if direct_child_names & chrome_names:
+        if "main" in direct_child_names:
+            return True
+        return any(_is_dense_content(child) for child in tag.find_all(recursive=False) if isinstance(child, Tag))
+    return False
 
 
 def _contains_page_shell_child(tag: Tag) -> bool:

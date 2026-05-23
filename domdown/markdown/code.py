@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html as html_lib
 import re
+import textwrap
 
 from bs4 import Tag
 
@@ -13,8 +14,9 @@ def render_code_block(node: Tag, options: DomdownOptions) -> str:
 
     code_node = node.find("code", recursive=False)
     source = code_node if isinstance(code_node, Tag) else node
-    text = source.get_text("\n", strip=False)
-    text = html_lib.unescape(text).replace("\r\n", "\n").replace("\r", "\n").strip("\n")
+    text = source.get_text("", strip=False)
+    text = html_lib.unescape(text).replace("\r\n", "\n").replace("\r", "\n")
+    text = textwrap.dedent(text).strip("\n")
     if not text.strip():
         return ""
     language = _detect_language(node, code_node if isinstance(code_node, Tag) else None)

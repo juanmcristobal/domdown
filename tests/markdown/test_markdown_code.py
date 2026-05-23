@@ -20,3 +20,21 @@ def test_render_code_block_uses_a_longer_fence_when_the_code_contains_backticks(
     soup = BeautifulSoup("<pre><code>```\ncode\n```</code></pre>", "lxml")
 
     assert render_code_block(soup.pre, DomdownOptions()).startswith("````")
+
+
+def test_render_code_block_preserves_multiline_source_with_inline_spans() -> None:
+    """Tokenized code blocks should keep their original line structure."""
+
+    soup = BeautifulSoup(
+        """
+        <pre><code>
+          <span>#!/usr/bin/env node</span>
+          <span>async function demo() {</span>
+          <span>  return 1;</span>
+          <span>}</span>
+        </code></pre>
+        """,
+        "lxml",
+    )
+
+    assert render_code_block(soup.pre, DomdownOptions()) == "```\n#!/usr/bin/env node\nasync function demo() {\n  return 1;\n}\n```"

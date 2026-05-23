@@ -431,7 +431,7 @@ def test_clean_root_keeps_linked_images_wrapped_in_popup_anchors() -> None:
         "lxml",
     )
 
-    cleaned = clean_root(soup.div, (), SKIP_TAGS)
+    cleaned = clean_root(soup.div, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
     text = cleaned.get_text(" ", strip=True)
 
     assert cleaned.find("img") is not None
@@ -451,3 +451,80 @@ def test_clean_root_keeps_intro_heading_but_drops_eyebrow_label() -> None:
     assert "Malware sandbox" not in text
     assert "Analyze malware and phishing in a safe environment" in text
     assert "Easy to use. Configurable. Quick to deliver the verdict." in text
+
+
+def test_clean_root_keeps_hero_summary_blocks_with_real_content() -> None:
+    """Hero blocks with article summary text should survive generic cleanup."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="hero">
+          <p class="slp-text-body1">Malware driving attack includes "dead man's switch" that can harm user data.</p>
+          <img src="https://example.test/hero.jpg" alt="Hero image" />
+          <p>Further context for the article intro.</p>
+        </div>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.div, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Malware driving attack includes" in text
+    assert "Further context for the article intro." in text
+    assert cleaned.find("img") is not None
+
+
+def test_clean_root_removes_ad_subblocks_inside_a_hero_section() -> None:
+    """Ad wrappers inside a newsroom hero should be stripped along with the hero chrome."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="post-hero">
+          <div class="post-hero__ad">
+            <div class="ad ad-leaderboard">Advertisement • Go ad free</div>
+          </div>
+          <div class="post-hero__content">
+            <h1>Example Title</h1>
+            <p>Example summary text stays.</p>
+          </div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.div, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Advertisement" not in text
+    assert "Example Title" not in text
+    assert "Example summary text stays." not in text
+    assert cleaned.find("img") is None
+
+
+def test_clean_root_removes_newsroom_style_hero_content_block() -> None:
+    """Newsroom hero wrappers should drop title/tag/image chrome when the body starts later."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="post-hero">
+          <div class="post-hero__content">
+            <a class="tag-privacy" href="/tag/privacy/">Privacy</a>
+            <h1 class="post-hero__title">A Secure Chat App’s Encryption Is So Bad It Is ‘Meaningless’</h1>
+            <div class="post-hero__excerpt">TeleGuard is an app downloaded more a million times.</div>
+          </div>
+          <figure class="post-hero__image">
+            <img src="https://example.test/hero.jpg" alt="hero" />
+          </figure>
+        </div>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.div, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Privacy" not in text
+    assert "A Secure Chat App’s Encryption Is So Bad It Is ‘Meaningless’" not in text
+    assert "TeleGuard is an app downloaded more a million times." not in text
+    assert cleaned.find("img") is None

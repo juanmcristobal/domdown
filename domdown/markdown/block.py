@@ -77,11 +77,26 @@ def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:
 def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
     """Render heading text while skipping permalink anchors."""
 
+    has_permalink_anchor = any(
+        isinstance(child, Tag)
+        and child.name.lower() == "a"
+        and str(child.get("href", "")).startswith("#")
+        for child in node.children
+    )
     parts: list[str] = []
     for child in node.children:
         if isinstance(child, Tag) and child.name.lower() == "a":
             href = str(child.get("href", ""))
             if href.startswith("#"):
+                continue
+        if has_permalink_anchor and isinstance(child, NavigableString):
+            stripped = str(child).strip()
+            if stripped in {"[", "]", "[[", "]]"}:
+                continue
+            if stripped.startswith("[[") and stripped.endswith("]]") and len(stripped) > 4:
+                rendered = stripped[2:-2].strip()
+                if rendered:
+                    parts.append(rendered)
                 continue
         rendered = render_inline(child, options)
         if rendered:
