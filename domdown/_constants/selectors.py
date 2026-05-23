@@ -238,7 +238,6 @@ BOILERPLATE_PHRASES = (
     "if you've got a moment",
     "how we can make the documentation better",
     "this post is for paid members only",
-    "search results",
     "no results found",
 )
 

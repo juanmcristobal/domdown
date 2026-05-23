@@ -239,6 +239,29 @@ def test_clean_root_removes_generic_boilerplate_phrases() -> None:
     assert "Body" in text
 
 
+def test_clean_root_does_not_drop_article_content_containing_search_results_phrase() -> None:
+    """Generic article text mentioning search results should not be treated as boilerplate."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="content">
+            <p>Online ads or search results: 26%</p>
+            <p>Body</p>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Online ads or search results: 26%" in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_paid_access_cta_and_header_chrome() -> None:
     """Cleanup should remove paid access chrome while keeping article paragraphs."""
 
