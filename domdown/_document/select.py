@@ -338,7 +338,7 @@ def _looks_like_chrome(tag: Tag) -> bool:
     id_text = str(tag.get("id", "")).lower()
     marker_text = f"{class_text} {id_text}".strip()
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
-    exact_layout_markers = {"row", "sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
+    exact_layout_markers = {"sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
     if marker_tokens & exact_layout_markers:
         return True
     return any(marker in marker_text for marker in NOISE_MARKERS if marker not in exact_layout_markers)

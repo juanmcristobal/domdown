@@ -14,6 +14,12 @@
       "description": "Concise newsroom-style article with inline links and author metadata."
     },
     {
+      "id": "arstechnica_airsnitch_article_chrome",
+      "html": "html/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.html",
+      "markdown": "raw/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.md",
+      "description": "Security article with skip links and recommendation chrome that should be removed."
+    },
+    {
       "id": "bitdefender_dll_sideloading",
       "html": "html/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.html",
       "markdown": "raw/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.md",

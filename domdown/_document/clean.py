@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from bs4 import Comment, Tag
+import re
 
 from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
 
@@ -42,11 +43,13 @@ def _looks_like_noise(node: Tag) -> bool:
     if not isinstance(classes, (list, tuple)):
         classes = (str(classes),)
     identifier = str(node.get("id", "")).lower()
-    tokens = " ".join([str(token).lower() for token in classes] + [identifier])
-    if any(marker in tokens for marker in NOISE_MARKERS):
+    tokens = _noise_tokens(classes, identifier)
+    if tokens & set(NOISE_MARKERS):
         return True
     text = node.get_text(" ", strip=True).lower()
-    return text == "more" and any(marker in tokens for marker in ("more", "share"))
+    if _looks_like_link_chrome(node):
+        return True
+    return text == "more" and bool(tokens & {"more", "share"})
 
 
 def _remove_structural_chrome(root: Tag) -> None:
@@ -56,7 +59,10 @@ def _remove_structural_chrome(root: Tag) -> None:
         if not isinstance(node, Tag) or node is root:
             continue
         if _is_small_structural_block(node) and (
-            _looks_like_header_block(node) or _looks_like_related_block(node) or _looks_like_boilerplate(node)
+            _looks_like_header_block(node)
+            or _looks_like_related_block(node)
+            or _looks_like_boilerplate(node)
+            or _looks_like_about_block(node)
         ):
             node.decompose()
 
@@ -91,6 +97,37 @@ def _looks_like_boilerplate(node: Tag) -> bool:
     return any(phrase in text for phrase in BOILERPLATE_PHRASES)
 
 
+def _looks_like_about_block(node: Tag) -> bool:
+    """Detect compact company/about blocks with a heading and CTA links."""
+
+    heading = node.find(["h1", "h2", "h3", "h4"], recursive=False)
+    if not isinstance(heading, Tag):
+        return False
+    heading_text = heading.get_text(" ", strip=True).lower()
+    if not heading_text.startswith("about "):
+        return False
+    link_count = len(node.find_all("a"))
+    button_count = len(node.find_all("button"))
+    text_words = len(node.get_text(" ", strip=True).split())
+    return text_words <= 120 and (link_count >= 1 or button_count >= 1)
+
+
+def _looks_like_link_chrome(node: Tag) -> bool:
+    """Detect dense menu or footer blocks dominated by links rather than prose."""
+
+    link_count = len(node.find_all("a"))
+    paragraph_count = len(node.find_all("p"))
+    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
+    word_count = len(node.get_text(" ", strip=True).split())
+    if link_count >= 20 and paragraph_count <= 1 and heading_count <= 1 and word_count <= 160:
+        return True
+    if link_count >= 40 and paragraph_count <= 5 and word_count <= 260:
+        return True
+    if link_count >= 15 and paragraph_count == 0 and heading_count == 0 and word_count <= 120:
+        return True
+    return False
+
+
 def _is_small_structural_block(node: Tag) -> bool:
     """Limit structural cleanup to compact blocks so wrappers with body text survive."""
 
@@ -107,3 +144,19 @@ def _marker_text(node: Tag) -> str:
         classes = (str(classes),)
     identifier = str(node.get("id", "")).lower()
     return " ".join([str(token).lower() for token in classes] + [identifier])
+
+
+def _noise_tokens(classes: tuple[str, ...] | list[str] | tuple[object, ...], identifier: str) -> set[str]:
+    """Split class and id markers into stable tokens for noise matching."""
+
+    tokens: set[str] = set()
+    for raw_token in classes:
+        token = str(raw_token).lower()
+        if not token:
+            continue
+        tokens.add(token)
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", token) if part)
+    if identifier:
+        tokens.add(identifier)
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", identifier) if part)
+    return tokens

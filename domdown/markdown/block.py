@@ -25,6 +25,9 @@ def render_block(node: object, options: DomdownOptions) -> str:
         return ""
     if name in {"h1", "h2", "h3", "h4", "h5", "h6"}:
         level = int(name[1])
+        title_link = _heading_title_link(node, options)
+        if title_link is not None:
+            return f"{'#' * level} {title_link}".strip()
         text = render_inline_children(node, options)
         return f"{'#' * level} {text}".strip()
     if name == "img":
@@ -56,3 +59,16 @@ def render_container(node: Tag, options: DomdownOptions) -> str:
 
     parts = [part for part in (render_block(child, options) for child in node.children) if part]
     return normalize_markdown_text("\n\n".join(parts))
+
+
+def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:
+    """Return plain text for headings that only wrap a single self-link."""
+
+    anchors = [child for child in node.children if isinstance(child, Tag) and child.name.lower() == "a"]
+    if len(anchors) != 1:
+        return None
+    non_whitespace_children = [child for child in node.children if not isinstance(child, NavigableString) or str(child).strip()]
+    if len(non_whitespace_children) != 1 or non_whitespace_children[0] is not anchors[0]:
+        return None
+    text = render_inline_children(anchors[0], options)
+    return text or None
