@@ -392,3 +392,24 @@ def test_clean_root_removes_divi_article_info_about_and_faq_icons() -> None:
     assert "About ExampleCorp" not in text
     assert "Real body content should remain." in text
     assert "The example answer should remain." in text
+
+
+def test_clean_root_keeps_linked_images_wrapped_in_popup_anchors() -> None:
+    """Popup-style image anchors should stay in the content tree."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="content">
+          <p><a class="popup img-link shimmer" href="https://example.test/fig.png"><img src="https://example.test/fig.png" alt="diagram"></a></p>
+          <p>Real body paragraph.</p>
+        </div>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.div, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert cleaned.find("img") is not None
+    assert cleaned.find("a") is not None
+    assert "Real body paragraph." in text

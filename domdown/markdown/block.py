@@ -7,7 +7,7 @@ from .._core import DomdownOptions
 from .._text import normalize_inline_text, normalize_markdown_text
 from .code import render_code_block
 from .images import render_image
-from .inline import render_inline_children
+from .inline import render_inline, render_inline_children
 from .links import render_link
 from .lists import render_list, render_list_item
 from .tables import render_table
@@ -28,7 +28,7 @@ def render_block(node: object, options: DomdownOptions) -> str:
         title_link = _heading_title_link(node, options)
         if title_link is not None:
             return f"{'#' * level} {title_link}".strip()
-        text = render_inline_children(node, options)
+        text = _render_heading_text(node, options)
         return f"{'#' * level} {text}".strip()
     if name == "img":
         return render_image(node, options)
@@ -72,3 +72,18 @@ def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:
         return None
     text = render_inline_children(anchors[0], options)
     return text or None
+
+
+def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
+    """Render heading text while skipping permalink anchors."""
+
+    parts: list[str] = []
+    for child in node.children:
+        if isinstance(child, Tag) and child.name.lower() == "a":
+            href = str(child.get("href", ""))
+            if href.startswith("#"):
+                continue
+        rendered = render_inline(child, options)
+        if rendered:
+            parts.append(rendered)
+    return normalize_inline_text("".join(parts))

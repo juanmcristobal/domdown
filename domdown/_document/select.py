@@ -147,6 +147,29 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
+    layout_tokens = {
+        "container",
+        "container-fluid",
+        "d-flex",
+        "flex-column",
+        "justify-content-center",
+        "justify-content-between",
+        "align-items-center",
+        "align-items-end",
+        "row",
+        "col",
+        "col-12",
+        "col-lg-11",
+        "col-xl-9",
+        "px-md-4",
+        "px-xxl-5",
+        "page-wrapper",
+        "wrapper",
+    }
+    if candidate.name not in {"article", "main"} and marker_tokens & layout_tokens:
+        has_embedded_main = bool(candidate.find("main", recursive=True))
+        if has_embedded_main:
+            return -80.0
     if marker_tokens & {"wrapper", "container-fluid", "page-wrapper"}:
         return -25.0
     return 0.0

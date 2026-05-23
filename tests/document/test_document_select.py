@@ -212,3 +212,44 @@ def test_choose_root_does_not_refine_into_a_generic_layout_wrapper() -> None:
     root = choose_root(soup, prefer_article_body=True)
 
     assert root.get("class") != ["container-fluid", "wrapper"]
+
+
+def test_choose_root_prefers_semantic_article_over_layout_shell() -> None:
+    """An article inside a bootstrap-like layout shell should beat the outer wrapper."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="container d-flex flex-column px-xxl-5">
+                  <aside id="sidebar">
+                    <nav><a href="/">Home</a><a href="/tags">Tags</a></nav>
+                  </aside>
+                  <div id="main-wrapper" class="d-flex justify-content-center">
+                    <main aria-label="Main Content" class="col-12 col-lg-11 col-xl-9 px-md-4">
+                      <article class="px-1">
+                        <header>
+                          <h1>HookChain: A Deep Dive into Advanced EDR Bypass Techniques</h1>
+                          <div class="post-meta text-muted">
+                            <span>Posted <time datetime="2024-10-25T00:00:00+03:00">Oct 25, 2024</time></span>
+                            <span>By <em><a href="https://twitter.com/0xmaz">Mohamed Alzhrani</a></em></span>
+                          </div>
+                        </header>
+                        <div class="content">
+                          <p>Paragraph one.</p>
+                          <p>Paragraph two.</p>
+                          <p>Paragraph three.</p>
+                        </div>
+                      </article>
+                    </main>
+                  </div>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.name == "div"
+    assert root.get("class") == ["content"]

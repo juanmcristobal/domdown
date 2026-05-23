@@ -31,3 +31,21 @@ def test_render_block_unwraps_self_linked_heading_titles() -> None:
     )
 
     assert render_block(soup.h1, DomdownOptions()) == "# Example Title"
+
+
+def test_render_block_ignores_permalink_icons_in_headings() -> None:
+    """Heading permalinks should not leak slug anchors into Markdown output."""
+
+    soup = BeautifulSoup(
+        """
+        <h2>
+          <span class="me-2">Example Section</span>
+          <a href="#example-section" class="anchor text-muted">
+            <i class="fas fa-hashtag"></i>
+          </a>
+        </h2>
+        """,
+        "lxml",
+    )
+
+    assert render_block(soup.h2, DomdownOptions()) == "## Example Section"

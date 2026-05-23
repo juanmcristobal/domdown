@@ -39,6 +39,8 @@ def _looks_like_noise(node: Tag) -> bool:
 
     if getattr(node, "attrs", None) is None:
         return False
+    if node.name == "a" and node.find("img") is not None:
+        return False
     classes = node.get("class") or ()
     if not isinstance(classes, (list, tuple)):
         classes = (str(classes),)
