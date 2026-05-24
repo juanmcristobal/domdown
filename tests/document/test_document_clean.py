@@ -421,6 +421,47 @@ def test_clean_root_removes_footer_legal_chrome() -> None:
     assert "Modern Slavery Act Statement" not in text
 
 
+def test_clean_root_removes_navigation_and_translation_chrome() -> None:
+    """Cleanup should drop compact nav, breadcrumb, and language-picker blocks."""
+
+    soup = BeautifulSoup(
+        """
+        <main>
+          <div class="translations">
+            <span>Other languages available:</span>
+            <a href="/de/tru/posts/example/">Deutsch</a>
+            <a href="/es/tru/posts/example/">Español</a>
+            <a href="/ja/tru/posts/example/">日本語</a>
+            <a href="/pt/tru/posts/example/">Português</a>
+          </div>
+          <nav class="breadcrumb">
+            <a href="/en/tru/">Home</a>
+            <a href="/en/tru/posts/">Articles</a>
+            <a href="/en/tru/authors/jozsef-gegeny/">Jozsef Gegeny</a>
+          </nav>
+          <article>
+            <p>Body paragraph.</p>
+          </article>
+        </main>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.main, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Other languages available" not in text
+    assert "Deutsch" not in text
+    assert "Español" not in text
+    assert "日本語" not in text
+    assert "Português" not in text
+    assert "Home" not in text
+    assert "Articles" not in text
+    assert "Jozsef Gegeny" not in text
+    assert "Body paragraph." in text
+
+
 def test_clean_root_removes_article_skip_link_and_staff_picks_chrome() -> None:
     """Cleanup should remove skip links, comment picks, and staff-picks chrome."""
 

@@ -66,6 +66,7 @@ def _remove_structural_chrome(root: Tag) -> None:
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
             or _looks_like_related_block(node)
+            or _looks_like_navigation_block(node)
             or _looks_like_footer_block(node)
             or _looks_like_boilerplate(node)
             or _looks_like_about_block(node)
@@ -120,6 +121,24 @@ def _looks_like_about_block(node: Tag) -> bool:
     button_count = len(node.find_all("button"))
     text_words = len(node.get_text(" ", strip=True).split())
     return text_words <= 120 and (link_count >= 1 or button_count >= 1)
+
+
+def _looks_like_navigation_block(node: Tag) -> bool:
+    """Detect compact navigation, breadcrumb, and language-picker blocks."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    marker_text = _marker_text(node)
+    if any(marker in marker_text for marker in ("breadcrumb", "breadcrumbs", "translation", "translations", "menu", "nav", "toc", "socials")):
+        return True
+    if "other languages available" in text or "on this page" in text:
+        return True
+    if node.name.lower() == "nav":
+        link_count = len(node.find_all("a"))
+        text_words = len(text.split())
+        return link_count >= 2 and text_words <= 40
+    return False
 
 
 def _looks_like_footer_block(node: Tag) -> bool:
