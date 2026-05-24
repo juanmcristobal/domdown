@@ -212,6 +212,23 @@ NOISE_MARKERS = (
     "sponsored",
     "note-b",
     "dog_two",
+    # Additional markers from defuddle
+    "read-more",
+    "article-card",
+    "post-meta",
+    "article-actions",
+    "post-actions",
+    "byline",
+    "author-block",
+    "meta-info",
+    "sidebar",
+    "aside",
+    "related-posts",
+    "related-content",
+    "promo-box",
+    "sponsor-box",
+    "ad-box",
+    "promo-block",
 )
 
 # Structural chrome markers for top-of-article wrappers that repeat metadata.
