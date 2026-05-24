@@ -75,6 +75,12 @@
       "html": "html/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.html",
       "markdown": "raw/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.md",
       "description": "Acronis article with language picker and breadcrumb chrome that should be removed."
+    },
+    {
+      "id": "adnanthekhan_clinejection",
+      "html": "html/adnanthekhan_clinejection.html",
+      "markdown": "raw/adnanthekhan_clinejection.md",
+      "description": "Technical article with code spans, anchor fragments, and email-protection markup."
     }
   ]
 }
