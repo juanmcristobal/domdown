@@ -202,6 +202,37 @@ def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_keeps_long_workaround_paragraphs() -> None:
+    """Cleanup should not treat normal prose with 'recommended' as related chrome."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>For <a href="https://www.cve.org/CVERecord?id=CVE-2026-3337">CVE-2026-3337</a>, customers using AES-CCM with (M=4, L=2), (M=8, L=2), or (M=16, L=2) can workaround this issue by using AES-CCM through the EVP AEAD API using implementations EVP_aead_aes_128_ccm_bluetooth, EVP_aead_aes_128_ccm_bluetooth_8, and, EVP_aead_aes_128_ccm_matter respectively. Otherwise, there is no known workaround. We recommended customers to upgrade to the latest major versions of AWS-LC.</p>
+          <section class="related-categories">
+            <h2>Related Articles</h2>
+            <ul>
+              <li><a href="/news">News</a></li>
+              <li><a href="/tips">Tips</a></li>
+            </ul>
+          </section>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "customers using AES-CCM" in text
+    assert "EVP_aead_aes_128_ccm_matter" in text
+    assert "We recommended customers to upgrade to the latest major versions of AWS-LC." in text
+    assert "Related Articles" not in text
+    assert "News" not in text
+    assert "Tips" not in text
+
+
 def test_clean_root_removes_html_comments() -> None:
     """Cleanup should drop HTML comments like more markers."""
 

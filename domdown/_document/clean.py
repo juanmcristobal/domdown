@@ -86,7 +86,9 @@ def _looks_like_related_block(node: Tag) -> bool:
     """Detect related-link sections that sit between the header and body."""
 
     text = node.get_text(" ", strip=True).lower()
-    if any(phrase in text for phrase in RELATED_PHRASES):
+    word_count = len(text.split())
+    link_count = len(node.find_all("a"))
+    if any(phrase in text for phrase in RELATED_PHRASES) and (word_count <= 18 or link_count >= 2):
         return True
     marker_text = _marker_text(node)
     return any(marker in marker_text for marker in ("related", "recommend"))
