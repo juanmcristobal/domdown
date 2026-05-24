@@ -77,6 +77,25 @@ def test_render_block_ignores_bracket_permalink_markers_in_headings() -> None:
     assert render_block(soup.h2, DomdownOptions()) == "## Inside the attack"
 
 
+def test_render_block_ignores_empty_absolute_permalink_anchors_in_headings() -> None:
+    """Empty permalink anchors with absolute fragment URLs should not leak into headings."""
+
+    soup = BeautifulSoup(
+        """
+        <h2>
+          <a class="header-anchor" href="https://example.com/test#technical-analysis-how-the-attack-unfolds"></a>
+          Technical analysis: How the attack unfolds
+        </h2>
+        """,
+        "lxml",
+    )
+
+    assert (
+        render_block(soup.h2, DomdownOptions())
+        == "## Technical analysis: How the attack unfolds"
+    )
+
+
 def test_render_block_renders_captioned_figures_as_image_then_caption() -> None:
     """Captioned figures should render as a media block followed by the caption."""
 

@@ -292,6 +292,8 @@ def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
             href = str(child.get("href", ""))
             if href.startswith("#"):
                 continue
+            if "#" in href and not render_inline_children(child, options).strip():
+                continue
         if has_permalink_anchor and isinstance(child, NavigableString):
             stripped = str(child).strip()
             if stripped in {"[", "]", "[[", "]]"}:

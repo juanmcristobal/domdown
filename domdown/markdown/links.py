@@ -25,8 +25,8 @@ def render_link(node: Tag, options: DomdownOptions) -> str:
             rendered_image = render_image(image, options)
             if rendered_image and href:
                 return f"[{rendered_image}]({href})"
-            return rendered_image or href or ""
-        return href or ""
+            return rendered_image or ""
+        return ""
     if content.startswith("![") and href:
         return f"[{content}]({href})"
     if href:

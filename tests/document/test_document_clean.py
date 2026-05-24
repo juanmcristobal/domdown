@@ -394,6 +394,33 @@ def test_clean_root_removes_paid_access_cta_and_header_chrome() -> None:
     assert "The second article paragraph also stays in the body." in text
 
 
+def test_clean_root_removes_footer_legal_chrome() -> None:
+    """Cleanup should drop legal footer text and keep the article body."""
+
+    soup = BeautifulSoup(
+        """
+        <main>
+          <article>
+            <p>Body paragraph.</p>
+          </article>
+          <div class="legal">
+            <p>© 2026 Example. All Rights Reserved. <a href="#">Privacy Settings</a> <a href="https://example.com/legal">Modern Slavery Act Statement</a></p>
+          </div>
+        </main>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.main, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Body paragraph." in text
+    assert "All Rights Reserved" not in text
+    assert "Privacy Settings" not in text
+    assert "Modern Slavery Act Statement" not in text
+
+
 def test_clean_root_removes_article_skip_link_and_staff_picks_chrome() -> None:
     """Cleanup should remove skip links, comment picks, and staff-picks chrome."""
 

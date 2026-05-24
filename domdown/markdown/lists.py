@@ -33,6 +33,8 @@ def render_list_item(node: Tag, options: DomdownOptions, ordered: bool, index: i
             if rendered:
                 inline_parts.append(rendered)
     head = normalize_inline_text("".join(inline_parts))
+    if not head and not nested_parts:
+        return ""
     blocks = [f"{indent}{prefix} {head}".rstrip() if head else f"{indent}{prefix}"]
     blocks.extend(nested_parts)
     return "\n".join(blocks)

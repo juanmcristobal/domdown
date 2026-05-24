@@ -20,7 +20,10 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
                 continue
-            if node.name in skip_tags or _looks_like_noise(node):
+            if node.name in skip_tags:
+                node.decompose()
+                continue
+            if _looks_like_noise(node) and not _has_substantive_body_content(node):
                 node.decompose()
 
         _remove_structural_chrome(root)
@@ -63,9 +66,12 @@ def _remove_structural_chrome(root: Tag) -> None:
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
             or _looks_like_related_block(node)
+            or _looks_like_footer_block(node)
             or _looks_like_boilerplate(node)
             or _looks_like_about_block(node)
         ):
+            if _has_substantive_body_content(node):
+                continue
             node.decompose()
 
 
@@ -116,6 +122,20 @@ def _looks_like_about_block(node: Tag) -> bool:
     return text_words <= 120 and (link_count >= 1 or button_count >= 1)
 
 
+def _looks_like_footer_block(node: Tag) -> bool:
+    """Detect compact footer/legal blocks that should not appear in article output."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    marker_text = _marker_text(node)
+    if any(marker in marker_text for marker in ("footer", "legal", "copyright")):
+        return True
+    if any(phrase in text for phrase in ("all rights reserved", "privacy settings", "modern slavery act statement")):
+        return True
+    return "©" in text and len(node.find_all("a")) >= 1
+
+
 def _looks_like_link_chrome(node: Tag) -> bool:
     """Detect dense menu or footer blocks dominated by links rather than prose."""
 
@@ -138,6 +158,14 @@ def _is_small_structural_block(node: Tag) -> bool:
     text_words = len(node.get_text(" ", strip=True).split())
     direct_blocks = sum(1 for child in node.find_all(recursive=False) if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "div", "section", "article"})
     return text_words <= 120 and direct_blocks <= 4
+
+
+def _has_substantive_body_content(node: Tag) -> bool:
+    """Keep compact wrappers that still contain real article paragraphs."""
+
+    paragraph_count = len(node.find_all("p"))
+    text_words = len(node.get_text(" ", strip=True).split())
+    return paragraph_count >= 2 and text_words >= 15
 
 
 def _marker_text(node: Tag) -> str:

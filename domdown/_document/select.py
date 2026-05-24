@@ -45,8 +45,17 @@ def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
     current = root
     current_words = len(current.get_text(" ", strip=True).split())
     for _ in range(max_depth):
-        shell_child = _best_page_shell_child(current)
-        candidate = shell_child or _best_content_subtree(current)
+        sneak_peek = current.select_one(".post-sneak-peek")
+        if isinstance(sneak_peek, Tag) and sneak_peek is not current:
+            candidate = sneak_peek
+            candidate_words = len(candidate.get_text(" ", strip=True).split())
+            if candidate_words >= 20:
+                current = candidate
+                current_words = candidate_words
+                continue
+        else:
+            shell_child = _best_page_shell_child(current)
+            candidate = shell_child or _best_content_subtree(current)
         if candidate is current:
             break
         if candidate.name in {"p", "li", "span"}:
