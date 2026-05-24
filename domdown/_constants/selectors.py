@@ -126,6 +126,8 @@ CONTENT_SELECTORS_FALLBACK = (
     "[id*='body']",
     "[class*='entry']",
     "[id*='entry']",
+    "[class*='content']",
+    "[id*='content']",
 )
 
 CONTENT_SELECTORS = CONTENT_SELECTORS_EXACT + CONTENT_SELECTORS_FALLBACK
@@ -155,6 +157,8 @@ ROOT_SELECTORS = (
     "[id*='body']",
     "[class*='entry']",
     "[id*='entry']",
+    "[class*='content']",
+    "[id*='content']",
     "body",
 )
 
