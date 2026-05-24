@@ -32,6 +32,8 @@ def render_block(node: object, options: DomdownOptions) -> str:
         return f"{'#' * level} {text}".strip()
     if name == "img":
         return render_image(node, options)
+    if name == "figure":
+        return render_figure(node, options)
     if name == "a":
         return render_link(node, options)
     if name == "br":
@@ -59,6 +61,33 @@ def render_container(node: Tag, options: DomdownOptions) -> str:
 
     parts = [part for part in (render_block(child, options) for child in node.children) if part]
     return normalize_markdown_text("\n\n".join(parts))
+
+
+def render_figure(node: Tag, options: DomdownOptions) -> str:
+    """Render a figure as its media content followed by an optional caption."""
+
+    caption = next(
+        (child for child in node.children if isinstance(child, Tag) and child.name.lower() == "figcaption"),
+        None,
+    )
+    if caption is None:
+        return render_container(node, options)
+
+    media_parts = [
+        part
+        for part in (
+            render_block(child, options)
+            for child in node.children
+            if not (isinstance(child, Tag) and child.name.lower() == "figcaption")
+        )
+        if part
+    ]
+    caption_text = render_inline_children(caption, options)
+    if not caption_text:
+        caption_text = render_container(caption, options)
+    if caption_text:
+        media_parts.append(caption_text)
+    return normalize_markdown_text("\n\n".join(media_parts))
 
 
 def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:

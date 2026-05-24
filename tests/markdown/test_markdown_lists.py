@@ -14,5 +14,5 @@ def test_render_list_and_nested_list_items() -> None:
         "lxml",
     )
 
-    assert render_list(soup.ul, DomdownOptions(), ordered=False) == "- one\n- two\n- nested"
+    assert render_list(soup.ul, DomdownOptions(), ordered=False) == "- one\n- two\n  - nested"
     assert render_list_item(soup.ul.find("li"), DomdownOptions(), ordered=False, index=None) == "- one"
