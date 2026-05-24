@@ -29,8 +29,7 @@
       "id": "cisa_alert_kev_catalog",
       "html": "html/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.html",
       "markdown": "raw/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.md",
-      "description": "Government alert page with concise body text and simple metadata.",
-      "layer": "adapter"
+      "description": "Government alert page with concise body text and simple metadata."
     },
     {
       "id": "node_release_tag_v2530",
@@ -57,8 +56,7 @@
       "id": "nisos_remote_worker_fraud",
       "html": "html/nisos.com_blog_dprk-remote-worker-fraud-interview.html",
       "markdown": "raw/nisos.com_blog_dprk-remote-worker-fraud-interview.md",
-      "description": "Interview-style article with strong frontmatter and inline formatting.",
-      "layer": "adapter"
+      "description": "Interview-style article with strong frontmatter and inline formatting."
     }
   ]
 }

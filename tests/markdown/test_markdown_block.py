@@ -209,6 +209,98 @@ def test_definition_list_helpers_cover_explicit_labels_and_anchor_rows() -> None
 </dl>"""
 
 
+def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
+    """Anchor-only definition rows should keep the link, not the nested UI DOM."""
+
+    soup = BeautifulSoup(
+        """
+        <div>
+          <div>
+            <a aria-label="Pixplus Pro" class="svelte-jrkm1h" href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">
+              <div class="container" style="display:flex">
+                <picture><img alt="" src="/assets/artwork/1x1.gif" /></picture>
+                <h3>Pixplus Pro</h3>
+                <p>Utilities</p>
+                <span>View</span>
+              </div>
+            </a>
+          </div>
+          <div><strong>Seller:</strong> Hangzhou Denghong Technology Co., Ltd.</div>
+          <div><strong>Category:</strong> Utilities</div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    assert render_definition_list(soup.div, DomdownOptions()) == """<dl>
+<dt>Pixplus Pro Utilities View</dt>
+<dd><a href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">Pixplus Pro Utilities View</a></dd>
+<dt>Seller</dt>
+<dd>Hangzhou Denghong Technology Co., Ltd.</dd>
+<dt>Category</dt>
+<dd>Utilities</dd>
+</dl>"""
+
+
+def test_render_explicit_definition_list_as_markdown_bullets() -> None:
+    """Native dl content should render as readable Markdown bullets."""
+
+    soup = BeautifulSoup(
+        """
+        <dl>
+          <dt>Granular controls</dt>
+          <dd>You have the choice to explicitly enable or disable entire AI features.</dd>
+          <dt>Security guardrails</dt>
+          <dd>Your Gemini assistant starts to automate a task only when you tell it to.</dd>
+          <dt>Explicit intent</dt>
+          <dd>For any feature, you decide whether your data is shared.</dd>
+        </dl>
+        """,
+        "lxml",
+    )
+
+    assert render_block(soup.dl, DomdownOptions()) == (
+        "- **Granular controls:** You have the choice to explicitly enable or disable entire AI features.\n"
+        "- **Security guardrails:** Your Gemini assistant starts to automate a task only when you tell it to.\n"
+        "- **Explicit intent:** For any feature, you decide whether your data is shared."
+    )
+
+
+def test_render_definition_list_between_lists_keeps_contiguous_bullets() -> None:
+    """Footnote dl blocks between lists should join the surrounding bullet sequence."""
+
+    soup = BeautifulSoup(
+        """
+        <section>
+          <h4>Footnotes</h4>
+          <p>[1] The 1M token context window is currently available in beta.</p>
+          <ul>
+            <li>For GPT-5.2 and Gemini 3 Pro models, we compared the best reported model version.</li>
+          </ul>
+          <dl>
+            <dt>SWE-bench Verified</dt>
+            <dd>Our score was averaged over 25 trials.</dd>
+            <dt>MCP Atlas</dt>
+            <dd>Claude Opus 4.6 was run with max effort.</dd>
+          </dl>
+          <ul>
+            <li><strong>CyberGym</strong>: Claude models were run on no thinking.</li>
+          </ul>
+        </section>
+        """,
+        "lxml",
+    )
+
+    assert render_container(soup.section, DomdownOptions()) == (
+        "#### Footnotes\n\n"
+        "[1] The 1M token context window is currently available in beta.\n\n"
+        "- For GPT-5.2 and Gemini 3 Pro models, we compared the best reported model version.\n"
+        "- **SWE-bench Verified:** Our score was averaged over 25 trials.\n"
+        "- **MCP Atlas:** Claude Opus 4.6 was run with max effort.\n"
+        "- **CyberGym**: Claude models were run on no thinking."
+    )
+
+
 def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
     """Small or non-metadata blocks should stay as normal container content."""
 

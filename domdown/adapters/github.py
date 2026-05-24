@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, replace
 
 from bs4 import Tag
@@ -71,6 +72,11 @@ class GitHubAdapter:
 
         kind = _page_kind(context.document)
         if kind == "blob":
+            raw_text = _raw_blob_text(context.document)
+            if raw_text:
+                context.markdown = raw_text
+                context.document = None
+                return context
             blob_root = _select_first(context.document, GITHUB_BLOB_ROOT_SELECTORS)
             if blob_root is not None:
                 context.document = blob_root
@@ -85,8 +91,12 @@ class GitHubAdapter:
         return context
 
     def postprocess(self, context: PipelineContext) -> PipelineContext:
-        """Leave the core Markdown output untouched for GitHub pages."""
+        """Normalize GitHub-specific rendered output after the core pipeline."""
 
+        if _page_kind(context.document) == "blob":
+            raw_text = _raw_blob_text(context.document)
+            if raw_text:
+                context.markdown = raw_text
         return context
 
 
@@ -146,3 +156,30 @@ def _meta_content(document: Tag | None, selector: str) -> str:
     if node is None:
         return ""
     return str(node.get("content", "")).strip()
+
+
+def _raw_blob_text(document: Tag | None) -> str:
+    """Extract exact file text from GitHub's embedded blob payload when present."""
+
+    if document is None:
+        return ""
+    for node in document.select("script[data-target='react-app.embeddedData']"):
+        try:
+            payload = json.loads(node.get_text("", strip=False))
+        except json.JSONDecodeError:
+            continue
+        raw_lines = (
+            payload.get("payload", {})
+            .get("blob", {})
+            .get("rawLines")
+            or payload.get("payload", {})
+            .get("codeViewBlobLayoutRoute", {})
+            .get("blob", {})
+            .get("rawLines")
+            or payload.get("payload", {})
+            .get("codeViewBlobLayoutRoute.StyledBlob", {})
+            .get("rawLines")
+        )
+        if isinstance(raw_lines, list) and all(isinstance(line, str) for line in raw_lines):
+            return "\n".join(raw_lines).strip()
+    return ""

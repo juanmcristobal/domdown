@@ -1,393 +1,321 @@
 # domdown
 
-`domdown` extracts the main content from web pages and returns cleaned HTML, optional markdown, and structured metadata.
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
-It is the Python port of the Node `domdown` package. The goal is functional parity: same intent, same pipeline, same extraction behavior where the DOM model allows it. It is not a byte-for-byte port of the underlying DOM operations because this package uses `beautifulsoup4` and `lxml`.
+`domdown` converts raw HTML into Markdown using the implementation that exists
+in this branch: a Python pipeline for article-like content, metadata extraction,
+HTML cleaning, Markdown rendering, optional YAML frontmatter, and a small adapter
+system.
 
-## What it does
+The current public API is Python-only. This branch does not document a CLI and
+does not ship a broad "supported sources" matrix.
 
-`domdown` is built for content extraction, not generic scraping. It tries to:
+## Current Branch Scope
 
-- identify the main article or post
-- remove navigation, ads, hidden clutter, and other boilerplate
-- normalize structure so the output is readable
-- extract page metadata like title, author, description, language, published date, site, and word count
-- detect site-specific formats such as YouTube transcripts, Reddit threads, GitHub issues, Substack posts, Hacker News stories, and more
+This branch supports:
 
-The output is a `DomdownResponse` object with cleaned content plus metadata.
+- raw HTML input as a string
+- article/body selection from parsed HTML
+- metadata extraction into `HtmlMetadata`
+- optional YAML frontmatter
+- cleaned HTML output from the pipeline
+- Markdown rendering for headings, paragraphs, links, images, captions, lists,
+  tables, and code blocks
+- configurable removal, preservation, and unwrapping through CSS selectors
+- a default GitHub adapter for common GitHub chrome and file/issue page shapes
 
-## Installation
+This branch does not provide:
 
-Install from the repository:
+- browser execution for JavaScript-rendered pages
+- network fetching as part of the public API
+- a documented command-line interface
+- domain-by-domain support guarantees
+- byte-for-byte parity with any Node implementation
 
-```bash
-pip install .
-```
-
-Install editable for development:
-
-```bash
-pip install -e ".[dev]"
-```
-
-This installs the development tools used in the repo, including:
-
-- `pytest`
-- `black`
-- `isort`
-- `flake8`
-- `coverage`
-
-## CLI
-
-The installed command is `domdown`.
-
-### Parse a URL
-
-```bash
-domdown parse https://example.com/article
-```
-
-### Parse a local HTML file
-
-```bash
-domdown parse ./page.html
-```
-
-### Output markdown
-
-```bash
-domdown parse https://example.com/article --markdown
-```
-
-### Output JSON
-
-```bash
-domdown parse https://example.com/article --json
-```
-
-### Output plain text
-
-```bash
-domdown parse https://example.com/article --plain-text
-```
-
-### Extract a single property
-
-```bash
-domdown parse https://example.com/article --property title
-domdown parse https://example.com/article --property author
-domdown parse https://example.com/article --property domain
-```
-
-### Write output to a file
-
-```bash
-domdown parse https://example.com/article --markdown --output article.md
-```
-
-### Prefer a language
-
-```bash
-domdown parse https://example.com/article --lang es
-```
-
-### Debug parsing
-
-```bash
-domdown parse https://example.com/article --debug
-```
-
-## Python API
-
-### Public exports
+## Quick Start
 
 ```python
-from domdown import Domdown, DomdownOptions, DomdownResponse
-```
-
-### High-level parse helpers
-
-Use `domdown.node.parse()` or `domdown.node.parse_async()` when you have raw HTML and want a ready-to-use result:
-
-```python
-from domdown.node import parse, parse_async
-```
-
-These helpers:
-
-- create the Beautiful Soup document
-- run the extraction pipeline
-- apply markdown conversion if requested
-- return a `DomdownResponse`
-
-### Synchronous example
-
-```python
-from domdown import DomdownOptions
-from domdown.node import parse
+from domdown import DomdownOptions, html_to_markdown
 
 html = """
 <html>
   <head>
-    <title>Example</title>
+    <title>Credential theft campaign expands</title>
+    <meta name="description" content="A concise security article." />
+    <link rel="canonical" href="https://example.com/research/campaign" />
   </head>
   <body>
+    <nav>Home Pricing Docs</nav>
     <article>
-      <h1>Hello</h1>
-      <p>This is a test article.</p>
+      <h1>Credential theft campaign expands</h1>
+      <p>Researchers observed a new wave of phishing infrastructure.</p>
+      <figure>
+        <img src="/images/chart.png" alt="Campaign infrastructure chart" />
+        <figcaption>Campaign infrastructure by week.</figcaption>
+      </figure>
+      <ul>
+        <li>Windows targets increased.</li>
+        <li>Linux staging remained stable.</li>
+      </ul>
     </article>
   </body>
 </html>
 """
 
-result = parse(
+markdown = html_to_markdown(
     html,
-    "https://example.com/article",
-    DomdownOptions(markdown=True),
+    DomdownOptions(base_url="https://example.com/research/campaign"),
 )
 
-print(result.title)
-print(result.author)
-print(result.word_count)
-print(result.content)
+print(markdown)
 ```
 
-### Asynchronous example
+Output:
+
+```markdown
+---
+title: Credential theft campaign expands
+source: "https://example.com/research/campaign"
+description: A concise security article.
+---
+# Credential theft campaign expands
+
+Researchers observed a new wave of phishing infrastructure.
+
+![Campaign infrastructure chart](https://example.com/images/chart.png)
+
+Campaign infrastructure by week.
+
+- Windows targets increased.
+- Linux staging remained stable.
+```
+
+## Installation
+
+Install from this repository:
+
+```bash
+pip install git+https://github.com/juanmcristobal/domdown.git
+```
+
+Install locally for development:
+
+```bash
+git clone https://github.com/juanmcristobal/domdown.git
+cd domdown
+pip install -e ".[dev]"
+```
+
+Runtime requirements are declared in `requirements.txt`:
+
+- `beautifulsoup4`
+- `lxml`
+- `soupsieve`
+- `httpx`
+
+## Public API
+
+The package exports these names from `domdown.__init__`:
 
 ```python
-import asyncio
-
-from domdown import DomdownOptions
-from domdown.node import parse_async
-
-
-async def main() -> None:
-    result = await parse_async(
-        html="<html><body><article><p>Hello world.</p></article></body></html>",
-        url="https://example.com/article",
-        options=DomdownOptions(separate_markdown=True),
-    )
-
-    print(result.content)
-    print(result.content_markdown)
-
-
-asyncio.run(main())
+from domdown import (
+    DomdownOptions,
+    HtmlMetadata,
+    HtmlToMarkdownPipeline,
+    HtmlToMarkdownResult,
+    html_to_markdown,
+)
 ```
 
-### Low-level parser
+### `html_to_markdown`
 
-If you already have a Beautiful Soup document, you can use the lower-level class directly:
+Use `html_to_markdown()` when you only need the final document string.
 
 ```python
-from bs4 import BeautifulSoup
+from domdown import DomdownOptions, html_to_markdown
 
-from domdown import DomdownOptions
-from domdown.domdown import Domdown
-from domdown.markdown import to_markdown
-
-doc = BeautifulSoup("<html><body><article><p>Hello.</p></article></body></html>", "lxml")
-opts = DomdownOptions(url="https://example.com", markdown=True)
-
-result = Domdown(doc, opts).parse()
-to_markdown(result, opts, opts.url or "")
-
-print(result.content)
+markdown = html_to_markdown(
+    html,
+    DomdownOptions(
+        base_url="https://example.com/post",
+        emit_frontmatter=False,
+    ),
+)
 ```
 
-## Output modes
+`html_to_markdown()` runs the default pipeline and returns the final rendered
+document. When frontmatter is enabled, that document includes the frontmatter.
 
-### Default
+### `HtmlToMarkdownPipeline`
 
-The default mode returns cleaned HTML in `content`.
+Use `HtmlToMarkdownPipeline` when you need structured output.
 
-### Markdown
+```python
+from domdown import DomdownOptions, HtmlToMarkdownPipeline
 
-With `markdown=True`, the main `content` field is converted to markdown.
+result = HtmlToMarkdownPipeline(
+    DomdownOptions(base_url="https://example.com/post")
+).run(html)
 
-### Separate markdown
+print(result.markdown)
+print(result.cleaned_html)
+print(result.frontmatter)
+print(result.document)
+print(result.warnings)
 
-With `separate_markdown=True`, the main `content` field stays as HTML and the markdown version is stored in `content_markdown`.
+if result.metadata:
+    print(result.metadata.title)
+    print(result.metadata.source)
+    print(result.metadata.canonical_url)
+```
 
-### Plain text
+`HtmlToMarkdownResult` contains:
 
-The CLI `--plain-text` flag strips HTML tags from the extracted content before printing.
+| Field | Type | Description |
+| --- | --- | --- |
+| `markdown` | `str` | Markdown rendered from the selected content. |
+| `cleaned_html` | `str \| None` | HTML after parsing, selection, cleaning, and preservation. |
+| `metadata` | `HtmlMetadata \| None` | Normalized metadata extracted from the source HTML. |
+| `frontmatter` | `str \| None` | YAML frontmatter when enabled. |
+| `document` | `str \| None` | Final document string, including frontmatter when enabled. |
+| `warnings` | `tuple[str, ...]` | Non-fatal pipeline warnings. |
 
-### JSON
+`HtmlMetadata` contains:
 
-The CLI `--json` flag prints a structured JSON object with metadata and content fields.
-
-## Result object
-
-`parse()` and `parse_async()` return a `DomdownResponse`.
-
-Common fields:
-
-- `title`
-- `description`
-- `domain`
-- `favicon`
-- `image`
-- `language`
-- `parse_time`
-- `published`
-- `author`
-- `site`
-- `schema_org_data`
-- `word_count`
-- `content`
-- `content_markdown`
-- `extractor_type`
-- `meta_tags`
-- `debug`
-- `profile`
-- `variables`
-
-### Field notes
-
-- `content` is the main extracted body.
-- `content_markdown` is populated only when markdown conversion is requested separately.
-- `variables` is used by site-specific extractors for extra structured metadata.
-- `debug` is filled when `debug=True`.
-- `profile` is filled when `profile=True`.
+| Field | Type |
+| --- | --- |
+| `title` | `str \| None` |
+| `site_name` | `str \| None` |
+| `source` | `str \| None` |
+| `author` | `tuple[str, ...]` |
+| `published` | `str \| None` |
+| `created` | `str \| None` |
+| `description` | `str \| None` |
+| `tags` | `tuple[str, ...]` |
+| `language` | `str \| None` |
+| `canonical_url` | `str \| None` |
+| `image` | `str \| None` |
 
 ## Options
 
-`DomdownOptions` controls the pipeline:
+`DomdownOptions` controls the pipeline.
 
-- `debug`: include debug extraction information
-- `url`: canonical URL associated with the document
-- `markdown`: convert `content` to markdown
-- `separate_markdown`: keep HTML in `content` and markdown in `content_markdown`
-- `remove_exact_selectors`: remove exact-match boilerplate selectors
-- `remove_partial_selectors`: remove partial-match boilerplate selectors
-- `remove_images`: strip image content in the extraction pipeline
-- `use_async`: allow async fallback extraction paths
-- `remove_hidden_elements`: remove hidden DOM elements
-- `remove_low_scoring`: drop low-scoring content blocks
-- `remove_small_images`: remove images that look like placeholders or tiny assets
-- `standardize`: normalize structure after extraction
-- `remove_content_patterns`: remove known boilerplate patterns
-- `content_selector`: force a specific content selector
-- `language`: preferred language code
-- `include_replies`: control whether extractor replies/comments are included
-- `profile`: collect timing data
-- `fetch`: custom async fetch function for extractors that need network access
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `base_url` | `None` | Source URL used for metadata and relative URL resolution. |
+| `created` | `None` | Creation date to include in metadata/frontmatter. |
+| `extract_metadata` | `True` | Enables metadata extraction. |
+| `emit_frontmatter` | `True` | Prepends YAML frontmatter to `document`. |
+| `prefer_article_body` | `True` | Prefers article-like containers during selection. |
+| `author_priority` | `"visible"` | Chooses visible author text before metadata unless set otherwise. |
+| `frontmatter_tags` | `()` | Extra tags to include in generated frontmatter. |
+| `preserve_images` | `True` | Keeps images for Markdown rendering. |
+| `preserve_tables` | `True` | Keeps tables for Markdown rendering. |
+| `preserve_code_blocks` | `True` | Keeps code/preformatted blocks. |
+| `strip_hidden` | `True` | Removes hidden/non-visible elements. |
+| `remove_selectors` | `()` | CSS selectors to remove. |
+| `keep_selectors` | `()` | CSS selectors to protect during cleaning. |
+| `unwrap_selectors` | `()` | CSS selectors whose wrapper is removed while children remain. |
 
-## Supported sources
+Example:
 
-`domdown` includes site-specific extractors for patterns such as:
+```python
+from domdown import DomdownOptions, HtmlToMarkdownPipeline
 
-- YouTube
-- GitHub
-- Reddit
-- Hacker News
-- Substack
-- LinkedIn
-- Mastodon
-- Bluesky
-- Threads
-- X / Twitter
-- ChatGPT
-- Gemini
-- Claude
-- Wikipedia
-- LeetCode
-- LWN
-- Discourse
-- NYTimes
-- BBCode-based content
-- and generic extractor paths for normal articles
+options = DomdownOptions(
+    base_url="https://example.com/report",
+    emit_frontmatter=True,
+    remove_selectors=(".newsletter", ".share-buttons", "[data-ad]"),
+    keep_selectors=("main", "article"),
+    preserve_tables=True,
+)
 
-Coverage is intentionally broad, but the exact extractor chosen depends on the page structure and URL.
+result = HtmlToMarkdownPipeline(options).run(html)
+```
+
+## Markdown Behavior
+
+The renderer in this branch covers these structures:
+
+| HTML input | Markdown behavior |
+| --- | --- |
+| `h1` to `h6` | Markdown headings |
+| `p` | Paragraphs |
+| `a` | Inline Markdown links |
+| `img` | Markdown images, using useful `src`/`srcset` candidates |
+| `figcaption` | Caption text near the image |
+| `ul`, `ol`, `li` | Ordered and unordered Markdown lists, including nested lists |
+| `table` | GitHub-flavored Markdown table syntax |
+| `pre`, `code` | Fenced code blocks and inline code |
+| metadata tags | `HtmlMetadata` and optional YAML frontmatter |
+
+Relative URLs are resolved when `base_url` is provided.
+
+## Pipeline
+
+The default pipeline runs these stages in order:
+
+1. Parse raw HTML.
+2. Extract metadata.
+3. Clean boilerplate and hidden content.
+4. Preserve structural elements before Markdown conversion.
+5. Render Markdown.
+6. Post-process Markdown.
+7. Compose frontmatter and final document.
+
+The default pipeline also creates an adapter registry. In this branch, the
+default adapter list contains `GitHubAdapter`.
+
+## Adapters
+
+Adapters are internal extension points that can:
+
+- preprocess a parsed document
+- refine metadata
+- post-process rendered output
+
+`GitHubAdapter` currently matches pages whose Open Graph site name is `GitHub`.
+It removes common GitHub chrome and narrows some blob/issue pages to more useful
+content regions. It is not a guarantee that every GitHub page shape is supported.
+
+## Real Fixtures
+
+`tests/real/` contains curated HTML and Markdown pairs used as regression tests.
+Those fixtures cover representative pages from real sites, including GitHub
+cases, but they are not a public support matrix.
+
+If behavior changes, update or add fixtures intentionally:
+
+1. Add captured HTML under `tests/real/html/`.
+2. Add expected Markdown under `tests/real/raw/`.
+3. Register the case in `tests/real/manifest.json`.
+4. Run `python3 -m pytest tests/real/test_real_examples.py -q`.
 
 ## Development
 
-Run the test suite:
+Run tests:
 
 ```bash
-python -m pytest -q
+python3 -m pytest -q
 ```
 
-Run linting:
+Run coverage:
 
 ```bash
-make lint
+python3 -m coverage run --source domdown -m pytest
+python3 -m coverage report -m
 ```
 
-Format code:
+Run formatting and linting:
 
 ```bash
-python -m black domdown tests
-python -m isort domdown tests
+python3 -m black domdown tests
+python3 -m isort domdown tests
+python3 -m flake8 domdown tests
 ```
 
-Run coverage locally:
+## Status
 
-```bash
-coverage run -m pytest -q
-coverage report
-```
-
-Or get a quick terminal summary with missing lines:
-
-```bash
-coverage run -m pytest -q && coverage report -m
-```
-
-If you want an HTML report:
-
-```bash
-coverage html
-```
-
-The HTML output is written to `htmlcov/`.
-
-## Architecture notes
-
-- The package lives at `domdown/` with no `src/` wrapper.
-- The public API is exposed from `domdown.__init__`.
-- Internal helpers are split into:
-  - `domdown/utils/`
-  - `domdown/elements/`
-  - `domdown/removals/`
-  - `domdown/extractors/`
-- The implementation is intentionally conceptually aligned with the Node version, but DOM behavior differs where `bs4` and `lxml` behave differently from the Node DOM stack.
-
-## Behavior notes
-
-- The parser tries to preserve content structure where possible.
-- Markdown conversion is a post-processing step on top of extracted content.
-- If a site-specific extractor matches, it can override the generic pipeline.
-- Some edge cases will not match Node exactly because of parser differences, but the test suite is built to validate the intended behavior.
-
-## Testing
-
-The repository includes fixtures for:
-
-- extraction pipeline behavior
-- metadata extraction
-- content standardization
-- markdown conversion
-- site-specific extractors
-- debug and profile output
-- edge cases such as surrogates, transcripts, and schema fallback
-
-If you change the extraction pipeline, run the full suite before merging.
-
-For development, coverage is configured in `pyproject.toml` to measure the `domdown` package and show missing lines in reports.
-
-## Example workflow
-
-1. Fetch or load HTML.
-2. Call `domdown.node.parse()` or `domdown.node.parse_async()`.
-3. Inspect `result.content` and metadata fields.
-4. Use `result.content_markdown` when markdown was requested separately.
-5. Use `--json` if you want a machine-readable summary from the CLI.
-
-## Notes
-
-- `domdown` is intentionally pragmatic rather than perfect.
-- The priority is to solve the same extraction problem as the Node package.
-- If you need exact DOM parity, you would need a different parser stack.
+`domdown` is early-stage software. Treat the exports from `domdown.__init__` as
+the documented public API for this branch. Internal modules and adapter behavior
+may change as extraction quality improves.

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from html import escape
 
 from bs4 import NavigableString, Tag
@@ -48,6 +47,8 @@ def render_block(node: object, options: DomdownOptions) -> str:
         return render_list(node, options, ordered=False)
     if name == "ol":
         return render_list(node, options, ordered=True)
+    if name == "dl":
+        return render_explicit_definition_list(node, options)
     if name == "blockquote":
         content = render_container(node, options)
         return "\n".join(f"> {line}" if line else ">" for line in content.splitlines())
@@ -63,8 +64,31 @@ def render_block(node: object, options: DomdownOptions) -> str:
 def render_container(node: Tag, options: DomdownOptions) -> str:
     """Render a tag by recursively rendering each child block."""
 
-    parts = [part for part in (render_block(child, options) for child in node.children) if part]
-    return normalize_markdown_text("\n\n".join(parts))
+    parts = [
+        (part, _is_list_block_node(child))
+        for child in node.children
+        if (part := render_block(child, options))
+    ]
+    return normalize_markdown_text(_join_block_parts(parts))
+
+
+def _join_block_parts(parts: list[tuple[str, bool]]) -> str:
+    """Join adjacent block renderings while keeping contiguous list blocks tight."""
+
+    if not parts:
+        return ""
+    rendered, previous_is_list = parts[0]
+    for part, current_is_list in parts[1:]:
+        separator = "\n" if previous_is_list and current_is_list else "\n\n"
+        rendered = f"{rendered}{separator}{part}"
+        previous_is_list = current_is_list
+    return rendered
+
+
+def _is_list_block_node(node: object) -> bool:
+    """Return True for HTML nodes that render as Markdown list blocks."""
+
+    return isinstance(node, Tag) and node.name.lower() in {"ul", "ol", "dl"}
 
 
 def render_figure(node: Tag, options: DomdownOptions) -> str:
@@ -106,6 +130,30 @@ def render_definition_list(node: Tag, options: DomdownOptions) -> str:
         lines.append(f"<dt>{escape(term)}</dt>")
         lines.append(f"<dd>{value_html}</dd>")
     lines.append("</dl>")
+    return "\n".join(lines)
+
+
+def render_explicit_definition_list(node: Tag, options: DomdownOptions) -> str:
+    """Render native HTML definition lists as readable Markdown bullets."""
+
+    lines: list[str] = []
+    current_term = ""
+    for child in node.find_all(recursive=False):
+        if not isinstance(child, Tag):
+            continue
+        name = child.name.lower()
+        if name == "dt":
+            current_term = render_inline_children(child, options).strip().removesuffix(":").strip()
+            continue
+        if name != "dd" or not current_term:
+            continue
+        value = normalize_inline_text(render_container(child, options).replace("\n", " "))
+        if value:
+            lines.append(f"- **{current_term}:** {value}")
+        else:
+            lines.append(f"- **{current_term}:**")
+    if not lines:
+        return render_container(node, options)
     return "\n".join(lines)
 
 
@@ -171,11 +219,26 @@ def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str
     anchors = [child for child in node.find_all("a", recursive=True) if isinstance(child, Tag)]
     if len(anchors) == 1 and len(direct_children) == 1:
         anchor = anchors[0]
-        term = anchor.get_text(" ", strip=True)
+        term = normalize_inline_text(anchor.get_text(" ", strip=True))
         if term and normalize_inline_text(node.get_text(" ", strip=True)) == term:
-            return term, str(anchor)
+            return term, _render_definition_anchor(anchor, term, options)
 
     return None
+
+
+def _render_definition_anchor(anchor: Tag, text: str, options: DomdownOptions) -> str:
+    """Render a definition-list anchor without leaking nested UI markup."""
+
+    href = str(anchor.get("href") or "").strip()
+    title = str(anchor.get("title") or "").strip()
+    attributes = []
+    if href:
+        attributes.append(f'href="{escape(href, quote=True)}"')
+    if title:
+        attributes.append(f'title="{escape(title, quote=True)}"')
+    if not attributes:
+        return escape(text)
+    return f"<a {' '.join(attributes)}>{escape(text)}</a>"
 
 
 def _definition_label_child(node: Tag, options: DomdownOptions) -> Tag | None:
