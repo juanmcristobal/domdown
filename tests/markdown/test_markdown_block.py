@@ -341,6 +341,39 @@ def test_render_block_ignores_email_protection_dl_chrome() -> None:
     assert "Another body paragraph also stays visible." in output
 
 
+def test_render_definition_list_does_not_reclassify_heading_sections() -> None:
+    """Heading-led content sections should stay as headings, not definition rows."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="RichTextBody">
+          <p>Date: Since 2023</p>
+          <div class="RichTextHeading">
+            <h2><a href="#adversary" id="adversary">ADVERSARY</a></h2>
+          </div>
+          <ul class="rte2-style-ul">
+            <li>Overlap with Volt Typhoon and BRONZE SILHOUETT</li>
+          </ul>
+          <div class="RichTextHeading">
+            <h2><a href="#capabilities" id="capabilities">CAPABILITIES</a></h2>
+          </div>
+          <ul class="rte2-style-ul">
+            <li>Heavy use of living off the land techniques</li>
+          </ul>
+        </div>
+        """,
+        "lxml",
+    )
+
+    output = render_block(soup.div, DomdownOptions())
+
+    assert "<dl>" not in output
+    assert "## ADVERSARY" in output
+    assert "- Overlap with Volt Typhoon and BRONZE SILHOUETT" in output
+    assert "## CAPABILITIES" in output
+    assert "- Heavy use of living off the land techniques" in output
+
+
 def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
     """Small or non-metadata blocks should stay as normal container content."""
 

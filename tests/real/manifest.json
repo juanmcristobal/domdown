@@ -81,6 +81,12 @@
       "html": "html/adnanthekhan_clinejection.html",
       "markdown": "raw/adnanthekhan_clinejection.md",
       "description": "Technical article with code spans, anchor fragments, and email-protection markup."
+    },
+    {
+      "id": "dragos_threat_voltzite",
+      "html": "html/dragos_threat_voltzite.html",
+      "markdown": "raw/dragos_threat_voltzite.md",
+      "description": "Threat profile page with heading-led sections and nested lists."
     }
   ]
 }

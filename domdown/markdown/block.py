@@ -1,5 +1,6 @@
 from __future__ import annotations
 from html import escape
+from urllib.parse import urlsplit
 
 from bs4 import NavigableString, Tag
 
@@ -216,7 +217,12 @@ def _contains_email_protection(node: Tag) -> bool:
 def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str] | None:
     """Parse a single label/value row from a node."""
 
+    if node.name.lower() in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+        return None
+
     direct_children = [child for child in node.find_all(recursive=False) if isinstance(child, Tag)]
+    if len(direct_children) == 1 and direct_children[0].name.lower() in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+        return None
     if len(direct_children) > 1:
         return None
 
@@ -250,6 +256,8 @@ def _render_definition_anchor(anchor: Tag, text: str, options: DomdownOptions) -
 
     href = str(anchor.get("href") or "").strip()
     title = str(anchor.get("title") or "").strip()
+    if urlsplit(href).fragment:
+        return escape(text)
     attributes = []
     if href:
         attributes.append(f'href="{escape(href, quote=True)}"')
