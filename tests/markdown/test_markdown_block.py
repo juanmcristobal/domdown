@@ -320,6 +320,27 @@ def test_render_definition_list_between_lists_keeps_contiguous_bullets() -> None
     )
 
 
+def test_render_block_ignores_email_protection_dl_chrome() -> None:
+    """Cloudflare email-protection blocks should stay as prose, not metadata lists."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="prose">
+          <p>Body paragraph stays visible.</p>
+          <p><code><a class="__cf_email__" data-cfemail="d1" href="/cdn-cgi/l/email-protection">[email&#160;protected]</a></code></p>
+          <p>Another body paragraph also stays visible.</p>
+        </div>
+        """,
+        "lxml",
+    )
+
+    output = render_block(soup.div, DomdownOptions())
+
+    assert "<dl>" not in output
+    assert "Body paragraph stays visible." in output
+    assert "Another body paragraph also stays visible." in output
+
+
 def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
     """Small or non-metadata blocks should stay as normal container content."""
 

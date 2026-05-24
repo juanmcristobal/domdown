@@ -160,6 +160,8 @@ def render_explicit_definition_list(node: Tag, options: DomdownOptions) -> str:
 def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
     """Detect repeated label/value rows that can be normalized to <dl>."""
 
+    if _contains_email_protection(node):
+        return False
     return len(_collect_definition_items(node, options)) >= 3
 
 
@@ -192,6 +194,23 @@ def _collect_definition_items_from_node(node: Tag, options: DomdownOptions) -> l
     for child in direct_children:
         nested_items.extend(_collect_definition_items_from_node(child, options))
     return nested_items
+
+
+def _contains_email_protection(node: Tag) -> bool:
+    """Detect Cloudflare email-protection blocks that should stay as normal prose."""
+
+    for anchor in node.find_all("a"):
+        href = str(anchor.get("href") or "")
+        classes = anchor.get("class") or ()
+        if "email-protection" in href:
+            return True
+        if isinstance(classes, (list, tuple)):
+            tokens = {str(token).lower() for token in classes}
+        else:
+            tokens = {str(classes).lower()}
+        if "__cf_email__" in tokens:
+            return True
+    return False
 
 
 def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str] | None:
