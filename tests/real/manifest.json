@@ -69,6 +69,12 @@
       "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
       "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",
       "description": "Security blog post testing partial selectors with real-world content."
+    },
+    {
+      "id": "acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil",
+      "html": "html/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.html",
+      "markdown": "raw/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.md",
+      "description": "Acronis article with language picker and breadcrumb chrome that should be removed."
     }
   ]
 }
