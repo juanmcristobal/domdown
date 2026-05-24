@@ -42,3 +42,15 @@ def test_github_blob_uses_embedded_raw_lines_without_line_numbers() -> None:
     assert not body.startswith("1\n\n2\n\n3")
     assert "\n\n- https://x.com/Unit42_Intel/status/1996363155237187909\n\n" not in body
     assert "  -- Mimicking Google's \"Aw Snap!\" error" in body
+
+
+def test_github_release_expands_lazy_asset_fragment() -> None:
+    """GitHub release pages should include the expanded assets list."""
+
+    case = next(case for case in load_real_cases(layer="adapter") if case.id == "node_release_tag_v2530")
+
+    actual = html_to_markdown(case.html_text())
+
+    assert "### Assets" in actual
+    assert "https://github.com/nodejs/node/archive/refs/tags/v25.3.0.zip" in actual
+    assert "https://github.com/nodejs/node/archive/refs/tags/v25.3.0.tar.gz" in actual

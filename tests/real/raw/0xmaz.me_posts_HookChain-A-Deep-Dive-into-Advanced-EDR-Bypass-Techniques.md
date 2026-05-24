@@ -6,11 +6,11 @@ description: "HookChain is a novel technique aimed at bypassing Endpoint Detecti
 ---
 **HookChain** is a novel technique aimed at bypassing Endpoint Detection and Response (EDR) solutions by leveraging low-level Windows APIs and manipulating how system calls interact with user-mode hooks. To better understand how HookChain operates, let’s dive deeper into the technical aspects with real-world examples.
 
-## The Mechanics of Function Hooking and EDR Monitoringhttps://0xmaz.me/posts/hookchain#the-mechanics-of-function-hooking-and-edr-monitoring
+## The Mechanics of Function Hooking and EDR Monitoring
 
 Modern EDR solutions often monitor Windows API calls at the `NTDLL.DLL` level, as this DLL acts as the bridge between user-mode applications and the kernel. For instance, when an application needs to allocate memory, it calls the `NtAllocateVirtualMemory` function, which EDR solutions can hook to monitor or block malicious activity.
 
-### Example: Traditional EDR Hookinghttps://0xmaz.me/posts/hookchain#example-traditional-edr-hooking
+### Example: Traditional EDR Hooking
 
 Here’s what happens in a typical EDR-monitored environment:
 
@@ -23,11 +23,11 @@ https://github.com/user-attachments/assets/dbbf4cd1-2764-40da-84a5-4e00408de8b7
 
 This flow is disrupted by **HookChain**, which manipulates the call process.
 
-## HookChain in Action: Bypassing the Hookhttps://0xmaz.me/posts/hookchain#hookchain-in-action-bypassing-the-hook
+## HookChain in Action: Bypassing the Hook
 
 In HookChain, the attacker does not call `NtAllocateVirtualMemory` directly as monitored by the EDR. Instead, they bypass the hooked API using **indirect system calls** and **dynamic SSN mapping** to evade detection.
 
-### Step 1: SSN (System Service Number) Mappinghttps://0xmaz.me/posts/hookchain#step-1-ssn-system-service-number-mapping
+### Step 1: SSN (System Service Number) Mapping
 
 Every system call in Windows has an associated System Service Number (SSN), which is used to identify the syscall in the System Service Dispatch Table (SSDT). HookChain maps these SSNs dynamically.
 
@@ -38,11 +38,11 @@ For example:
 
 https://github.com/user-attachments/assets/be5461b5-2529-4682-9fa3-ca73354ed923
 
-### Step 2: Using Indirect Syscallshttps://0xmaz.me/posts/hookchain#step-2-using-indirect-syscalls
+### Step 2: Using Indirect Syscalls
 
 In this stage, HookChain skips over the hooked `NTDLL` functions by using **Halo’s Gate** or other techniques that identify unhooked neighboring functions in `NTDLL`.
 
-#### Example: Halo’s Gatehttps://0xmaz.me/posts/hookchain#example-halos-gate
+#### Example: Halo’s Gate
 
 Let’s assume the attacker wants to bypass `NtAllocateVirtualMemory` (which has been hooked by the EDR). HookChain does the following:
 
@@ -52,11 +52,11 @@ Let’s assume the attacker wants to bypass `NtAllocateVirtualMemory` (which has
 
 https://github.com/user-attachments/assets/a885671c-891d-46d5-930a-1532ae124e3d
 
-### Step 3: Modifying the IAT (Import Address Table)https://0xmaz.me/posts/hookchain#step-3-modifying-the-iat-import-address-table
+### Step 3: Modifying the IAT (Import Address Table)
 
 One of the core strategies in HookChain is modifying the **Import Address Table (IAT)** of key DLLs like `kernel32.dll`, `kernelbase.dll`, and others. The IAT stores pointers to imported functions, and by overwriting these pointers, HookChain ensures that API calls bypass the EDR’s hooks.
 
-#### Example: IAT Hookinghttps://0xmaz.me/posts/hookchain#example-iat-hooking
+#### Example: IAT Hooking
 
 1. **Identifying the Target DLL**: Suppose the attacker knows that the target application uses `kernel32.dll` to make system calls such as `ReadFile` or `WriteFile`, which ultimately call `NTDLL` functions (e.g., `NtReadFile` and `NtWriteFile`).
 2. **Hooking the IAT**: HookChain modifies the IAT entry for `ReadFile` in `kernel32.dll` so that it points to HookChain’s custom handler instead of the original function. This handler then executes an indirect syscall (bypassing the EDR) to the original `NTDLL` function.
@@ -64,7 +64,7 @@ One of the core strategies in HookChain is modifying the **Import Address Table 
 
 https://github.com/user-attachments/assets/d962cda9-8922-4fc4-9989-773105694b3b
 
-## Technical Walkthrough of HookChain’s Execution Flowhttps://0xmaz.me/posts/hookchain#technical-walkthrough-of-hookchains-execution-flow
+## Technical Walkthrough of HookChain’s Execution Flow
 
 https://github.com/user-attachments/assets/5e5d427c-5054-4661-96f6-c8b9fa8a267e
 
@@ -87,7 +87,7 @@ By Following these steps we gain shellcode injection successfully
 
 https://github.com/user-attachments/assets/797220b9-f0d3-47b6-95ad-e2b36f762b89
 
-## Real-World Testinghttps://0xmaz.me/posts/hookchain#real-world-testing
+## Real-World Testing
 
 **Here’s the results of our shellcode injector using HookChain Technique**
 
@@ -97,7 +97,7 @@ https://github.com/user-attachments/assets/2e11c558-0e75-48db-8a1a-bb20f3b20a42
 
 https://github.com/user-attachments/assets/9718f5d6-7c99-42b3-8680-52f493e442f6
 
-## Real-World Case Study: Lazarus Group and HookChain Techniqueshttps://0xmaz.me/posts/hookchain#real-world-case-study-lazarus-group-and-hookchain-techniques
+## Real-World Case Study: Lazarus Group and HookChain Techniques
 
 Advanced Persistent Threat (APT) groups, like **Lazarus Group**, have been known to use techniques that bear similarities to HookChain. In a 2021 attack, Lazarus used a variant of their malware toolkit that bypassed kernel and user-mode EDR monitoring by employing direct syscalls.
 
@@ -107,19 +107,19 @@ HookChain takes this one step further by leveraging **dynamic syscall mapping** 
 
 HookChain’s ability to sidestep NTDLL hooks has proven effective in evading detection, allowing attackers to carry out their operations undisturbed.
 
-## Advanced Bypassing Mechanisms: Comparing HookChain to SysWhispershttps://0xmaz.me/posts/hookchain#advanced-bypassing-mechanisms-comparing-hookchain-to-syswhispers
+## Advanced Bypassing Mechanisms: Comparing HookChain to SysWhispers
 
 **SysWhispers** is another technique designed to bypass hooked Windows APIs by directly invoking syscalls. However, HookChain distinguishes itself through **dynamic SSN mapping** and **neighboring function redirection**, which makes it more adaptable in scenarios where multiple functions are hooked or when syscall numbers change between Windows versions.
 
 While SysWhispers relies on predefined syscall numbers and static syscall stubs, HookChain dynamically adjusts its approach in real time. This makes HookChain more resilient in scenarios where EDR solutions monitor multiple APIs or hook kernel-mode functions.
 
-## The Future of EDR and HookChainhttps://0xmaz.me/posts/hookchain#the-future-of-edr-and-hookchain
+## The Future of EDR and HookChain
 
 As **HookChain** becomes more widely adopted by threat actors, EDR solutions will need to evolve. One promising area of development is **hypervisor-based monitoring**, which can intercept and analyze syscalls before they reach the OS kernel. **Artificial Intelligence (AI)** and **machine learning** models will also become critical, as they can learn to detect suspicious syscall behavior based on subtle anomalies that static detection methods miss.
 
 Moreover, **behavioral-driven syscall analysis** could become a key defense, enabling EDRs to not just track syscalls but understand their context and flow. This would make it much harder for techniques like HookChain to evade detection without raising red flags.
 
-## Challenges for EDR Solutionshttps://0xmaz.me/posts/hookchain#challenges-for-edr-solutions
+## Challenges for EDR Solutions
 
 EDR systems typically rely on hooks placed in user-mode APIs like NTDLL to monitor and block malicious activities. However, many EDRs do not monitor NTDLL comprehensively enough, leaving certain hooks vulnerable to bypass techniques like HookChain. **94% of analyzed EDR solutions did not present hooks in the subsystem layer above NTDLL**.
 
@@ -129,13 +129,13 @@ https://github.com/user-attachments/assets/9d14495c-93c4-44f4-a8cb-d8637e4b216f
 
 **note**:from Helvio Carvalho Junior paper
 
-## Conclusion: The Arms Race Continueshttps://0xmaz.me/posts/hookchain#conclusion-the-arms-race-continues
+## Conclusion: The Arms Race Continues
 
 HookChain exemplifies the next evolution in **EDR evasion**, demonstrating how attackers continue to innovate new techniques to bypass even the most sophisticated defenses. As organizations become more reliant on advanced security solutions, the need to stay ahead of these emerging techniques has never been greater. Defenders must combine **kernel-level monitoring**, **behavioral analysis**, and continuous threat intelligence to stay ahead in this ever-changing battlefield.
 
 In the end, cybersecurity is a game of cat-and-mouse, and as defenders adapt to techniques like HookChain, attackers will no doubt devise even more creative methods to achieve their goals.
 
-## Referenceshttps://0xmaz.me/posts/hookchain#references
+## References
 
 [Helvio Carvalho Junior. 2024. HookChain](https://arxiv.org/abs/2404.16856): I’ve expanded upon this foundational work by adding further implementations and advancements to enhance the approach outlined in the research.
 

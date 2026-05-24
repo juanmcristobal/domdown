@@ -1,6 +1,6 @@
 ---
 title: "As AI Supercharges Phishing Scams, 1Password Introduces Built-In Protection | 1Password"
-source: "https://1password.com/blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection"
+source: /blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection
 published: "2026-01-22T00:00:00.000Z"
 description: "AI is making phishing attacks tougher to spot, but 1Password’s new feature helps prevent people and businesses from being victimized."
 ---
@@ -14,8 +14,8 @@ January 22, 2026 - 9 min
 
 ![](https://images.ctfassets.net/3091ajzcmzlr/4Ln6oiLGExYkimZbFhV7ys/606a1e61d5de43740fbb2a1df7e043f5/Blog-Header_Cyber_Attack_1920x1080.png?w=3840&q=70&fm=avif)
 
-- [News](https://1password.com/blog/categories/news)
-- [Tips & advice](https://1password.com/blog/categories/tips-advice)
+- [News](/blog/categories/news)
+- [Tips & advice](/blog/categories/tips-advice)
 
 Phishing attacks are everywhere these days. People encounter them while shopping, job hunting, reading work emails, and checking personal texts. Thanks to AI-powered scammers, phishing has become both more common and harder to spot, leading to disastrous consequences. A phishing attack on a business [costs an average](https://www.ibm.com/reports/data-breach) of $4.8 million, and attacks on individuals can drain bank accounts and wreck credit scores.
 
@@ -168,14 +168,14 @@ _1Password conducted this study using an online survey prepared by_[KW Research]
 
 ## Continue Reading
 
-[November 5, 2025 Survey: Holiday scammers are getting bolder with AI, and Americans are taking the bait](https://1password.com/blog/holiday-phishing-scams)
+[November 5, 2025 Survey: Holiday scammers are getting bolder with AI, and Americans are taking the bait](/blog/holiday-phishing-scams)
 
-[News](https://1password.com/blog/categories/news)
+[News](/blog/categories/news)
 
-[Tips & advice](https://1password.com/blog/categories/tips-advice)
+[Tips & advice](/blog/categories/tips-advice)
 
-[October 27, 2025 Utah Mammoth and Utah Jazz score with identity security](https://1password.com/blog/utah-mammoth-and-utah-jazz-score-with-identity-security)
+[October 27, 2025 Utah Mammoth and Utah Jazz score with identity security](/blog/utah-mammoth-and-utah-jazz-score-with-identity-security)
 
-[Partners](https://1password.com/blog/categories/partners)
+[Partners](/blog/categories/partners)
 
-[Extended Access Management](https://1password.com/blog/categories/extended-access-management)
+[Extended Access Management](/blog/categories/extended-access-management)

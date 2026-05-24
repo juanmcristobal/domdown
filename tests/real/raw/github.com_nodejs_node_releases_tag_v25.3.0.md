@@ -51,3 +51,8 @@ lib:
 - ([CVE-2026-21637](https://github.com/advisories/GHSA-ggxc-26fx-987r)) route callback exceptions through error handlers (Matteo Collina) [nodejs-private/node-private#790](https://github.com/nodejs-private/node-private/pull/790)
 
 ### Commits
+
+### Assets
+
+- [Source code (zip)](https://github.com/nodejs/node/archive/refs/tags/v25.3.0.zip) 2026-01-13T12:49:52Z
+- [Source code (tar.gz)](https://github.com/nodejs/node/archive/refs/tags/v25.3.0.tar.gz) 2026-01-13T12:49:52Z

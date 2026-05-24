@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, replace
+from urllib.parse import urljoin
+from urllib.request import Request, urlopen
 
-from bs4 import Tag
+from bs4 import BeautifulSoup, Tag
 
 from .._core import PipelineContext
 
@@ -80,6 +82,8 @@ class GitHubAdapter:
             blob_root = _select_first(context.document, GITHUB_BLOB_ROOT_SELECTORS)
             if blob_root is not None:
                 context.document = blob_root
+        if kind == "release":
+            _expand_release_assets(context.document, context.options.base_url or GITHUB_BASE_URL)
         if kind == "issue":
             issue_author = _meta_content(context.document, "meta[property='og:author:username']")
             issue_root = _select_first(context.document, (".repository-content", ".js-repo-pjax-container"))
@@ -183,3 +187,42 @@ def _raw_blob_text(document: Tag | None) -> str:
         if isinstance(raw_lines, list) and all(isinstance(line, str) for line in raw_lines):
             return "\n".join(raw_lines).strip()
     return ""
+
+
+def _expand_release_assets(document: Tag | None, base_url: str) -> None:
+    """Inline GitHub's lazy-loaded release assets fragment into the release body."""
+
+    if document is None:
+        return
+    include_fragment = document.select_one("include-fragment[src*='/releases/expanded_assets/']")
+    if not isinstance(include_fragment, Tag):
+        return
+    src = str(include_fragment.get("src", "")).strip()
+    if not src:
+        return
+    fragment_url = urljoin(base_url or GITHUB_BASE_URL, src)
+    try:
+        request = Request(fragment_url, headers={"User-Agent": "domdown/1.0"})
+        with urlopen(request, timeout=10) as response:
+            fragment_html = response.read().decode("utf-8", errors="replace")
+    except OSError:
+        return
+    fragment_document = BeautifulSoup(fragment_html, "html.parser")
+    fragment_root = fragment_document.select_one("div.Box.Box--condensed") or fragment_document.select_one("ul")
+    if fragment_root is None:
+        return
+    body_root = _select_first(document, ("div[data-pjax='true'][data-test-selector='body-content']",))
+    if body_root is None:
+        return
+    markdown_body = body_root.select_one(".markdown-body")
+    if not isinstance(markdown_body, Tag):
+        markdown_body = body_root
+
+    assets_soup = BeautifulSoup("", "html.parser")
+    assets_container = assets_soup.new_tag("section")
+    heading = assets_soup.new_tag("h3")
+    heading.string = "Assets"
+    assets_container.append(heading)
+    assets_container.append(fragment_root)
+    markdown_body.append(assets_container)
+    include_fragment.decompose()
