@@ -57,6 +57,18 @@
       "html": "html/nisos.com_blog_dprk-remote-worker-fraud-interview.html",
       "markdown": "raw/nisos.com_blog_dprk-remote-worker-fraud-interview.md",
       "description": "Interview-style article with strong frontmatter and inline formatting."
+    },
+    {
+      "id": "0xmaz_hookchain_edr_bypass",
+      "html": "html/0xmaz.me_posts_HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques.html",
+      "markdown": "raw/0xmaz.me_posts_HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques.md",
+      "description": "Technical security article with partial selectors matching [class*='content'] patterns."
+    },
+    {
+      "id": "1password_ai_phishing_protection",
+      "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
+      "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",
+      "description": "Security blog post testing partial selectors with real-world content."
     }
   ]
 }
