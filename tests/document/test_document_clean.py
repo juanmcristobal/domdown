@@ -4,6 +4,17 @@ from bs4 import BeautifulSoup
 
 from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
 from domdown._document import clean_root, choose_root, parse_html
+from domdown._document.clean import (
+    _is_small_structural_block,
+    _looks_like_about_block,
+    _looks_like_boilerplate,
+    _looks_like_header_block,
+    _looks_like_link_chrome,
+    _looks_like_noise,
+    _looks_like_related_block,
+    _marker_text,
+    _noise_tokens,
+)
 from tests.fixtures import (
     ARTICLE_ARTICLE_CHROME_HTML,
     ARTICLE_DIVI_ABOUT_AND_FAQ_HTML,
@@ -292,6 +303,59 @@ def test_clean_root_does_not_drop_article_content_containing_search_results_phra
 
     assert "Online ads or search results: 26%" in text
     assert "Body" in text
+
+
+def test_clean_helper_heuristics_cover_common_structural_cases() -> None:
+    """Helper heuristics should recognize the common chrome patterns they are meant to catch."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="share-widget">Share this article</div>
+          <a href="/image"><img src="/img.png" alt="Image" /></a>
+          <div class="more share">more</div>
+          <div class="links">
+            <a href="/1">One</a><a href="/2">Two</a><a href="/3">Three</a><a href="/4">Four</a><a href="/5">Five</a>
+            <a href="/6">Six</a><a href="/7">Seven</a><a href="/8">Eight</a><a href="/9">Nine</a><a href="/10">Ten</a>
+            <a href="/11">Eleven</a><a href="/12">Twelve</a><a href="/13">Thirteen</a><a href="/14">Fourteen</a><a href="/15">Fifteen</a>
+            <a href="/16">Sixteen</a><a href="/17">Seventeen</a><a href="/18">Eighteen</a><a href="/19">Nineteen</a><a href="/20">Twenty</a>
+          </div>
+          <div class="article-header">
+            <h1>Example Title</h1>
+            <time datetime="2026-05-22">May 22, 2026</time>
+          </div>
+          <section class="related-categories">
+            <h2>Related Articles</h2>
+            <a href="/news">News</a>
+            <a href="/tips">Tips</a>
+          </section>
+          <div class="docs-feedback">
+            Thanks for letting us know this page needs work.
+          </div>
+          <div class="about-box">
+            <h2>About Example</h2>
+            <a href="/more">More</a>
+          </div>
+          <div class="small">
+            <p>One</p>
+            <p>Two</p>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    assert _looks_like_noise(soup.select_one(".share-widget")) is True
+    assert _looks_like_noise(soup.find("a")) is False
+    assert _looks_like_noise(soup.select_one(".more.share")) is True
+    assert _looks_like_link_chrome(soup.select_one(".links")) is True
+    assert _looks_like_header_block(soup.select_one(".article-header")) is True
+    assert _looks_like_related_block(soup.select_one(".related-categories")) is True
+    assert _looks_like_boilerplate(soup.select_one(".docs-feedback")) is True
+    assert _looks_like_about_block(soup.select_one(".about-box")) is True
+    assert _is_small_structural_block(soup.select_one(".small")) is True
+    assert _marker_text(soup.select_one(".about-box")).strip() == "about-box"
+    assert _noise_tokens(("share-widget",), "node-share") == {"share-widget", "share", "widget", "node-share", "node"}
 
 
 def test_clean_root_removes_paid_access_cta_and_header_chrome() -> None:

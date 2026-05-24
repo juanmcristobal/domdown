@@ -3,7 +3,17 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions
-from domdown.markdown.block import render_block
+from domdown.markdown.block import (
+    _collect_definition_items,
+    _collect_definition_items_from_node,
+    _definition_label_child,
+    _looks_like_definition_list,
+    _parse_definition_item,
+    render_block,
+    render_container,
+    render_definition_list,
+    render_figure,
+)
 
 
 def test_render_block_covers_headings_paragraphs_and_quotes() -> None:
@@ -93,6 +103,137 @@ def test_render_block_renders_captioned_figures_as_image_then_caption() -> None:
     )
 
     assert render_block(soup.figure, DomdownOptions()) == '![](/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F021f5a89f9b3ba1755f9a2315bc63be855259532-3840x1762.png&w=3840&q=75)\n\n_Left:_Character archetypes form a "persona space," with the Assistant at one extreme of the "Assistant Axis." _Right:_ Capping drift along this axis prevents models (here, Llama 3.3 70B) from drifting into alternative personas and behaving in harmful ways.'
+
+
+def test_render_block_covers_inline_and_block_fallbacks() -> None:
+    """Block rendering should dispatch to the expected specialized handlers."""
+
+    soup = BeautifulSoup(
+        """
+        <div>
+          text
+          <a href="/docs">Docs</a>
+          <br />
+          <pre><code>print(1)</code></pre>
+          <ul><li>One</li></ul>
+          <ol><li>Two</li></ol>
+          <table><tr><td>Cell</td></tr></table>
+          <span>Fallback</span>
+        </div>
+        """,
+        "lxml",
+    )
+
+    children = [child for child in soup.div.children if getattr(child, "name", None)]
+
+    assert render_block(123, DomdownOptions()) == ""
+    assert render_block(children[0], DomdownOptions()) == "[Docs](/docs)"
+    assert render_block(children[1], DomdownOptions()) == ""
+    assert render_block(children[2], DomdownOptions()) == "```\nprint(1)\n```"
+    assert render_block(children[3], DomdownOptions()) == "- One"
+    assert render_block(children[4], DomdownOptions()) == "1. Two"
+    assert render_block(children[5], DomdownOptions()) == "| Cell |\n| --- |"
+    assert render_block(children[6], DomdownOptions()) == "Fallback"
+
+
+def test_render_figure_without_caption_uses_container_rendering() -> None:
+    """Figures without a caption should fall back to the container renderer."""
+
+    soup = BeautifulSoup(
+        """
+        <figure>
+          <img src="https://example.com/a.png" alt="Example" />
+        </figure>
+        """,
+        "lxml",
+    )
+
+    assert render_figure(soup.figure, DomdownOptions()) == "![Example](https://example.com/a.png)"
+
+
+def test_render_figure_ignores_empty_captions() -> None:
+    """Empty figcaptions should not add blank markdown blocks."""
+
+    soup = BeautifulSoup(
+        """
+        <figure>
+          <img src="https://example.com/a.png" alt="Example" />
+          <figcaption><span></span></figcaption>
+        </figure>
+        """,
+        "lxml",
+    )
+
+    assert render_figure(soup.figure, DomdownOptions()) == "![Example](https://example.com/a.png)"
+
+
+def test_definition_list_helpers_cover_explicit_labels_and_anchor_rows() -> None:
+    """Definition list helpers should recognize both labeled rows and permalink rows."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="metadata">
+          <div class="row">
+            <span class="field-label">Platforms:</span> Windows
+          </div>
+          <div class="row">
+            <a href="/versions/v19/techniques/T1055/004/">Version Permalink</a>
+          </div>
+          <div class="row">
+            <span class="field-label">Version:</span> 2.0
+          </div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    row = soup.select_one(".row")
+    assert row is not None
+    assert _definition_label_child(row, DomdownOptions()) is not None
+    assert _parse_definition_item(row, DomdownOptions()) == ("Platforms", "Windows")
+
+    anchor_row = soup.select(".row")[1]
+    assert _parse_definition_item(anchor_row, DomdownOptions()) == (
+        "Version Permalink",
+        '<a href="/versions/v19/techniques/T1055/004/">Version Permalink</a>',
+    )
+
+    assert _looks_like_definition_list(soup.div, DomdownOptions()) is True
+    assert render_definition_list(soup.div, DomdownOptions()) == """<dl>
+<dt>Platforms</dt>
+<dd>Windows</dd>
+<dt>Version Permalink</dt>
+<dd><a href="/versions/v19/techniques/T1055/004/">Version Permalink</a></dd>
+<dt>Version</dt>
+<dd>2.0</dd>
+</dl>"""
+
+
+def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
+    """Small or non-metadata blocks should stay as normal container content."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="wrapper">
+          <div class="row"><span class="field-label">Only one:</span> Item</div>
+          <div class="row"><span class="field-label">Two:</span> Item</div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    assert _collect_definition_items(soup.div, DomdownOptions()) == [("Only one", "Item"), ("Two", "Item")]
+    assert _collect_definition_items_from_node(soup.select_one(".row"), DomdownOptions()) == [("Only one", "Item")]
+    assert _looks_like_definition_list(soup.div, DomdownOptions()) is False
+    assert render_definition_list(soup.div, DomdownOptions()) == "Only one:\n\nItem\n\nTwo:\n\nItem"
+
+
+def test_render_container_collapses_empty_children() -> None:
+    """Container rendering should drop empty child nodes and normalize spacing."""
+
+    soup = BeautifulSoup("<div><p>First</p><script>skip()</script><p>Second</p></div>", "lxml")
+
+    assert render_container(soup.div, DomdownOptions()) == "First\n\nSecond"
 
 
 def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:

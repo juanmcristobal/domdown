@@ -1,6 +1,18 @@
 from __future__ import annotations
 
 from domdown._document import choose_root, parse_html
+from domdown._document.select import (
+    _best_content_subtree,
+    _best_page_shell_child,
+    _collect_root_candidates,
+    _contains_page_shell_child,
+    _looks_like_layout_shell,
+    _pick_best_root_candidate,
+    _refine_content_root,
+    _root_candidate_penalty,
+    _root_selectors,
+    _score_content,
+)
 from tests.fixtures import ARTICLE_SHELL_HTML
 
 
@@ -288,3 +300,70 @@ def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
     root = choose_root(soup, prefer_article_body=True)
 
     assert root.name == "main"
+
+
+def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
+    """Selection helpers should keep their shell and scoring branches reachable."""
+
+    soup = parse_html(
+        """
+        <html>
+          <body>
+            <div class="wrapper">
+              <div class="page-wrapper">
+                <header>Header</header>
+                <main>
+                  <div class="content">
+                    <p>This is the actual article body paragraph one.</p>
+                    <p>This is the actual article body paragraph two.</p>
+                  </div>
+                </main>
+              </div>
+              <div class="container-fluid">
+                <main>
+                  <p>This content lives in a bootstrap wrapper.</p>
+                </main>
+              </div>
+            </div>
+          </body>
+        </html>
+        """
+    )
+
+    selectors_true = _root_selectors(True)
+    selectors_false = _root_selectors(False)
+    assert selectors_true.index(".post-body") < selectors_true.index(".articlebody")
+    assert selectors_false.index(".articlebody") < selectors_false.index(".post-body")
+
+    wrapper = soup.select_one(".wrapper")
+    page_wrapper = soup.select_one(".page-wrapper")
+    container = soup.select_one(".container-fluid")
+    content = soup.select_one(".content")
+    assert wrapper is not None
+    assert page_wrapper is not None
+    assert container is not None
+    assert content is not None
+
+    assert _looks_like_layout_shell(wrapper) is True
+    assert _contains_page_shell_child(wrapper) is True
+    assert _best_page_shell_child(wrapper) is page_wrapper
+
+    assert _score_content(content) > _score_content(container)
+    assert _root_candidate_penalty(container) == -80.0
+    assert _root_candidate_penalty(wrapper) == -90.0
+    assert _root_candidate_penalty(parse_html("<div class='wrapper'><p>text</p></div>").div) == -25.0
+
+    candidates = _collect_root_candidates(soup, (".content", "[class*='content']"))
+    assert len(candidates) >= 1
+    assert candidates[0][0].get("class") == ["content"]
+    assert _pick_best_root_candidate([(wrapper, 1.0, 0), (content, 2.0, 1)]) is content
+
+
+def test_select_private_helpers_cover_refinement_fallbacks() -> None:
+    """Refinement should stop on paragraph-level and undersized candidates."""
+
+    shallow = parse_html("<html><body><div class='article-shell'><p>Short text.</p></div></body></html>")
+    assert _refine_content_root(shallow.div).name == "div"
+
+    small = parse_html("<html><body><div class='article-shell'><div class='content'><p>Just a few words here.</p></div></div></body></html>")
+    assert _best_content_subtree(small.div).name == "div"

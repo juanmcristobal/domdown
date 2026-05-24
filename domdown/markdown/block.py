@@ -153,23 +153,51 @@ def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str
     if len(direct_children) > 1:
         return None
 
-    text = render_inline_children(node, options).strip()
-    if not text:
-        return None
-
-    colon_index = text.find(":")
-    if 0 < colon_index < 80:
-        term = text[:colon_index].strip()
-        value = text[colon_index + 1 :].strip()
-        if term and value:
-            return term, escape(value)
+    label_child = _definition_label_child(node, options)
+    if label_child is not None:
+        label_text = render_inline_children(label_child, options).strip().removesuffix(":").strip()
+        if label_text:
+            value_parts: list[str] = []
+            for child in node.children:
+                if child is label_child:
+                    continue
+                rendered = render_inline(child, options)
+                if rendered:
+                    value_parts.append(rendered)
+            value = normalize_inline_text("".join(value_parts))
+            if value:
+                return label_text, escape(value)
 
     anchors = [child for child in node.find_all("a", recursive=True) if isinstance(child, Tag)]
     if len(anchors) == 1 and len(direct_children) == 1:
         anchor = anchors[0]
         term = anchor.get_text(" ", strip=True)
-        return term, str(anchor)
+        if term and normalize_inline_text(node.get_text(" ", strip=True)) == term:
+            return term, str(anchor)
 
+    return None
+
+
+def _definition_label_child(node: Tag, options: DomdownOptions) -> Tag | None:
+    """Find an explicit label element that should introduce a definition row."""
+
+    label_markers = {"card-title", "field-label", "label", "meta", "term", "title"}
+    for child in node.find_all(recursive=False):
+        if not isinstance(child, Tag):
+            continue
+        if child.name.lower() not in {"b", "strong", "span", "dt", "h1", "h2", "h3", "h4", "h5", "h6"}:
+            continue
+        classes = child.get("class") or ()
+        if isinstance(classes, (list, tuple)):
+            tokens = {str(token).lower() for token in classes}
+        else:
+            tokens = {str(classes).lower()}
+        marker_text = " ".join([*tokens, str(child.get("id", "")).lower()]).strip()
+        if tokens & label_markers or any(marker in marker_text for marker in label_markers):
+            return child
+        text = render_inline_children(child, options).strip()
+        if text.endswith(":") and 0 < len(text) <= 80 and "://" not in text:
+            return child
     return None
 
 
