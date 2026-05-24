@@ -93,3 +93,64 @@ def test_render_block_renders_captioned_figures_as_image_then_caption() -> None:
     )
 
     assert render_block(soup.figure, DomdownOptions()) == '![](/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F021f5a89f9b3ba1755f9a2315bc63be855259532-3840x1762.png&w=3840&q=75)\n\n_Left:_Character archetypes form a "persona space," with the Assistant at one extreme of the "Assistant Axis." _Right:_ Capping drift along this axis prevents models (here, Llama 3.3 70B) from drifting into alternative personas and behaving in harmful ways.'
+
+
+def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:
+    """Repeated label/value rows should render as a semantic definition list."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="technique-metadata">
+          <div class="row card-data">
+            <div class="col-md-1 px-0 text-center">
+              <span aria-hidden="true">ⓘ</span>
+            </div>
+            <div class="col-md-11 pl-0">
+              <span class="h5 card-title">Platforms:&nbsp;</span>Windows
+            </div>
+          </div>
+          <div class="row card-data">
+            <div class="col-md-1 px-0 text-center"></div>
+            <div class="col-md-11 pl-0">
+              <span class="h5 card-title">Version:&nbsp;</span>2.0
+            </div>
+          </div>
+          <div class="row card-data">
+            <div class="col-md-1 px-0 text-center"></div>
+            <div class="col-md-11 pl-0">
+              <span class="h5 card-title">Created:&nbsp;</span>14 January 2020
+            </div>
+          </div>
+          <div class="row card-data">
+            <div class="col-md-1 px-0 text-center"></div>
+            <div class="col-md-11 pl-0">
+              <span class="h5 card-title">Last Modified:&nbsp;</span>12 May 2026
+            </div>
+          </div>
+          <div class="text-center pt-2 version-button live">
+            <div class="live">
+              <a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a>
+            </div>
+            <div class="permalink">
+              <a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a>
+            </div>
+          </div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    assert render_block(soup.div, DomdownOptions()) == """<dl>
+<dt>Platforms</dt>
+<dd>Windows</dd>
+<dt>Version</dt>
+<dd>2.0</dd>
+<dt>Created</dt>
+<dd>14 January 2020</dd>
+<dt>Last Modified</dt>
+<dd>12 May 2026</dd>
+<dt>Version Permalink</dt>
+<dd><a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a></dd>
+<dt>Live Version</dt>
+<dd><a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a></dd>
+</dl>"""

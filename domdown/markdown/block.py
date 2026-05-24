@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from html import escape
+
 from bs4 import NavigableString, Tag
 
 from .._constants import SKIP_TAGS
@@ -34,6 +36,8 @@ def render_block(node: object, options: DomdownOptions) -> str:
         return render_image(node, options)
     if name == "figure":
         return render_figure(node, options)
+    if name in {"div", "section", "article"} and _looks_like_definition_list(node, options):
+        return render_definition_list(node, options)
     if name == "a":
         return render_link(node, options)
     if name == "br":
@@ -88,6 +92,85 @@ def render_figure(node: Tag, options: DomdownOptions) -> str:
     if caption_text:
         media_parts.append(caption_text)
     return normalize_markdown_text("\n\n".join(media_parts))
+
+
+def render_definition_list(node: Tag, options: DomdownOptions) -> str:
+    """Render definition-style metadata blocks as a semantic HTML definition list."""
+
+    items = _collect_definition_items(node, options)
+    if len(items) < 3:
+        return render_container(node, options)
+
+    lines = ["<dl>"]
+    for term, value_html in items:
+        lines.append(f"<dt>{escape(term)}</dt>")
+        lines.append(f"<dd>{value_html}</dd>")
+    lines.append("</dl>")
+    return "\n".join(lines)
+
+
+def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
+    """Detect repeated label/value rows that can be normalized to <dl>."""
+
+    return len(_collect_definition_items(node, options)) >= 3
+
+
+def _collect_definition_items(node: Tag, options: DomdownOptions) -> list[tuple[str, str]]:
+    """Extract generic label/value pairs from a metadata-style container."""
+
+    items: list[tuple[str, str]] = []
+    for child in node.find_all(recursive=False):
+        if not isinstance(child, Tag):
+            continue
+        items.extend(_collect_definition_items_from_node(child, options))
+    return items
+
+
+def _collect_definition_items_from_node(node: Tag, options: DomdownOptions) -> list[tuple[str, str]]:
+    """Extract one or more definition items from a candidate child node."""
+
+    parsed = _parse_definition_item(node, options)
+    if parsed is not None:
+        return [parsed]
+
+    direct_children = [child for child in node.find_all(recursive=False) if isinstance(child, Tag)]
+    if len(direct_children) < 2:
+        return []
+
+    if any(child.name.lower() in {"p", "ul", "ol", "table", "figure", "blockquote", "pre"} for child in direct_children):
+        return []
+
+    nested_items: list[tuple[str, str]] = []
+    for child in direct_children:
+        nested_items.extend(_collect_definition_items_from_node(child, options))
+    return nested_items
+
+
+def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str] | None:
+    """Parse a single label/value row from a node."""
+
+    direct_children = [child for child in node.find_all(recursive=False) if isinstance(child, Tag)]
+    if len(direct_children) > 1:
+        return None
+
+    text = render_inline_children(node, options).strip()
+    if not text:
+        return None
+
+    colon_index = text.find(":")
+    if 0 < colon_index < 80:
+        term = text[:colon_index].strip()
+        value = text[colon_index + 1 :].strip()
+        if term and value:
+            return term, escape(value)
+
+    anchors = [child for child in node.find_all("a", recursive=True) if isinstance(child, Tag)]
+    if len(anchors) == 1 and len(direct_children) == 1:
+        anchor = anchors[0]
+        term = anchor.get_text(" ", strip=True)
+        return term, str(anchor)
+
+    return None
 
 
 def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:
