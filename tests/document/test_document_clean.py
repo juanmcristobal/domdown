@@ -435,6 +435,29 @@ def test_clean_root_removes_paid_access_cta_and_header_chrome() -> None:
     assert "The second article paragraph also stays in the body." in text
 
 
+def test_clean_root_removes_standalone_template_placeholders() -> None:
+    """Cleanup should drop bare template placeholders such as cta markers."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body.</p>
+          {{cta}}
+          <p>More body.</p>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "{{cta}}" not in text
+    assert "Body." in text
+    assert "More body." in text
+
+
 def test_clean_root_removes_footer_legal_chrome() -> None:
     """Cleanup should drop legal footer text and keep the article body."""
 

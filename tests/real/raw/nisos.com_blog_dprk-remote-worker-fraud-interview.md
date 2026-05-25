@@ -80,7 +80,3 @@ Common signals include inconsistent communication, limited digital presence, ove
 #### How does DPRK remote worker fraud create insider threat risk?
 
 Once hired, these individuals may gain access to internal systems, data, and teams. This creates a direct path to insider threat, including data exposure, IP theft, and operational risk.
-
-[Employment Shield](https://nisos.com/services/employment-shield/)
-
-[Human Risk Management](https://nisos.com/solutions/human-risk/)

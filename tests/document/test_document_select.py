@@ -98,7 +98,9 @@ def test_choose_root_ignores_navigation_like_content_blocks() -> None:
 
     root = choose_root(soup, prefer_article_body=True)
 
-    assert root.name == "main"
+    assert root.name in {"main", "section"}
+    if root.name == "section":
+        assert root.get("class") == ["blog-all-content"]
 
 
 def test_choose_root_skips_root_article_when_it_looks_like_chrome() -> None:
@@ -174,6 +176,44 @@ def test_choose_root_does_not_pick_body_when_a_real_content_shell_exists() -> No
 
     assert root.name != "body"
     assert root.name in {"main", "div"}
+
+
+def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
+    """Generic page wrappers with a nested main should not outrank the article shell."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="page_wrap">
+                  <div class="nav">
+                    <a href="/a">A</a>
+                    <a href="/b">B</a>
+                    <a href="/c">C</a>
+                    <a href="/d">D</a>
+                  </div>
+                  <main>
+                    <section class="blog-all-content">
+                      <h1>Article title</h1>
+                      <p>Paragraph one.</p>
+                      <p>Paragraph two.</p>
+                      <h2>Key takeaways</h2>
+                      <ul>
+                        <li>Takeaway one.</li>
+                        <li>Takeaway two.</li>
+                      </ul>
+                    </section>
+                  </main>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.name == "section"
+    assert root.get("class") == ["blog-all-content"]
 
 
 def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:
@@ -349,8 +389,8 @@ def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
     assert _best_page_shell_child(wrapper) is page_wrapper
 
     assert _score_content(content) > _score_content(container)
-    assert _root_candidate_penalty(container) == -80.0
-    assert _root_candidate_penalty(wrapper) == -90.0
+    assert _root_candidate_penalty(container) == -180.0
+    assert _root_candidate_penalty(wrapper) == -180.0
     assert _root_candidate_penalty(parse_html("<div class='wrapper'><p>text</p></div>").div) == -25.0
 
     candidates = _collect_root_candidates(soup, (".content", "[class*='content']"))

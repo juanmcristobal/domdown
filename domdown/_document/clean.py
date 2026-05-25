@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bs4 import Comment, Tag
+from bs4 import Comment, NavigableString, Tag
 import re
 
 from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
@@ -11,6 +11,10 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
 
     for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
         comment.extract()
+
+    for text_node in list(root.find_all(string=True)):
+        if isinstance(text_node, NavigableString) and _looks_like_template_placeholder(str(text_node)) and not _is_within_code_block(text_node):
+            text_node.extract()
 
     for selector in remove_selectors:
         for node in root.select(selector):
@@ -248,6 +252,17 @@ def _is_within_preserved_block(node: Tag) -> bool:
     return False
 
 
+def _is_within_code_block(node: NavigableString) -> bool:
+    """Avoid stripping template placeholders from literal code samples."""
+
+    current = node.parent
+    while isinstance(current, Tag):
+        if current.name in {"code", "pre", "textarea"}:
+            return True
+        current = current.parent if isinstance(current.parent, Tag) else None
+    return False
+
+
 def _is_tag_href(href: str) -> bool:
     """Return True for link targets that look like tag pages or tag anchors."""
 
@@ -256,3 +271,9 @@ def _is_tag_href(href: str) -> bool:
     if href.startswith("#"):
         return True
     return "/tag/" in href or "/tags/" in href
+
+
+def _looks_like_template_placeholder(text: str) -> bool:
+    """Detect standalone template placeholders such as {{cta}}."""
+
+    return bool(re.fullmatch(r"\s*\{\{\s*[a-z0-9_-]+\s*\}\}\s*", text.strip(), re.IGNORECASE))

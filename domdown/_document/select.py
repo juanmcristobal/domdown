@@ -163,7 +163,9 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     if _looks_like_page_shell(candidate):
         return -120.0
     if _contains_page_shell_child(candidate):
-        return -90.0
+        return -180.0
+    if candidate.name not in {"article", "main"} and candidate.find("main", recursive=False) is not None:
+        return -180.0
     classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
