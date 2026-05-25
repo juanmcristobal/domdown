@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from domdown import html_to_markdown
+from domdown._core import DomdownOptions
 from . import RealExampleCase, load_real_cases
 
 
@@ -16,7 +17,8 @@ def _case_param(case: RealExampleCase) -> pytest.ParameterSet:
 def test_real_example_cases_match_the_expected_markdown_snapshot(case: RealExampleCase) -> None:
     """Real HTML fixtures should match the Markdown snapshot stored in tests/real/raw."""
 
-    actual = html_to_markdown(case.html_text())
+    options = DomdownOptions(base_url=case.base_url) if case.base_url else DomdownOptions()
+    actual = html_to_markdown(case.html_text(), options)
     expected = case.markdown_text()
 
     assert actual == expected

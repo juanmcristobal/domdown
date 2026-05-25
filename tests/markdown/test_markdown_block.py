@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup
 
-from domdown._core import DomdownOptions
 from domdown.markdown.block import (
     _collect_definition_items,
     _collect_definition_items_from_node,
@@ -14,6 +13,7 @@ from domdown.markdown.block import (
     render_definition_list,
     render_figure,
 )
+from domdown._core import DomdownOptions
 
 
 def test_render_block_covers_headings_paragraphs_and_quotes() -> None:
@@ -218,14 +218,9 @@ def test_definition_list_helpers_cover_explicit_labels_and_anchor_rows() -> None
     )
 
     assert _looks_like_definition_list(soup.div, DomdownOptions()) is True
-    assert render_definition_list(soup.div, DomdownOptions()) == """<dl>
-<dt>Platforms</dt>
-<dd>Windows</dd>
-<dt>Version Permalink</dt>
-<dd><a href="/versions/v19/techniques/T1055/004/">Version Permalink</a></dd>
-<dt>Version</dt>
-<dd>2.0</dd>
-</dl>"""
+    assert render_definition_list(soup.div, DomdownOptions()) == """- **Platforms:** Windows
+- **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/">Version Permalink</a>
+- **Version:** 2.0"""
 
 
 def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
@@ -251,14 +246,9 @@ def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
         "lxml",
     )
 
-    assert render_definition_list(soup.div, DomdownOptions()) == """<dl>
-<dt>Pixplus Pro Utilities View</dt>
-<dd><a href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">Pixplus Pro Utilities View</a></dd>
-<dt>Seller</dt>
-<dd>Hangzhou Denghong Technology Co., Ltd.</dd>
-<dt>Category</dt>
-<dd>Utilities</dd>
-</dl>"""
+    assert render_definition_list(soup.div, DomdownOptions()) == """- **Pixplus Pro Utilities View:** <a href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">Pixplus Pro Utilities View</a>
+- **Seller:** Hangzhou Denghong Technology Co., Ltd.
+- **Category:** Utilities"""
 
 
 def test_render_explicit_definition_list_as_markdown_bullets() -> None:
@@ -446,17 +436,10 @@ def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:
         "lxml",
     )
 
-    assert render_block(soup.div, DomdownOptions()) == """<dl>
-<dt>Platforms</dt>
-<dd>Windows</dd>
-<dt>Version</dt>
-<dd>2.0</dd>
-<dt>Created</dt>
-<dd>14 January 2020</dd>
-<dt>Last Modified</dt>
-<dd>12 May 2026</dd>
-<dt>Version Permalink</dt>
-<dd><a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a></dd>
-<dt>Live Version</dt>
-<dd><a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a></dd>
-</dl>"""
+    assert render_block(soup.div, DomdownOptions()) == """- **Platforms:** Windows
+- **Version:** 2.0
+- **Created:** 14 January 2020
+- **Last Modified:** 12 May 2026
+- **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a>
+- **Live Version:** <a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a>"""
+

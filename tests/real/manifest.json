@@ -65,6 +65,19 @@
       "description": "Technical security article with partial selectors matching [class*='content'] patterns."
     },
     {
+      "id": "mitre_attack_t1102_001",
+      "html": "html/attack.mitre.org_techniques_T1102_001.html",
+      "markdown": "raw/attack.mitre.org_techniques_T1102_001.md",
+      "base_url": "https://attack.mitre.org/techniques/T1102/001/",
+      "description": "MITRE ATT&CK technique page with a metadata card that should render as bullets."
+    },
+    {
+      "id": "gdatasoftware_acr_stealer_infrastructure",
+      "html": "html/blog.gdatasoftware.com_2026_03_38385-acr-stealer-infrastructure.html",
+      "markdown": "raw/blog.gdatasoftware.com_2026_03_38385-acr-stealer-infrastructure.md",
+      "description": "G DATA blog article with topic chrome and nested article content that should render as a full document."
+    },
+    {
       "id": "1password_ai_phishing_protection",
       "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
       "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",

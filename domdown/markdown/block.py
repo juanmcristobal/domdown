@@ -66,7 +66,7 @@ def render_container(node: Tag, options: DomdownOptions) -> str:
     """Render a tag by recursively rendering each child block."""
 
     parts = [
-        (part, _is_list_block_node(child))
+        (part, _is_list_block_node(child, options))
         for child in node.children
         if (part := render_block(child, options))
     ]
@@ -86,10 +86,15 @@ def _join_block_parts(parts: list[tuple[str, bool]]) -> str:
     return rendered
 
 
-def _is_list_block_node(node: object) -> bool:
+def _is_list_block_node(node: object, options: DomdownOptions) -> bool:
     """Return True for HTML nodes that render as Markdown list blocks."""
 
-    return isinstance(node, Tag) and node.name.lower() in {"ul", "ol", "dl"}
+    if not isinstance(node, Tag):
+        return False
+    name = node.name.lower()
+    if name in {"ul", "ol", "dl"}:
+        return True
+    return name in {"div", "section", "article"} and _looks_like_definition_list(node, options)
 
 
 def render_figure(node: Tag, options: DomdownOptions) -> str:
@@ -120,17 +125,15 @@ def render_figure(node: Tag, options: DomdownOptions) -> str:
 
 
 def render_definition_list(node: Tag, options: DomdownOptions) -> str:
-    """Render definition-style metadata blocks as a semantic HTML definition list."""
+    """Render definition-style metadata blocks as readable Markdown bullets."""
 
     items = _collect_definition_items(node, options)
     if len(items) < 3:
         return render_container(node, options)
 
-    lines = ["<dl>"]
+    lines: list[str] = []
     for term, value_html in items:
-        lines.append(f"<dt>{escape(term)}</dt>")
-        lines.append(f"<dd>{value_html}</dd>")
-    lines.append("</dl>")
+        lines.append(f"- **{term}:** {value_html}" if value_html else f"- **{term}:**")
     return "\n".join(lines)
 
 

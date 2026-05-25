@@ -16,6 +16,7 @@ class RealExampleCase:
     id: str
     html_path: Path
     markdown_path: Path
+    base_url: str | None = None
     description: str = ""
 
     def html_text(self) -> str:
@@ -42,6 +43,7 @@ def load_real_cases(layer: str | None = "core") -> list[RealExampleCase]:
                 id=item["id"],
                 html_path=REAL_TESTS_DIR / item["html"],
                 markdown_path=REAL_TESTS_DIR / item["markdown"],
+                base_url=item.get("base_url"),
                 description=item.get("description", ""),
             )
         )
