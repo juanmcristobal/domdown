@@ -29,6 +29,9 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
             if _looks_like_hero_chrome(node):
                 node.decompose()
                 continue
+            if _looks_like_metadata_bar(node):
+                node.decompose()
+                continue
             if _looks_like_decorative_image_block(node):
                 node.decompose()
                 continue
@@ -114,6 +117,27 @@ def _looks_like_header_block(node: Tag) -> bool:
     text_words = len(node.get_text(" ", strip=True).split())
     paragraph_count = len(node.find_all("p"))
     return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
+
+
+def _looks_like_metadata_bar(node: Tag) -> bool:
+    """Detect compact author/date/share bars near article headers."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    text_words = len(text.split())
+    if text_words > 24:
+        return False
+    if "published on" in text and ("written by" in text or "author" in text or "share:" in text):
+        return True
+    if "last updated on" in text or "updated on" in text:
+        return True
+    if text.startswith("written by ") and ("published on" in text or "share:" in text):
+        return True
+    marker_text = _marker_text(node)
+    if not any(token in marker_text for token in ("byline", "author", "date", "meta")):
+        return False
+    return bool(node.find("time")) and ("published" in text or "updated" in text)
 
 
 def _looks_like_hero_chrome(node: Tag) -> bool:
@@ -231,12 +255,37 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
     text = node.get_text(" ", strip=True).lower()
     if not text:
         return False
-    article_count = len(node.find_all("article"))
+    heading_count = len(node.find_all(["h1", "h2", "h3"]))
+    image_count = len(node.find_all("img"))
     text_words = len(text.split())
+    marker_text = _marker_text(node)
+    card_like_children = sum(
+        1
+        for child in node.find_all(True)
+        if isinstance(child, Tag)
+        and child is not node
+        and (
+            any(
+                token in _marker_text(child)
+                for token in (
+                    "card",
+                    "dyn-item",
+                )
+            )
+        )
+        and len(child.find_all(["h1", "h2", "h3"])) >= 1
+    )
+    if "similar posts" in text and heading_count >= 2 and image_count >= 2 and text_words <= 260:
+        return True
+    if card_like_children >= 2 and heading_count >= 2 and image_count >= 2 and text_words <= 260:
+        return True
+    article_count = len(node.find_all("article"))
     if article_count >= 2:
-        return any(phrase in text for phrase in ("latest", "related", "more from", "you may also like", "recommended", "blogs")) and text_words <= 220
-    if any(phrase in text for phrase in ("the latest from", "latest from", "related articles", "more from", "you may also like", "recommended")):
+        return any(phrase in text for phrase in ("latest", "related", "similar posts", "more from", "you may also like", "recommended", "blogs")) and text_words <= 220
+    if any(phrase in text for phrase in ("the latest from", "latest from", "related articles", "similar posts", "more from", "you may also like", "recommended")):
         return text_words <= 30
+    if any(token in marker_text for token in ("blog", "card", "posts", "feed", "related", "recommend", "category")) and card_like_children >= 2:
+        return text_words <= 220 and heading_count >= 2
     return False
 
 
@@ -246,6 +295,13 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
     text = node.get_text(" ", strip=True).lower()
     if not text:
         return False
+    if node.name.lower() == "main":
+        return False
+    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
+    paragraph_count = len(node.find_all("p"))
+    link_count = len(node.find_all("a"))
+    button_count = len(node.find_all("button"))
+    marker_text = _marker_text(node)
     if len(text.split()) > 80:
         return False
     cta_phrases = (
@@ -260,9 +316,13 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
     )
     if not any(phrase in text for phrase in cta_phrases):
         return False
-    link_count = len(node.find_all("a"))
-    button_count = len(node.find_all("button"))
-    return link_count + button_count >= 1
+    if link_count + button_count < 1:
+        return False
+    if any(marker in marker_text for marker in ("cta", "banner", "promo", "callout")):
+        return True
+    if "intro" in marker_text:
+        return False
+    return heading_count <= 2 and paragraph_count <= 3
 
 
 def _looks_like_navigation_block(node: Tag) -> bool:

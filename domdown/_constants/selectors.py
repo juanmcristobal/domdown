@@ -270,6 +270,8 @@ BOILERPLATE_PHRASES = (
     "how we can make the documentation better",
     "this post is for paid members only",
     "no results found",
+    "developing story",
+    "stay tuned for updates",
 )
 
 # Placeholder phrases used by portal-style shells that require JavaScript

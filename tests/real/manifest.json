@@ -96,6 +96,13 @@
       "description": "SafeDep article with compact hero chrome that should be removed."
     },
     {
+      "id": "aikido_axios_npm_compromised_maintainer_hijacked_rat",
+      "html": "html/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.html",
+      "markdown": "raw/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.md",
+      "base_url": "https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat/",
+      "description": "Aikido article with compact metadata bar and promotional wrappers that should be removed."
+    },
+    {
       "id": "encryptionconsulting_enterprise_guide_to_pqc_migration",
       "html": "html/encryptionconsulting.com_enterprise-guide-to-pqc-migration.html",
       "markdown": "raw/encryptionconsulting.com_enterprise-guide-to-pqc-migration.md",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from bs4 import BeautifulSoup
+from pathlib import Path
 
 from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
 from domdown._document import clean_root, choose_root, parse_html
@@ -8,6 +9,7 @@ from domdown._document.clean import (
     _is_small_structural_block,
     _looks_like_about_block,
     _looks_like_boilerplate,
+    _looks_like_article_feed_block,
     _looks_like_header_block,
     _looks_like_link_chrome,
     _looks_like_noise,
@@ -254,6 +256,27 @@ def test_clean_root_removes_html_comments() -> None:
 
     assert "more" not in cleaned.get_text(" ", strip=True)
     assert "Content" in cleaned.get_text(" ", strip=True)
+
+
+def test_clean_root_removes_blog_feed_card_strips() -> None:
+    """Cleanup should drop compact related-post feeds rendered as cards."""
+
+    html = Path(
+        "/home/juanmcristobal/projects/github/domdown/tests/real/html/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.html"
+    ).read_text()
+    soup = BeautifulSoup(html, "lxml")
+    feed = soup.find(class_="blog_category_section")
+    assert feed is not None
+    assert _looks_like_article_feed_block(feed)
+
+    wrapper = BeautifulSoup(f"<article>{feed}</article>", "lxml")
+    cleaned = clean_root(wrapper.article, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Supply Chain Attack Targets Laravel-Lang Packages with Credential Stealer" not in text
+    assert "Google API keys keep working after you delete them" not in text
+    assert "The Wild West of VS Code extensions and how a poisoned extension breached GitHub" not in text
+    assert "Aikido Endpoint" not in text
 
 
 def test_clean_root_removes_generic_boilerplate_phrases() -> None:
