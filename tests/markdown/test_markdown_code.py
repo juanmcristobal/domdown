@@ -14,6 +14,14 @@ def test_render_code_block_outputs_a_fenced_block_with_language() -> None:
     assert render_code_block(soup.pre, DomdownOptions()) == '```python\nprint("hi")\n```'
 
 
+def test_render_code_block_uses_data_language_when_present() -> None:
+    """Code blocks should prefer explicit data-language hints."""
+
+    soup = BeautifulSoup('<pre data-language="yaml"><code>- name: Run</code></pre>', "lxml")
+
+    assert render_code_block(soup.pre, DomdownOptions()) == "```yaml\n- name: Run\n```"
+
+
 def test_render_code_block_uses_a_longer_fence_when_the_code_contains_backticks() -> None:
     """The fence delimiter should expand when the code body already contains backticks."""
 

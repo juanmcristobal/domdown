@@ -33,6 +33,9 @@ def _detect_language(node: Tag, code_node: Tag | None) -> str:
     for tag in (code_node, node):
         if tag is None:
             continue
+        data_language = str(tag.get("data-language", "")).strip().lower()
+        if data_language:
+            return data_language
         classes = tag.get("class") or ()
         if not isinstance(classes, (list, tuple)):
             classes = (str(classes),)
