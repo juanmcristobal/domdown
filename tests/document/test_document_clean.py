@@ -23,6 +23,7 @@ from tests.fixtures import (
     ARTICLE_PAID_ACCESS_HTML,
     ARTICLE_SHELL_HTML,
 )
+from tests.real import load_real_cases
 
 
 def test_clean_root_removes_noise_and_promotes_lazy_loaded_images() -> None:
@@ -280,6 +281,46 @@ def test_clean_root_removes_generic_boilerplate_phrases() -> None:
     assert "Help improve this page" not in text
     assert "Learn how to contribute" not in text
     assert "Body" in text
+
+
+def test_clean_root_removes_tag_permalink_blocks_but_keeps_article_content() -> None:
+    """Cleanup should drop compact tag permalink blocks without removing body prose."""
+
+    case = next(case for case in load_real_cases() if case.id == "adnanthekhan_clinejection")
+    soup = parse_html(case.html_text())
+    root = soup.article
+
+    cleaned = clean_root(
+        root,
+        (
+            "[class*='share']",
+            "[id*='share']",
+            "[class*='follow']",
+            "[class*='social']",
+            "[class*='sponsored']",
+            "[rel*='sponsored']",
+            ".news-form",
+            ".article-info",
+            ".et_pb_title_meta_container",
+            ".et_pb_text_0",
+            ".dsm_open_icon",
+            ".dsm_close_icon",
+            ".dsm-faq-item-open_icon",
+            ".dsm-faq-item-close_icon",
+            "[class*='note-b']",
+            "[class*='dog_two']",
+        ),
+        SKIP_TAGS,
+    )
+
+    text = cleaned.get_text("\n", strip=True)
+
+    assert "[cicd]" not in text
+    assert "[githubactions]" not in text
+    assert "[cache-poisoning]" not in text
+    assert "[ai]" not in text
+    assert "Cline is an open-source AI coding tool" in text
+    assert "Overview" in text
 
 
 def test_clean_root_does_not_drop_article_content_containing_search_results_phrase() -> None:

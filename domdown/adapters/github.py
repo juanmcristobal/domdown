@@ -220,6 +220,7 @@ def _expand_release_assets(document: Tag | None, base_url: str) -> None:
 
     assets_soup = BeautifulSoup("", "html.parser")
     assets_container = assets_soup.new_tag("section")
+    assets_container["data-domdown-keep-assets"] = "true"
     heading = assets_soup.new_tag("h3")
     heading.string = "Assets"
     assets_container.append(heading)

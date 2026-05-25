@@ -21,14 +21,6 @@ February 9, 2026
 
 adnanthekhan
 
-[cicd](https://adnanthekhan.com/tag/cicd/)
-
-[githubactions](https://adnanthekhan.com/tag/githubactions/)
-
-[cache-poisoning](https://adnanthekhan.com/tag/cache-poisoning/)
-
-[ai](https://adnanthekhan.com/tag/ai/)
-
 ## Overview
 
 Cline is an open-source AI coding tool that integrates with developer IDEs such as VSCode and its many forks. Users can download Cline through the VS Code Marketplace or OpenVSX. Since Cline is an open-source project the team uses a GitHub for development. On December 21st, 2025, Cline maintainers added an AI agent to triage issues created on the repository. This AI agent ran within a GitHub Actions workflow and ran with broad privileges. You might be able to guess where this is heading…
@@ -375,13 +367,3 @@ Clinejection demonstrates an in-the-wild example of how **AI agent vulnerabiliti
 The individual components of this attack are not new. Prompt injection, Actions cache poisoning, and credential theft are well-documented techniques. What makes this dangerous is how they compose: AI agents with broad tool access create a low-friction entry point into CI/CD pipelines previously only reachable through code contributions, maintainer compromise or traditional poisoned pipeline execution.
 
 Developer tooling startups like Cline _must_ do better to have processes in place to triage, respond to, and mitigate vulnerability reports.
-
-Tags:
-
-[#cicd](https://adnanthekhan.com/tag/cicd/)
-
-[#githubactions](https://adnanthekhan.com/tag/githubactions/)
-
-[#cache-poisoning](https://adnanthekhan.com/tag/cache-poisoning/)
-
-[#ai](https://adnanthekhan.com/tag/ai/)

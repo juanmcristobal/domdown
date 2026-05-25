@@ -20,6 +20,8 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
                 continue
+            if _is_within_preserved_block(node):
+                continue
             if node.name in skip_tags:
                 node.decompose()
                 continue
@@ -63,11 +65,14 @@ def _remove_structural_chrome(root: Tag) -> None:
     for node in reversed(list(root.find_all(True))):
         if not isinstance(node, Tag) or node is root:
             continue
+        if _is_within_preserved_block(node):
+            continue
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
             or _looks_like_related_block(node)
             or _looks_like_navigation_block(node)
             or _looks_like_footer_block(node)
+            or _looks_like_tag_block(node)
             or _looks_like_boilerplate(node)
             or _looks_like_about_block(node)
         ):
@@ -155,6 +160,25 @@ def _looks_like_footer_block(node: Tag) -> bool:
     return "©" in text and len(node.find_all("a")) >= 1
 
 
+def _looks_like_tag_block(node: Tag) -> bool:
+    """Detect compact tag lists made of tag permalink links only."""
+
+    links = [child for child in node.find_all("a") if isinstance(child, Tag)]
+    if len(links) < 2:
+        return False
+    if any(child.name in {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "table", "blockquote"} for child in node.find_all(recursive=False)):
+        return False
+    texts = [link.get_text(" ", strip=True).lower() for link in links]
+    hrefs = [str(link.get("href") or "").strip().lower() for link in links]
+    if not all(texts):
+        return False
+    if not all(_is_tag_href(href) for href in hrefs):
+        return False
+    text = node.get_text(" ", strip=True).lower()
+    word_count = len(text.split())
+    return word_count <= 40 or text.startswith("tags:") or text.startswith("tag:")
+
+
 def _looks_like_link_chrome(node: Tag) -> bool:
     """Detect dense menu or footer blocks dominated by links rather than prose."""
 
@@ -211,3 +235,24 @@ def _noise_tokens(classes: tuple[str, ...] | list[str] | tuple[object, ...], ide
         tokens.add(identifier)
         tokens.update(part for part in re.split(r"[^a-z0-9]+", identifier) if part)
     return tokens
+
+
+def _is_within_preserved_block(node: Tag) -> bool:
+    """Keep nodes that live inside explicitly preserved content blocks."""
+
+    current: Tag | None = node
+    while isinstance(current, Tag):
+        if current.get("data-domdown-keep-assets") == "true":
+            return True
+        current = current.parent if isinstance(current.parent, Tag) else None
+    return False
+
+
+def _is_tag_href(href: str) -> bool:
+    """Return True for link targets that look like tag pages or tag anchors."""
+
+    if not href:
+        return False
+    if href.startswith("#"):
+        return True
+    return "/tag/" in href or "/tags/" in href
