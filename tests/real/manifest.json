@@ -90,6 +90,13 @@
       "description": "Acronis article with language picker and breadcrumb chrome that should be removed."
     },
     {
+      "id": "encryptionconsulting_enterprise_guide_to_pqc_migration",
+      "html": "html/encryptionconsulting.com_enterprise-guide-to-pqc-migration.html",
+      "markdown": "raw/encryptionconsulting.com_enterprise-guide-to-pqc-migration.md",
+      "base_url": "https://www.encryptionconsulting.com/enterprise-guide-to-pqc-migration/",
+      "description": "PQC migration article with compact CTA cards that should be removed."
+    },
+    {
       "id": "adnanthekhan_clinejection",
       "html": "html/adnanthekhan_clinejection.html",
       "markdown": "raw/adnanthekhan_clinejection.md",

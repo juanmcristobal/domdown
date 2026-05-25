@@ -29,6 +29,9 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
             if _looks_like_decorative_image_block(node):
                 node.decompose()
                 continue
+            if _looks_like_cta_block(node):
+                node.decompose()
+                continue
             if node.name in skip_tags:
                 node.decompose()
                 continue
@@ -133,6 +136,48 @@ def _looks_like_about_block(node: Tag) -> bool:
     button_count = len(node.find_all("button"))
     text_words = len(node.get_text(" ", strip=True).split())
     return text_words <= 120 and (link_count >= 1 or button_count >= 1)
+
+
+def _looks_like_cta_block(node: Tag) -> bool:
+    """Detect compact call-to-action cards that are not part of article prose."""
+
+    marker_text = _marker_text(node)
+    if not any(marker in marker_text for marker in ("cta", "banner", "promo", "callout")):
+        return False
+    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
+    paragraph_count = len(node.find_all("p"))
+    link_count = len(node.find_all("a"))
+    button_count = len(node.find_all("button"))
+    text_words = len(node.get_text(" ", strip=True).split())
+    has_heading_like_descendant = bool(
+        node.find(
+            lambda child: isinstance(child, Tag)
+            and (
+                child.name in {"h1", "h2", "h3", "h4", "h5", "h6"}
+                or any(token in _marker_text(child) for token in ("heading", "title", "top-heading"))
+            )
+        )
+    )
+    has_button_like_descendant = bool(
+        node.find(
+            lambda child: isinstance(child, Tag)
+            and (
+                child.name == "button"
+                or "btn-wrapper" in (child.get("class") or ())
+                or any(
+                    token in _marker_text(child)
+                    for token in ("primary-btn", "secondary-btn", "button", "btn")
+                )
+            )
+        )
+    )
+    if not has_heading_like_descendant and heading_count < 1:
+        return False
+    if text_words > 60:
+        return False
+    if paragraph_count > 2:
+        return False
+    return has_button_like_descendant
 
 
 def _looks_like_navigation_block(node: Tag) -> bool:
