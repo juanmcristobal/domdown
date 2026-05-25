@@ -7,30 +7,6 @@ language: en
 image: "https://staticfiles.acronis.com/images/content/48dd48407e8ea7eac10c3014b920dd49.jpg"
 description: "In a newly identified campaign, internally referred to as Boto Cor-de-Rosa, our researchers discovered that Astaroth now exploits WhatsApp Web as part of its propagation strategy."
 ---
-![Acronis](https://staticfiles.acronis.com/images/content/2947a2b5ff14b217c0412f1396216f30.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/c9c1493e95df9d9bdcf6a948504980af.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/aea0ce50ae74bc2e9a47bb7de161279d.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/fc4badaa53aacd5297599230dcf72bd5.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/fc4badaa53aacd5297599230dcf72bd5.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/fc4badaa53aacd5297599230dcf72bd5.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/2947a2b5ff14b217c0412f1396216f30.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/c9c1493e95df9d9bdcf6a948504980af.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/c9c1493e95df9d9bdcf6a948504980af.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/8a1909cf7fde9d3fc9b815a1bb7bf1b2.png)
-
-![Acronis](https://staticfiles.acronis.com/images/content/b23a3beb3c7394a0a59e8031163d05da.png)
-
-![Acronis](https://staticfiles.acronis.com/images/background/7ef1a11664bb41a7f039288398290b40.png)
-
 # Boto-Cor-de-Rosa campaign reveals Astaroth WhatsApp-based worm activity in Brazil
 
 In a newly identified campaign, internally referred to as Boto Cor-de-Rosa, our researchers discovered that Astaroth now exploits WhatsApp Web as part of its propagation strategy.

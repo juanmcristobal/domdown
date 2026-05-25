@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from bs4 import BeautifulSoup
 
+from domdown import html_to_markdown
+from domdown._core import DomdownOptions
 from domdown.markdown.block import (
     _collect_definition_items,
     _collect_definition_items_from_node,
@@ -13,7 +17,6 @@ from domdown.markdown.block import (
     render_definition_list,
     render_figure,
 )
-from domdown._core import DomdownOptions
 
 
 def test_render_block_covers_headings_paragraphs_and_quotes() -> None:
@@ -443,3 +446,17 @@ def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:
 - **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a>
 - **Live Version:** <a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a>"""
 
+
+def test_render_acronis_article_skips_decorative_background_images() -> None:
+    """Decorative hero/background wrappers should not render as leading content."""
+
+    html_path = Path("tests/real/html/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.html")
+    output = html_to_markdown(
+        html_path.read_text(encoding="utf-8"),
+        DomdownOptions(base_url="https://www.acronis.com/en/tru/posts/boto-cor-de-rosa-campaign-reveals-astaroth-whatsapp-based-worm-activity-in-brazil/"),
+    )
+    body = output.split("---", 2)[-1].lstrip()
+
+    assert not body.startswith("![Acronis](https://staticfiles.acronis.com/images/content/")
+    assert not body.startswith("![Acronis](https://staticfiles.acronis.com/images/background/")
+    assert body.splitlines()[0] == "# Boto-Cor-de-Rosa campaign reveals Astaroth WhatsApp-based worm activity in Brazil"

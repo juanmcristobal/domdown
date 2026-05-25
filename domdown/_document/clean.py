@@ -26,6 +26,9 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
                 continue
             if _is_within_preserved_block(node):
                 continue
+            if _looks_like_decorative_image_block(node):
+                node.decompose()
+                continue
             if node.name in skip_tags:
                 node.decompose()
                 continue
@@ -181,6 +184,22 @@ def _looks_like_tag_block(node: Tag) -> bool:
     text = node.get_text(" ", strip=True).lower()
     word_count = len(text.split())
     return word_count <= 40 or text.startswith("tags:") or text.startswith("tag:")
+
+
+def _looks_like_decorative_image_block(node: Tag) -> bool:
+    """Detect image-only hero or background wrappers that should not render as content."""
+
+    if node.name in {"img", "picture"}:
+        return False
+    marker_text = _marker_text(node)
+    if not any(marker in marker_text for marker in ("background", "parallax", "top-bg")):
+        return False
+    if node.find(["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "table", "blockquote"]):
+        return False
+    image_count = len(node.find_all("img"))
+    picture_count = len(node.find_all("picture"))
+    text_words = len(node.get_text(" ", strip=True).split())
+    return (image_count + picture_count) >= 1 and text_words <= 8
 
 
 def _looks_like_link_chrome(node: Tag) -> bool:
