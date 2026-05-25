@@ -26,10 +26,22 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
                 continue
             if _is_within_preserved_block(node):
                 continue
+            if _looks_like_hero_chrome(node):
+                node.decompose()
+                continue
             if _looks_like_decorative_image_block(node):
                 node.decompose()
                 continue
             if _looks_like_cta_block(node):
+                node.decompose()
+                continue
+            if _looks_like_author_card_block(node):
+                node.decompose()
+                continue
+            if _looks_like_article_feed_block(node):
+                node.decompose()
+                continue
+            if _looks_like_promo_banner_block(node):
                 node.decompose()
                 continue
             if node.name in skip_tags:
@@ -102,6 +114,26 @@ def _looks_like_header_block(node: Tag) -> bool:
     text_words = len(node.get_text(" ", strip=True).split())
     paragraph_count = len(node.find_all("p"))
     return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
+
+
+def _looks_like_hero_chrome(node: Tag) -> bool:
+    """Detect compact article hero wrappers with a back link plus metadata."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text or len(text.split()) > 60:
+        return False
+    if not any(marker in text for marker in ("back to ", "return to ", "go back to ")):
+        return False
+    has_title = bool(node.find(["h1", "h2"]))
+    has_metadata = bool(node.find("time")) or any(token in text for token in ("author", "read", "min", "date", "category"))
+    has_back_link = bool(
+        node.find(
+            lambda child: isinstance(child, Tag)
+            and child.name == "a"
+            and child.get_text(" ", strip=True).lower().startswith("back to ")
+        )
+    )
+    return has_title and has_metadata and has_back_link
 
 
 def _looks_like_related_block(node: Tag) -> bool:
@@ -178,6 +210,59 @@ def _looks_like_cta_block(node: Tag) -> bool:
     if paragraph_count > 2:
         return False
     return has_button_like_descendant
+
+
+def _looks_like_author_card_block(node: Tag) -> bool:
+    """Detect compact author/share cards that belong to page chrome."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text or "share" not in text:
+        return False
+    if not text.startswith("author "):
+        return False
+    if len(text.split()) > 10:
+        return False
+    return len(node.find_all("button")) >= 1 or len(node.find_all("a")) >= 1
+
+
+def _looks_like_article_feed_block(node: Tag) -> bool:
+    """Detect compact blog-feed or related-article strips rendered as cards."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    article_count = len(node.find_all("article"))
+    text_words = len(text.split())
+    if article_count >= 2:
+        return any(phrase in text for phrase in ("latest", "related", "more from", "you may also like", "recommended", "blogs")) and text_words <= 220
+    if any(phrase in text for phrase in ("the latest from", "latest from", "related articles", "more from", "you may also like", "recommended")):
+        return text_words <= 30
+    return False
+
+
+def _looks_like_promo_banner_block(node: Tag) -> bool:
+    """Detect compact marketing banners with repeated CTA links or buttons."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    if len(text.split()) > 80:
+        return False
+    cta_phrases = (
+        "book a demo",
+        "star on github",
+        "start free",
+        "get started",
+        "learn more",
+        "sign up",
+        "try free",
+        "view all blogs",
+    )
+    if not any(phrase in text for phrase in cta_phrases):
+        return False
+    link_count = len(node.find_all("a"))
+    button_count = len(node.find_all("button"))
+    return link_count + button_count >= 1
 
 
 def _looks_like_navigation_block(node: Tag) -> bool:

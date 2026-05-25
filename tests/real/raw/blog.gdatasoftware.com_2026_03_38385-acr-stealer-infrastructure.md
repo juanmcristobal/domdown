@@ -171,11 +171,3 @@ This only indicates that the threat actors in control of the PiviGames infrastru
 ## Previous Research on ACRStealer
 
 [www.proofpoint.com/us/blog/threat-insight/amatera-stealer-rebranded-acr-stealer-improved-evasion-sophistication](https://www.proofpoint.com/us/blog/threat-insight/amatera-stealer-rebranded-acr-stealer-improved-evasion-sophistication)
-
-##### Share Article
-
-##### Content
-
-##### Topics
-
-- [Malware](https://blog.gdatasoftware.com/malware)

@@ -165,10 +165,6 @@ These numbers highlight the need for better communication between IT and end use
 
 The goal of 1Password’s new anti-phishing feature is to give users – whether at work or home – a subtle reminder that helps their training kick in. We’re excited to continue developing it as part of our overall mission to secure the future of work.
 
-Don't get hooked
-
-If you’d like to learn more about how 1Password can help protect you, your family, and your business, get in touch with our team.
-
 _1Password conducted this study using an online survey prepared by_[KW Research](https://www.kelseywhiteresearch.com/)_and distributed by_[PureSpectrum](https://www.purespectrum.com/)_, completed by n=2,000 American adults. Within employees, a range of role types, seniority, and industries are represented. Data was collected from September 29 to October 2, 2025._
 
 ## Continue Reading

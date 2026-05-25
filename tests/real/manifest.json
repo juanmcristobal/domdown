@@ -90,6 +90,12 @@
       "description": "Acronis article with language picker and breadcrumb chrome that should be removed."
     },
     {
+      "id": "safedep_malicious_ixpresso_core_npm_rat",
+      "html": "html/safedep.io_malicious-ixpresso-core-npm-rat.html",
+      "markdown": "raw/safedep.io_malicious-ixpresso-core-npm-rat.md",
+      "description": "SafeDep article with compact hero chrome that should be removed."
+    },
+    {
       "id": "encryptionconsulting_enterprise_guide_to_pqc_migration",
       "html": "html/encryptionconsulting.com_enterprise-guide-to-pqc-migration.html",
       "markdown": "raw/encryptionconsulting.com_enterprise-guide-to-pqc-migration.md",
