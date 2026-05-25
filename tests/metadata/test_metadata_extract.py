@@ -14,11 +14,14 @@ def test_extract_metadata_reads_article_fields() -> None:
         <html lang="en">
           <head>
             <meta property="og:title" content="Example Article" />
+            <meta property="og:site_name" content="Example Platform" />
             <link rel="canonical" href="https://example.com/posts/example-article" />
             <meta name="author" content="The Hacker News" />
             <meta property="article:published_time" content="2025-12-29T15:14:00+05:30" />
             <meta name="description" content="Example description." />
             <meta property="og:image" content="https://example.com/image.png" />
+            <meta property="article:tag" content="Meta Tag A" />
+            <meta name="keywords" content="Meta Tag B, Meta Tag C" />
           </head>
           <body>
             <div class="story-meta">
@@ -35,15 +38,15 @@ def test_extract_metadata_reads_article_fields() -> None:
 
     assert metadata.title == "Example Article"
     assert metadata.source == "https://example.com/posts/example-article"
+    assert metadata.site_name == "Example Platform"
     assert metadata.author == ("Example Author",)
     assert metadata.published == "2025-12-29T15:14:00+05:30"
     assert metadata.created == "2026-05-15"
     assert metadata.description == "Example description."
-    assert metadata.tags == ()
+    assert metadata.tags == ("Threat Intelligence", "Cloud Security", "Meta Tag A", "Meta Tag B", "Meta Tag C")
     assert metadata.language == "en"
     assert metadata.canonical_url == "https://example.com/posts/example-article"
     assert metadata.image == "https://example.com/image.png"
-    assert metadata.site_name is None
 
 
 def test_extract_metadata_strips_site_suffixes_and_resolves_relative_source_against_base_url() -> None:
@@ -113,8 +116,8 @@ def test_extract_metadata_reads_visible_published_time_when_meta_is_missing() ->
     assert metadata.published == "2026-03-03T12:00:00Z"
 
 
-def test_extract_metadata_prefers_visible_author_and_tags() -> None:
-    """Visible article metadata should win over generic HTML metatags."""
+def test_extract_metadata_prefers_visible_author_and_combines_tags() -> None:
+    """Visible article metadata should stay primary while tags are combined."""
 
     soup = BeautifulSoup(
         """
@@ -142,10 +145,10 @@ def test_extract_metadata_prefers_visible_author_and_tags() -> None:
     metadata = extract_metadata(soup, DomdownOptions())
 
     assert metadata.author == ("Visible Author",)
-    assert metadata.tags == ()
+    assert metadata.tags == ("Visible Tag A", "Visible Tag B", "Meta Tag A", "Meta Tag B")
 
 
-def test_extract_metadata_can_prefer_metadata_author_without_affecting_visible_tags() -> None:
+def test_extract_metadata_can_prefer_metadata_author_without_affecting_tag_combination() -> None:
     """Author priority should be configurable without changing tag extraction."""
 
     soup = BeautifulSoup(
@@ -174,11 +177,11 @@ def test_extract_metadata_can_prefer_metadata_author_without_affecting_visible_t
     metadata = extract_metadata(soup, DomdownOptions(author_priority="metadata"))
 
     assert metadata.author == ("The Hacker News",)
-    assert metadata.tags == ()
+    assert metadata.tags == ("Tag A", "Tag B")
 
 
-def test_extract_tags_uses_visible_tags_before_metadata_fallback() -> None:
-    """Tag extraction should prefer visible tag blocks and deduplicate tokens."""
+def test_extract_tags_combines_visible_tags_and_metadata() -> None:
+    """Tag extraction should combine visible tag blocks with metadata and deduplicate tokens."""
 
     soup = BeautifulSoup(
         """
@@ -199,10 +202,10 @@ def test_extract_tags_uses_visible_tags_before_metadata_fallback() -> None:
         "lxml",
     )
 
-    assert extract_tags(soup) == ("Visible Tag A", "Visible Tag B")
+    assert extract_tags(soup) == ("Visible Tag A", "Visible Tag B", "Meta Tag A", "Meta Tag C", "Meta Tag B")
 
 
-def test_extract_tags_falls_back_to_metadata_when_visible_tags_are_absent() -> None:
+def test_extract_tags_uses_metadata_when_visible_tags_are_absent() -> None:
     """Tag extraction should use metadata when visible tags are not present."""
 
     soup = BeautifulSoup(

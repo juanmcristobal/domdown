@@ -1,6 +1,10 @@
 ---
 title: "[Security]: litellm PyPI package (v1.82.7 + v1.82.8) compromised — full timeline and status · Issue #24518"
 source: "https://github.com/BerriAI/litellm/issues/24518"
+site_name: GitHub
+canonical_url: "https://github.com/BerriAI/litellm/issues/24518"
+language: en
+image: "https://opengraph.githubassets.com/46b931aabb677b81c306e2478e60887db6962f050ef53889f8cdbe4711209f1a/BerriAI/litellm/issues/24518"
 author:
   - "isfinne"
 description: The Trivy supply-chain compromise has been contained 🎉 . All affected packages have been deleted and current releases are free of the compromised code/component. Please refer to our Security Townhall for a deeper understanding of the pro...

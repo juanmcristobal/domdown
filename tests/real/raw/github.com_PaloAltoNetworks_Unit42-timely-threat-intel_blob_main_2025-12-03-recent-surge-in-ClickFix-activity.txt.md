@@ -1,6 +1,10 @@
 ---
 title: Unit42-timely-threat-intel/2025-12-03-recent-surge-in-ClickFix-activity.txt at main
 source: "https://github.com/PaloAltoNetworks/Unit42-timely-threat-intel/blob/main/2025-12-03-recent-surge-in-ClickFix-activity.txt"
+site_name: GitHub
+canonical_url: "https://github.com/PaloAltoNetworks/Unit42-timely-threat-intel/blob/main/2025-12-03-recent-surge-in-ClickFix-activity.txt"
+language: en
+image: "https://opengraph.githubassets.com/7da4400e4f44a00689b12a902a9275f3709f62f23c5f4914452ba9b8aceb9541/PaloAltoNetworks/Unit42-timely-threat-intel"
 author:
   - "PaloAltoNetworks"
 description: "A collection of files with indicators supporting social media posts from Palo Alto Network's Unit 42 team to disseminate timely threat intelligence. - Unit42-timely-threat-intel/2025-12-03-recent-surge-in-ClickFix-activity.txt at main · PaloAltoNetworks/Unit42-timely-threat-intel"

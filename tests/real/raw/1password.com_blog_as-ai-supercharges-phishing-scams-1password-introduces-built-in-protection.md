@@ -1,8 +1,13 @@
 ---
 title: "As AI Supercharges Phishing Scams, 1Password Introduces Built-In Protection | 1Password"
 source: /blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection
+canonical_url: /blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection
+language: en
+image: "https://images.ctfassets.net/3091ajzcmzlr/4Ln6oiLGExYkimZbFhV7ys/606a1e61d5de43740fbb2a1df7e043f5/Blog-Header_Cyber_Attack_1920x1080.png"
 published: "2026-01-22T00:00:00.000Z"
 description: "AI is making phishing attacks tougher to spot, but 1Password’s new feature helps prevent people and businesses from being victimized."
+tags:
+  - 1Password
 ---
 # As AI supercharges phishing scams, 1Password introduces built-in protection
 

@@ -10,7 +10,7 @@ def test_synthetic_article_renders_without_page_chrome() -> None:
     output = html_to_markdown(ARTICLE_SHELL_HTML, DomdownOptions(created="2026-05-15"))
 
     assert 'author:\n  - "Example Author"' in output
-    assert "tags:" not in output
+    assert "tags:\n  - Example Topic" in output
     assert "Share this article" not in output
     assert "author_debug_inline" not in output
     assert "example.com/share?text=Example" not in output
@@ -26,7 +26,7 @@ def test_synthetic_article_omits_page_chrome_when_rendered() -> None:
     output = html_to_markdown(ARTICLE_SHELL_HTML, DomdownOptions(created="2026-05-15"))
 
     assert 'author:\n  - "Example Author"' in output
-    assert "tags:" not in output
+    assert "tags:\n  - Example Topic" in output
     assert "Share this article" not in output
     assert "author_debug_inline" not in output
     assert "example.com/share?text=Example" not in output

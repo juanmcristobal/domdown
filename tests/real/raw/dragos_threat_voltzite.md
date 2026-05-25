@@ -1,6 +1,9 @@
 ---
 title: "Voltzite Threat Group | Dragos"
 source: "https://www.dragos.com/threat/voltzite"
+canonical_url: "https://www.dragos.com/threat/voltzite"
+language: en-US
+image: "https://dragos.brightspotcdn.com/dims4/default/d6127ac/2147483647/strip/true/crop/2242x1260+79+0/resize/500x281!/format/webp/quality/90/?url=https%3A%2F%2Fdragos-production-dragos.s3.us-west-2.amazonaws.com%2Fbrightspot%2Fc7%2Fe7%2Ffa422a584d7aa18fe3ca46dd4783%2Fdragos-teaser-reveal-nav-rail-2400x1260-05-26.webp"
 description: "Understand VOLTZITE's operational objectives and the implications for critical industrial processes. Safeguard your organization now."
 ---
 ![Threat group: Voltzite](https://dragos.brightspotcdn.com/dims4/default/4bb4eda/2147483647/strip/true/crop/316x316+0+0/resize/1000x1000!/format/webp/quality/90/?url=https%3A%2F%2Fdragos-production-dragos.s3.us-west-2.amazonaws.com%2Fbrightspot%2Fe4%2Ff1%2F6228354f410eb5a694dfebbb5074%2Fthreat-groups-overview-tile-voltzite-8-25.webp)

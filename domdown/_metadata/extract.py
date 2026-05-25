@@ -33,12 +33,11 @@ from .selectors import (
 
 
 def extract_tags(soup: BeautifulSoup) -> tuple[str, ...]:
-    """Extract article tags from visible tags or metadata selectors."""
+    """Extract article tags from visible tags and metadata selectors."""
 
     visible_tags = split_tags(collect_texts(soup, TAG_VISIBLE_SELECTORS))
-    if visible_tags:
-        return visible_tags
-    return split_tags(collect_meta_contents(soup, TAG_META_SELECTORS))
+    meta_tags = split_tags(collect_meta_contents(soup, TAG_META_SELECTORS))
+    return _merge_tags(visible_tags, meta_tags)
 
 
 def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetadata:
@@ -66,7 +65,7 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     author = tuple(item for item in author if item and not looks_like_date(item) and not looks_like_url(item))
     published = first_text(*(meta_content(soup, selector) for selector in PUBLISHED_SELECTORS))
     description = first_text(*(meta_content(soup, selector) for selector in DESCRIPTION_SELECTORS))
-    tags = options.frontmatter_tags
+    tags = _merge_tags(extract_tags(soup), options.frontmatter_tags)
     language = html_tag.get("lang") if html_tag and html_tag.get("lang") else None
     canonical_url = normalize_source(first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url)
     image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
@@ -83,3 +82,16 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
         canonical_url=canonical_url or None,
         image=image or None,
     )
+
+
+def _merge_tags(*tag_groups: tuple[str, ...]) -> tuple[str, ...]:
+    """Combine tag groups while preserving order and removing duplicates."""
+
+    tags: list[str] = []
+    seen: set[str] = set()
+    for group in tag_groups:
+        for tag in group:
+            if tag and tag not in seen:
+                seen.add(tag)
+                tags.append(tag)
+    return tuple(tags)

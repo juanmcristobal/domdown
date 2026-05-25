@@ -1,8 +1,14 @@
 ---
 title: "HookChain: A Deep Dive into Advanced EDR Bypass Techniques"
 source: "https://0xmaz.me/posts/HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques/"
+site_name: Mohamed Alzhrani
+canonical_url: "https://0xmaz.me/posts/HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques/"
+language: en
+image: /assets/images/avatar.jpg
 published: "2024-10-25T00:00:00+03:00"
 description: "HookChain is a novel technique aimed at bypassing Endpoint Detection and Response (EDR) solutions by leveraging low-level Windows APIs and manipulating how system calls interact with user-mode hooks. To better understand how HookChain operates, let’s dive deeper into the technical aspects with real-world examples."
+tags:
+  - Evasion
 ---
 **HookChain** is a novel technique aimed at bypassing Endpoint Detection and Response (EDR) solutions by leveraging low-level Windows APIs and manipulating how system calls interact with user-mode hooks. To better understand how HookChain operates, let’s dive deeper into the technical aspects with real-world examples.
 

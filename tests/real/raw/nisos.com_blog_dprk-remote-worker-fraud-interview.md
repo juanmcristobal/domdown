@@ -1,6 +1,10 @@
 ---
 title: "DPRK Remote Worker Fraud: A CPO’s Real Interview Experience"
 source: "https://nisos.com/blog/dprk-remote-worker-fraud-interview/"
+site_name: Nisos
+canonical_url: "https://nisos.com/blog/dprk-remote-worker-fraud-interview/"
+language: en-US
+image: "https://nisos.com/wp-content/uploads/2026/03/blogdprk-remote-worker-fraud-interview-rectangle.png"
 author:
   - "Magen Gicinto, Chief People Officer"
 published: "2026-03-30T11:30:05+00:00"

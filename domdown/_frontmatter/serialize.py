@@ -11,6 +11,10 @@ def render_frontmatter(metadata: HtmlMetadata) -> str:
     scalar_fields = [
         ("title", metadata.title),
         ("source", metadata.source),
+        ("site_name", metadata.site_name),
+        ("canonical_url", metadata.canonical_url),
+        ("language", metadata.language),
+        ("image", metadata.image),
     ]
     trailing_fields = [
         ("published", metadata.published),

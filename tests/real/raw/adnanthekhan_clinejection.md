@@ -1,11 +1,17 @@
 ---
 title: "Clinejection — Compromising Cline's Production Releases just by Prompting an Issue Triager"
 source: "https://adnanthekhan.com/posts/clinejection/"
+site_name: Adnan Khan - Security Research
+canonical_url: "https://adnanthekhan.com/posts/clinejection/"
+language: en
+image: "https://adnanthekhan.com/_astro/images/clinejection.BWC24kLc.png"
 author:
   - "Adnan Khan"
   - "adnanthekhan"
 published: "2026-02-09T09:00:00.000Z"
 description: "Clinejection — Compromising Cline's Production Releases just by Prompting an Issue Triager - Security research by adnanthekhan"
+tags:
+  - cicd
 ---
 # Clinejection — Compromising Cline's Production Releases just by Prompting an Issue Triager
 

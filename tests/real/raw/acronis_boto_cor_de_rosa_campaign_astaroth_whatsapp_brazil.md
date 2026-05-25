@@ -1,6 +1,10 @@
 ---
 title: Astaroth’s Boto Cor-de-Rosa campaign targets Brazil with new WhatsApp malware technique
 source: "https://www.acronis.com/en/tru/posts/boto-cor-de-rosa-campaign-reveals-astaroth-whatsapp-based-worm-activity-in-brazil/"
+site_name: Acronis
+canonical_url: "https://www.acronis.com/en/tru/posts/boto-cor-de-rosa-campaign-reveals-astaroth-whatsapp-based-worm-activity-in-brazil/"
+language: en
+image: "https://staticfiles.acronis.com/images/content/48dd48407e8ea7eac10c3014b920dd49.jpg"
 description: "In a newly identified campaign, internally referred to as Boto Cor-de-Rosa, our researchers discovered that Astaroth now exploits WhatsApp Web as part of its propagation strategy."
 ---
 ![Acronis](https://staticfiles.acronis.com/images/content/2947a2b5ff14b217c0412f1396216f30.png)
