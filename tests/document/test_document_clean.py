@@ -601,6 +601,28 @@ def test_clean_root_removes_topic_bars_and_search_overlays() -> None:
     assert "Body paragraph." in text
 
 
+def test_clean_root_removes_ai_links_chrome() -> None:
+    """Cleanup should drop AI helper links that are page chrome, not content."""
+
+    soup = BeautifulSoup(
+        """
+        <main>
+          <div class="ai-links">Summarize with AI</div>
+          <div class="blog-rich-text w-richtext">
+            <p>Body paragraph.</p>
+          </div>
+        </main>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.main, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Summarize with AI" not in text
+    assert "Body paragraph." in text
+
+
 def test_clean_root_removes_article_skip_link_and_staff_picks_chrome() -> None:
     """Cleanup should remove skip links, comment picks, and staff-picks chrome."""
 

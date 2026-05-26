@@ -164,6 +164,7 @@ ROOT_SELECTORS = (
 
 # Class or id markers that usually indicate page chrome, ads, or engagement widgets.
 NOISE_MARKERS = (
+    "ai-links",
     "announcement",
     "banner",
     "brand",

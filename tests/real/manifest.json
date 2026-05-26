@@ -90,6 +90,12 @@
       "description": "Elastic Security Labs article with MITRE metadata and references that should stay structured."
     },
     {
+      "id": "endorlabs_openclaw_ai_sast_vulnerabilities",
+      "html": "html/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.html",
+      "markdown": "raw/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.md",
+      "description": "Endor Labs article with AI helper chrome and structured vulnerability summaries."
+    },
+    {
       "id": "1password_ai_phishing_protection",
       "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
       "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",
