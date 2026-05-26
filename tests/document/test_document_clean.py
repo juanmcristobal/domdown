@@ -216,6 +216,31 @@ def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_long_copyright_footer_block() -> None:
+    """Legal footer text should be removed even when it is longer than a compact block."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="press-footer">
+            <p><i>Copyright © 2025 Example, Inc. All rights reserved. Example trademarks include ExampleOne and ExampleTwo. Other trademarks belong to their respective owners.</i></p>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Copyright © 2025 Example" not in text
+    assert "All rights reserved" not in text
+    assert "ExampleOne" not in text
+    assert "Body" in text
+
+
 def test_clean_root_keeps_long_workaround_paragraphs() -> None:
     """Cleanup should not treat normal prose with 'recommended' as related chrome."""
 

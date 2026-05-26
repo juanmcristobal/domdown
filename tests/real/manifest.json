@@ -90,6 +90,12 @@
       "description": "Elastic Security Labs article with MITRE metadata and references that should stay structured."
     },
     {
+      "id": "fortinet_threat_report_automated_cyberattacks",
+      "html": "html/fortinet.com_corporate_about-us_newsroom_press-releases_2025_fortinet-threat-report-reveals-record-surge-in-automated-cyberattacks.html",
+      "markdown": "raw/fortinet.com_corporate_about-us_newsroom_press-releases_2025_fortinet-threat-report-reveals-record-surge-in-automated-cyberattacks.md",
+      "description": "Fortinet press release with a link-dense shell that should resolve to the article body."
+    },
+    {
       "id": "endorlabs_openclaw_ai_sast_vulnerabilities",
       "html": "html/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.html",
       "markdown": "raw/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.md",

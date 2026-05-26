@@ -102,11 +102,13 @@ def _remove_structural_chrome(root: Tag) -> None:
         if _looks_like_date_kicker(node):
             node.decompose()
             continue
+        if _looks_like_footer_block(node):
+            node.decompose()
+            continue
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
             or _looks_like_related_block(node)
             or _looks_like_navigation_block(node)
-            or _looks_like_footer_block(node)
             or _looks_like_tag_block(node)
             or _looks_like_boilerplate(node)
             or _looks_like_about_block(node)

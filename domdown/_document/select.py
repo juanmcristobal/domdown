@@ -50,6 +50,17 @@ def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
         else:
             shell_child = _best_page_shell_child(current)
             candidate = shell_child or _best_content_subtree(current)
+            if (
+                shell_child is not None
+                and candidate is shell_child
+                and _looks_like_page_shell(candidate)
+            ):
+                deeper_candidate = _best_content_subtree(candidate)
+                if deeper_candidate is not candidate and not _looks_like_chrome(deeper_candidate):
+                    candidate_words = len(candidate.get_text(" ", strip=True).split())
+                    deeper_words = len(deeper_candidate.get_text(" ", strip=True).split())
+                    if deeper_words >= 20 and deeper_words >= candidate_words * 0.6:
+                        candidate = deeper_candidate
         if candidate is current:
             break
         if candidate.name in {"p", "li", "span"}:
@@ -154,12 +165,13 @@ def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag |
 def _root_candidate_penalty(candidate: Tag) -> float:
     """Penalize generic layout wrappers when selecting the top-level shell."""
 
+    penalty = 0.0
     if _looks_like_page_shell(candidate):
-        return -120.0
+        penalty -= 120.0
     if _contains_page_shell_child(candidate):
-        return -180.0
+        penalty -= 180.0
     if candidate.name not in {"article", "main"} and candidate.find("main", recursive=False) is not None:
-        return -180.0
+        penalty -= 180.0
     classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
@@ -185,10 +197,11 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     if candidate.name not in {"article", "main"} and marker_tokens & layout_tokens:
         has_embedded_main = bool(candidate.find("main", recursive=True))
         if has_embedded_main:
-            return -80.0
+            penalty -= 80.0
     if marker_tokens & {"wrapper", "container-fluid", "page-wrapper"}:
-        return -25.0
-    return 0.0
+        penalty -= 25.0
+    penalty -= _link_density_penalty(candidate)
+    return penalty
 
 
 def _looks_like_layout_shell(tag: Tag) -> bool:
@@ -198,6 +211,19 @@ def _looks_like_layout_shell(tag: Tag) -> bool:
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(tag.get("id", "")).lower()} if tag.get("id") else set()
     return bool(marker_tokens & {"wrapper", "container-fluid", "page-wrapper"})
+
+
+def _link_density_penalty(candidate: Tag) -> float:
+    """Penalize non-semantic wrappers that are dominated by links instead of prose."""
+
+    if candidate.name in {"article", "main"}:
+        return 0.0
+    links = len(candidate.find_all("a"))
+    paragraphs = max(len(candidate.find_all("p")), 1)
+    excess_links = links - (paragraphs * 5)
+    if excess_links <= 0:
+        return 0.0
+    return min(excess_links * 1.2, 400.0)
 
 
 def _pick_best_candidate(root: Tag, candidates: list[tuple[Tag, int, int]]) -> Tag | None:
@@ -223,7 +249,7 @@ def _root_selector_weight(selector: str) -> float:
     """Assign a broad specificity weight to top-level shell selectors."""
 
     if selector in {"article", "main", "[role='article']", "[role='main']"}:
-        return 3.0
+        return 4.0
     if selector in CONTENT_SELECTORS_EXACT:
         return 2.0
     if selector in CONTENT_SELECTORS_FALLBACK:

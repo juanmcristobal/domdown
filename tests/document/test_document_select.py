@@ -216,6 +216,56 @@ def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
     assert root.get("class") == ["blog-all-content"]
 
 
+def test_choose_root_prefers_article_over_a_link_dense_shell() -> None:
+    """Link-heavy generic shells should not beat the real article body."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="xf-content-height">
+                  <header class="ftnt-navigation">
+                    <nav>
+                      <a href="/one">One</a>
+                      <a href="/two">Two</a>
+                      <a href="/three">Three</a>
+                      <a href="/four">Four</a>
+                      <a href="/five">Five</a>
+                      <a href="/six">Six</a>
+                      <a href="/seven">Seven</a>
+                      <a href="/eight">Eight</a>
+                      <a href="/nine">Nine</a>
+                      <a href="/ten">Ten</a>
+                      <a href="/eleven">Eleven</a>
+                      <a href="/twelve">Twelve</a>
+                      <a href="/thirteen">Thirteen</a>
+                      <a href="/fourteen">Fourteen</a>
+                      <a href="/fifteen">Fifteen</a>
+                      <a href="/sixteen">Sixteen</a>
+                      <a href="/seventeen">Seventeen</a>
+                      <a href="/eighteen">Eighteen</a>
+                      <a href="/nineteen">Nineteen</a>
+                      <a href="/twenty">Twenty</a>
+                    </nav>
+                  </header>
+                </div>
+                <main class="page--body">
+                  <h1>Article title</h1>
+                  <p>Paragraph one.</p>
+                  <p>Paragraph two.</p>
+                  <p>Paragraph three.</p>
+                </main>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.name == "main"
+    assert root.get("class") == ["page--body"]
+
+
 def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:
     """Paragraph-level nodes should not become the selected content root."""
 
@@ -389,8 +439,8 @@ def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
     assert _best_page_shell_child(wrapper) is page_wrapper
 
     assert _score_content(content) > _score_content(container)
-    assert _root_candidate_penalty(container) == -180.0
-    assert _root_candidate_penalty(wrapper) == -180.0
+    assert _root_candidate_penalty(container) <= -180.0
+    assert _root_candidate_penalty(wrapper) <= -180.0
     assert _root_candidate_penalty(parse_html("<div class='wrapper'><p>text</p></div>").div) == -25.0
 
     candidates = _collect_root_candidates(soup, (".content", "[class*='content']"))
