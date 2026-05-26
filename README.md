@@ -1,38 +1,32 @@
 # domdown
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+![domdown banner](assets/domdown-banner.jpg)
 
-`domdown` converts raw HTML into Markdown using the implementation that exists
-in this branch: a Python pipeline for article-like content, metadata extraction,
-HTML cleaning, Markdown rendering, optional YAML frontmatter, and a small adapter
-system.
+`domdown` turns article-like web pages into clean, structured Markdown.
 
-The current public API is Python-only. This branch does not document a CLI and
-does not ship a broad "supported sources" matrix.
+It is built for pages where the shape matters: long-form posts, research writeups, technical blogs, security reports, and other content-heavy pages that need to become readable Markdown without losing useful structure.
 
-## Current Branch Scope
+## What it does
 
-This branch supports:
+`domdown` takes care of the full HTML-to-Markdown pipeline:
 
-- raw HTML input as a string
-- article/body selection from parsed HTML
-- metadata extraction into `HtmlMetadata`
-- optional YAML frontmatter
-- cleaned HTML output from the pipeline
-- Markdown rendering for headings, paragraphs, links, images, captions, lists,
-  tables, and code blocks
-- configurable removal, preservation, and unwrapping through CSS selectors
-- a default GitHub adapter for common GitHub chrome and file/issue page shapes
+- Parses messy web HTML
+- Selects the main article content
+- Removes navigation, promo blocks, and other chrome
+- Extracts metadata
+- Preserves images, tables, code blocks, links, and lists
+- Optionally emits YAML frontmatter
+- Renders the final Markdown document
 
-This branch does not provide:
+The result is Markdown that is ready to read, reuse, archive, or feed into another model.
 
-- browser execution for JavaScript-rendered pages
-- network fetching as part of the public API
-- a documented command-line interface
-- domain-by-domain support guarantees
-- byte-for-byte parity with any Node implementation
+## Why it exists
 
-## Quick Start
+Most pages are not written like clean documents. They mix article content with menus, banners, share widgets, related links, and other page furniture.
+
+`domdown` is designed for cases where you want the content to stay faithful to the original page while still producing a clean Markdown output that is easy to consume downstream.
+
+## Example
 
 ```python
 from domdown import DomdownOptions, html_to_markdown
@@ -90,46 +84,23 @@ Campaign infrastructure by week.
 - Linux staging remained stable.
 ```
 
-## Installation
+## What it preserves
 
-Install from this repository:
+`domdown` is optimized for article-style pages where useful structure should survive the conversion:
 
-```bash
-pip install git+https://github.com/juanmcristobal/domdown.git
-```
+- Titles and headings
+- Visible author and publication metadata
+- Canonical URLs and source references
+- Images and captions
+- Tables and code blocks
+- Inline links and emphasized text
+- Lists, quotes, and other document structure
 
-Install locally for development:
+## Using domdown
 
-```bash
-git clone https://github.com/juanmcristobal/domdown.git
-cd domdown
-pip install -e ".[dev]"
-```
+### Client usage
 
-Runtime requirements are declared in `requirements.txt`:
-
-- `beautifulsoup4`
-- `lxml`
-- `soupsieve`
-- `httpx`
-
-## Public API
-
-The package exports these names from `domdown.__init__`:
-
-```python
-from domdown import (
-    DomdownOptions,
-    HtmlMetadata,
-    HtmlToMarkdownPipeline,
-    HtmlToMarkdownResult,
-    html_to_markdown,
-)
-```
-
-### `html_to_markdown`
-
-Use `html_to_markdown()` when you only need the final document string.
+Use `html_to_markdown()` when you only need the final Markdown document as a string.
 
 ```python
 from domdown import DomdownOptions, html_to_markdown
@@ -143,33 +114,28 @@ markdown = html_to_markdown(
 )
 ```
 
-`html_to_markdown()` runs the default pipeline and returns the final rendered
-document. When frontmatter is enabled, that document includes the frontmatter.
+When `emit_frontmatter=True` or left at the default, the returned string includes YAML frontmatter followed by the Markdown body.
 
-### `HtmlToMarkdownPipeline`
+### API usage
 
-Use `HtmlToMarkdownPipeline` when you need structured output.
+Use `HtmlToMarkdownPipeline` when you want structured output.
 
 ```python
 from domdown import DomdownOptions, HtmlToMarkdownPipeline
 
-result = HtmlToMarkdownPipeline(
+pipeline = HtmlToMarkdownPipeline(
     DomdownOptions(base_url="https://example.com/post")
-).run(html)
+)
+result = pipeline.run(html)
 
+print(result.document)
 print(result.markdown)
 print(result.cleaned_html)
 print(result.frontmatter)
-print(result.document)
 print(result.warnings)
-
-if result.metadata:
-    print(result.metadata.title)
-    print(result.metadata.source)
-    print(result.metadata.canonical_url)
 ```
 
-`HtmlToMarkdownResult` contains:
+`HtmlToMarkdownResult` exposes:
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -180,7 +146,7 @@ if result.metadata:
 | `document` | `str \| None` | Final document string, including frontmatter when enabled. |
 | `warnings` | `tuple[str, ...]` | Non-fatal pipeline warnings. |
 
-`HtmlMetadata` contains:
+`HtmlMetadata` exposes:
 
 | Field | Type |
 | --- | --- |
@@ -198,7 +164,7 @@ if result.metadata:
 
 ## Options
 
-`DomdownOptions` controls the pipeline.
+`DomdownOptions` controls parsing, cleanup, metadata extraction, and output shaping.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
@@ -212,7 +178,7 @@ if result.metadata:
 | `preserve_images` | `True` | Keeps images for Markdown rendering. |
 | `preserve_tables` | `True` | Keeps tables for Markdown rendering. |
 | `preserve_code_blocks` | `True` | Keeps code/preformatted blocks. |
-| `strip_hidden` | `True` | Removes hidden/non-visible elements. |
+| `strip_hidden` | `True` | Removes hidden or non-visible elements. |
 | `remove_selectors` | `()` | CSS selectors to remove. |
 | `keep_selectors` | `()` | CSS selectors to protect during cleaning. |
 | `unwrap_selectors` | `()` | CSS selectors whose wrapper is removed while children remain. |
@@ -220,102 +186,69 @@ if result.metadata:
 Example:
 
 ```python
-from domdown import DomdownOptions, HtmlToMarkdownPipeline
+from domdown import DomdownOptions
 
 options = DomdownOptions(
-    base_url="https://example.com/report",
+    base_url="https://example.com/article",
     emit_frontmatter=True,
-    remove_selectors=(".newsletter", ".share-buttons", "[data-ad]"),
-    keep_selectors=("main", "article"),
-    preserve_tables=True,
+    preserve_images=True,
+    remove_selectors=(".share-widget", ".newsletter-signup"),
 )
-
-result = HtmlToMarkdownPipeline(options).run(html)
 ```
 
-## Markdown Behavior
+## Real-world coverage
 
-The renderer in this branch covers these structures:
+`domdown` includes curated real-world HTML/Markdown pairs under `tests/real/` to protect the pipeline against regressions on live site shapes.
 
-| HTML input | Markdown behavior |
-| --- | --- |
-| `h1` to `h6` | Markdown headings |
-| `p` | Paragraphs |
-| `a` | Inline Markdown links |
-| `img` | Markdown images, using useful `src`/`srcset` candidates |
-| `figcaption` | Caption text near the image |
-| `ul`, `ol`, `li` | Ordered and unordered Markdown lists, including nested lists |
-| `table` | GitHub-flavored Markdown table syntax |
-| `pre`, `code` | Fenced code blocks and inline code |
-| metadata tags | `HtmlMetadata` and optional YAML frontmatter |
+- `html/` stores the captured HTML for each case.
+- `raw/` stores the expected Markdown output for the same case.
+- `manifest.json` declares the cases and their relative fixture paths.
 
-Relative URLs are resolved when `base_url` is provided.
-
-## Pipeline
-
-The default pipeline runs these stages in order:
-
-1. Parse raw HTML.
-2. Extract metadata.
-3. Clean boilerplate and hidden content.
-4. Preserve structural elements before Markdown conversion.
-5. Render Markdown.
-6. Post-process Markdown.
-7. Compose frontmatter and final document.
-
-The default pipeline also creates an adapter registry. In this branch, the
-default adapter list contains `GitHubAdapter`.
-
-## Adapters
-
-Adapters are internal extension points that can:
-
-- preprocess a parsed document
-- refine metadata
-- post-process rendered output
-
-`GitHubAdapter` currently matches pages whose Open Graph site name is `GitHub`.
-It removes common GitHub chrome and narrows some blob/issue pages to more useful
-content regions. It is not a guarantee that every GitHub page shape is supported.
-
-## Real Fixtures
-
-`tests/real/` contains curated HTML and Markdown pairs used as regression tests.
-Those fixtures cover representative pages from real sites, including GitHub
-cases, but they are not a public support matrix.
-
-If behavior changes, update or add fixtures intentionally:
-
-1. Add captured HTML under `tests/real/html/`.
-2. Add expected Markdown under `tests/real/raw/`.
-3. Register the case in `tests/real/manifest.json`.
-4. Run `python3 -m pytest tests/real/test_real_examples.py -q`.
-
-## Development
-
-Run tests:
+To run the real-example suite:
 
 ```bash
-python3 -m pytest -q
+pytest tests/real/test_real_examples.py -q
 ```
 
-Run coverage:
+## Public API
+
+`domdown` exports these names from `domdown.__init__`:
+
+```python
+from domdown import (
+    DomdownOptions,
+    HtmlMetadata,
+    HtmlToMarkdownPipeline,
+    HtmlToMarkdownResult,
+    html_to_markdown,
+)
+```
+
+## Installation
+
+Install from this repository:
 
 ```bash
-python3 -m coverage run --source domdown -m pytest
-python3 -m coverage report -m
+pip install git+https://github.com/juanmcristobal/domdown.git
 ```
 
-Run formatting and linting:
+Install locally for development:
 
 ```bash
-python3 -m black domdown tests
-python3 -m isort domdown tests
-python3 -m flake8 domdown tests
+git clone https://github.com/juanmcristobal/domdown.git
+cd domdown
+pip install -e ".[dev]"
 ```
 
-## Status
+Runtime dependencies:
 
-`domdown` is early-stage software. Treat the exports from `domdown.__init__` as
-the documented public API for this branch. Internal modules and adapter behavior
-may change as extraction quality improves.
+- `beautifulsoup4`
+- `lxml`
+- `soupsieve`
+- `httpx`
+
+## Support & Connect
+
+* ⭐ **Star the repo** if you found it useful
+* ☕ **Support me:** Say thanks by buying me a coffee! [https://buymeacoffee.com/juanmcristobal](https://buymeacoffee.com/juanmcristobal)
+* 💼 **Open to work:** [https://www.linkedin.com/in/jmcristobal/](https://www.linkedin.com/in/jmcristobal/)
