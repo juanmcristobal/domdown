@@ -166,7 +166,14 @@ def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
 
     if _contains_email_protection(node):
         return False
-    return len(_collect_definition_items(node, options)) >= 3
+    if any(
+        isinstance(child, Tag) and child.name.lower() in {"p", "ul", "figure", "blockquote", "pre", "h1", "h2", "h3", "h4", "h5", "h6"}
+        for child in node.find_all(recursive=False)
+    ):
+        return False
+    if len(_collect_definition_items(node, options)) < 3:
+        return False
+    return True
 
 
 def _collect_definition_items(node: Tag, options: DomdownOptions) -> list[tuple[str, str]]:

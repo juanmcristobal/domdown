@@ -84,6 +84,12 @@
       "description": "G DATA article with topic chrome, search overlay noise, and nested article content."
     },
     {
+      "id": "elastic_phantom_in_the_vault",
+      "html": "html/elastic.co_security-labs_phantom-in-the-vault.html",
+      "markdown": "raw/elastic.co_security-labs_phantom-in-the-vault.md",
+      "description": "Elastic Security Labs article with MITRE metadata and references that should stay structured."
+    },
+    {
       "id": "1password_ai_phishing_protection",
       "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
       "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",

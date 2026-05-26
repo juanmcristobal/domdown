@@ -472,6 +472,37 @@ def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:
 - **Live Version:** <a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a>"""
 
 
+def test_render_block_does_not_reclassify_article_body_as_definition_list() -> None:
+    """Large article wrappers with a metadata strip should stay as normal prose."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="article-content">
+          <div>
+            <ul>
+              <li><a href="https://attack.mitre.org/tactics/TA0001/">Initial Access</a></li>
+              <li><a href="https://attack.mitre.org/tactics/TA0002/">Execution</a></li>
+              <li><a href="https://attack.mitre.org/tactics/TA0003/">Persistence</a></li>
+            </ul>
+          </div>
+          <blockquote>A short leading note.</blockquote>
+          <h2>Preamble</h2>
+          <p>First body paragraph.</p>
+          <p>Second body paragraph.</p>
+        </div>
+        """,
+        "lxml",
+    )
+
+    output = render_block(soup.div, DomdownOptions())
+
+    assert "<dl>" not in output
+    assert "A short leading note." in output
+    assert "## Preamble" in output
+    assert "First body paragraph." in output
+    assert "Second body paragraph." in output
+
+
 def test_render_acronis_article_skips_decorative_background_images() -> None:
     """Decorative hero/background wrappers should not render as leading content."""
 
