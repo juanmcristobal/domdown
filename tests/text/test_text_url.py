@@ -20,3 +20,9 @@ def test_origin_url_and_srcset_resolution_cover_edge_cases() -> None:
         "https://example.com/img/a.png 1x, https://example.com/img/b.png 2x"
     )
     assert resolve_srcset("", "https://example.com") == ""
+
+
+def test_resolve_url_falls_back_for_malformed_urls() -> None:
+    """Malformed URLs should not crash URL resolution."""
+
+    assert resolve_url("https://[invalid-ipv6]/path", "https://example.com") == "https://[invalid-ipv6]/path"

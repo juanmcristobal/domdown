@@ -259,7 +259,10 @@ def _render_definition_anchor(anchor: Tag, text: str, options: DomdownOptions) -
 
     href = str(anchor.get("href") or "").strip()
     title = str(anchor.get("title") or "").strip()
-    if urlsplit(href).fragment:
+    try:
+        if urlsplit(href).fragment:
+            return escape(text)
+    except ValueError:
         return escape(text)
     attributes = []
     if href:

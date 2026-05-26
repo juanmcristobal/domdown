@@ -386,6 +386,31 @@ def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
     assert render_definition_list(soup.div, DomdownOptions()) == "Only one:\n\nItem\n\nTwo:\n\nItem"
 
 
+def test_definition_list_anchor_with_malformed_url_falls_back_to_text() -> None:
+    """Malformed URLs in metadata anchors should not crash markdown rendering."""
+
+    soup = BeautifulSoup(
+        """
+        <div class="metadata">
+          <div class="row">
+            <a href="https://[invalid-ipv6]/path">Version Permalink</a>
+          </div>
+          <div class="row">
+            <span class="field-label">Version:</span> 2.0
+          </div>
+          <div class="row">
+            <span class="field-label">Created:</span> 14 January 2020
+          </div>
+        </div>
+        """,
+        "lxml",
+    )
+
+    assert render_block(soup.div, DomdownOptions()) == """- **Version Permalink:** Version Permalink
+- **Version:** 2.0
+- **Created:** 14 January 2020"""
+
+
 def test_render_container_collapses_empty_children() -> None:
     """Container rendering should drop empty child nodes and normalize spacing."""
 

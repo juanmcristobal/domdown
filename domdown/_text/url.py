@@ -9,7 +9,10 @@ def resolve_url(url: str | None, base_url: str | None) -> str:
     if not url:
         return ""
     if base_url:
-        return urljoin(base_url, url)
+        try:
+            return urljoin(base_url, url)
+        except ValueError:
+            return url
     return url
 
 
