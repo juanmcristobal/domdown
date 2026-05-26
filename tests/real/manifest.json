@@ -78,6 +78,12 @@
       "description": "G DATA blog article with topic chrome and nested article content that should render as a full document."
     },
     {
+      "id": "gdatasoftware_kiss_loader_analysis",
+      "html": "html/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.html",
+      "markdown": "raw/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.md",
+      "description": "G DATA article with topic chrome, search overlay noise, and nested article content."
+    },
+    {
       "id": "1password_ai_phishing_protection",
       "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
       "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",

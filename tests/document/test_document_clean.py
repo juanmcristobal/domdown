@@ -549,6 +549,58 @@ def test_clean_root_removes_navigation_and_translation_chrome() -> None:
     assert "Body paragraph." in text
 
 
+def test_clean_root_removes_topic_bars_and_search_overlays() -> None:
+    """Cleanup should drop topic bars and search overlays from blog shells."""
+
+    soup = BeautifulSoup(
+        """
+        <main>
+          <nav class="nm-sticky-nav">
+            <ul>
+              <li><a href="/ransomware">Ransomware</a></li>
+              <li><a href="/warning">Warning</a></li>
+              <li><a href="/malware">Malware</a></li>
+            </ul>
+          </nav>
+          <div class="nm-page-section-blog-head">
+            <div class="nm-page-section-content">
+              <div class="nm-dropdown">
+                <ul class="nm-dropdown-menu">
+                  <li><a href="/ransomware">Ransomware</a></li>
+                  <li><a href="/warning">Warning</a></li>
+                  <li><a href="/cybercrime">CyberCrime</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="nm-search-overlay">
+            <label>Enter search term</label>
+            <button>Search</button>
+          </div>
+          <div class="nm-article-blog-header">
+            <p class="nm-article-subtitle">03/24/2026</p>
+            <h1>Article title</h1>
+          </div>
+          <article>
+            <p>Body paragraph.</p>
+          </article>
+        </main>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.main, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Ransomware" not in text
+    assert "CyberCrime" not in text
+    assert "Enter search term" not in text
+    assert "Search" not in text
+    assert "03/24/2026" not in text
+    assert "Article title" in text
+    assert "Body paragraph." in text
+
+
 def test_clean_root_removes_article_skip_link_and_staff_picks_chrome() -> None:
     """Cleanup should remove skip links, comment picks, and staff-picks chrome."""
 

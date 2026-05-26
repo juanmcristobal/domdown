@@ -29,12 +29,6 @@ def _best_content_subtree(root: Tag) -> Tag:
     if candidates:
         candidate = _pick_best_candidate(root, candidates)
         if candidate is not None:
-            if candidate is root and _looks_like_page_shell(root):
-                shell_children = [item for item in candidates if item[0] is not root and not _looks_like_chrome(item[0])]
-                if shell_children:
-                    child_candidate = _pick_best_candidate(root, shell_children)
-                    if child_candidate is not None:
-                        return child_candidate
             return candidate
     return root
 

@@ -10,16 +10,6 @@ author:
 published: "2026-03-12T08:44:48"
 description: "ACRStealer is one of the many payloads that is used by HijackLoader. It seems to specifically target gamers, stealing data like Steam logins."
 ---
-- **Ransomware:** <a href="https://blog.gdatasoftware.com/ransomware">Ransomware</a>
-- **Warning:** <a href="https://blog.gdatasoftware.com/warning">Warning</a>
-- **Malware:** <a href="https://blog.gdatasoftware.com/malware">Malware</a>
-- **CyberCrime:** <a href="https://blog.gdatasoftware.com/cybercrime">CyberCrime</a>
-- **Exploits:** <a href="https://blog.gdatasoftware.com/exploits">Exploits</a>
-- **Phishing:** <a href="https://blog.gdatasoftware.com/phishing">Phishing</a>
-- **Bots & Botnets:** <a href="https://blog.gdatasoftware.com/bots-botnets">Bots &amp; Botnets</a>
-
-03/12/2026
-
 # Endgame Harvesting: Inside ACRStealer’s Modern Infrastructure
 
 ![Endgame Harvesting: Inside ACRStealer’s Modern Infrastructure](https://blog.gdatasoftware.com/fileadmin/web/general/images/blog/2026/03/G_DATA_Blog_ACR_Stealer_Title.jpg)

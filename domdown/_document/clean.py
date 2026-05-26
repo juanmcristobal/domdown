@@ -79,6 +79,13 @@ def _looks_like_noise(node: Tag) -> bool:
     if tokens & set(NOISE_MARKERS):
         return True
     text = node.get_text(" ", strip=True).lower()
+    link_count = len(node.find_all("a"))
+    word_count = len(text.split())
+    if "enter search term" in text and word_count <= 20:
+        return True
+    marker_text = _marker_text(node)
+    if any(marker in marker_text for marker in ("sticky-nav", "page-section-blog-head", "search-overlay")):
+        return True
     if _looks_like_link_chrome(node):
         return True
     return text == "more" and bool(tokens & {"more", "share"})
@@ -91,6 +98,9 @@ def _remove_structural_chrome(root: Tag) -> None:
         if not isinstance(node, Tag) or node is root:
             continue
         if _is_within_preserved_block(node):
+            continue
+        if _looks_like_date_kicker(node):
+            node.decompose()
             continue
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
@@ -336,11 +346,32 @@ def _looks_like_navigation_block(node: Tag) -> bool:
         return True
     if "other languages available" in text or "on this page" in text:
         return True
+    link_count = len(node.find_all("a"))
+    word_count = len(text.split())
     if node.name.lower() == "nav":
-        link_count = len(node.find_all("a"))
-        text_words = len(text.split())
-        return link_count >= 2 and text_words <= 40
+        return link_count >= 2 and word_count <= 40
     return False
+
+
+def _looks_like_date_kicker(node: Tag) -> bool:
+    """Detect isolated article date lines in top-of-page headers."""
+
+    text = node.get_text(" ", strip=True)
+    if not text:
+        return False
+    if len(text.split()) > 3:
+        return False
+    if not re.fullmatch(r"\d{2}/\d{2}/\d{4}", text):
+        return False
+    marker_text = _marker_text(node)
+    if not any(token in marker_text for token in ("subtitle", "date", "time")):
+        return False
+    parent = node.parent if isinstance(node.parent, Tag) else None
+    if parent is None:
+        return False
+    if parent.find(["h1", "h2"], recursive=False) is not None:
+        return True
+    return any(token in _marker_text(parent) for token in ("header", "article"))
 
 
 def _looks_like_footer_block(node: Tag) -> bool:
