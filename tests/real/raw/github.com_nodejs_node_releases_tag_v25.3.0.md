@@ -15,7 +15,6 @@ description: Node.js JavaScript runtime ✨🐢🚀✨. Contribute to nodejs/nod
 
 Public
 
-- Uh oh! There was an error while loading. Please reload this page.
 - [Notifications](https://github.com/login?return_to=%2Fnodejs%2Fnode) You must be signed in to change notification settings
 - [Fork 35.5k](https://github.com/login?return_to=%2Fnodejs%2Fnode)
 - [Star](https://github.com/login?return_to=%2Fnodejs%2Fnode)

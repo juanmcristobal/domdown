@@ -47,6 +47,9 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
             if _looks_like_promo_banner_block(node):
                 node.decompose()
                 continue
+            if _looks_like_hidden_block(node):
+                node.decompose()
+                continue
             if node.name in skip_tags:
                 node.decompose()
                 continue
@@ -388,6 +391,17 @@ def _looks_like_footer_block(node: Tag) -> bool:
     if any(phrase in text for phrase in ("all rights reserved", "privacy settings", "modern slavery act statement")):
         return True
     return "©" in text and len(node.find_all("a")) >= 1
+
+
+def _looks_like_hidden_block(node: Tag) -> bool:
+    """Detect blocks that are intentionally hidden from the rendered page."""
+
+    if node.has_attr("hidden"):
+        return True
+    classes = node.get("class") or ()
+    if not isinstance(classes, (list, tuple)):
+        classes = (str(classes),)
+    return any(str(token).lower() == "hidden" for token in classes)
 
 
 def _looks_like_tag_block(node: Tag) -> bool:

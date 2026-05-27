@@ -156,6 +156,30 @@ def test_clean_root_keeps_article_body_wrappers_that_contain_social_in_class_nam
     assert "Body" in text
 
 
+def test_clean_root_removes_hidden_html_blocks() -> None:
+    """Cleanup should drop intentionally hidden blocks even when they contain escaped HTML."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="hidden">
+            "&lt;!DOCTYPE html&gt;\\n&lt;html&gt;\\n  &lt;head&gt;\\n    &lt;title&gt;Sign in ・ Cloudflare Access&lt;/title&gt;"
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Cloudflare Access" not in text
+    assert "<!DOCTYPE html>" not in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_fixed_ad_wrappers() -> None:
     """Cleanup should strip fixed ad wrappers that sit outside the article body."""
 
