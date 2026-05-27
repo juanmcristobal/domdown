@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "zimperium_android_malware_bypass_detection",
+      "html": "html/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.html",
+      "markdown": "raw/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.md",
+      "description": "Structured security article with headings, lists, and images."
+    },
+    {
+      "id": "404media_secure_chat_encryption",
+      "html": "html/404media.co_a-secure-chat-apps-encryption-is-so-bad-it-is-meaningless.html",
+      "markdown": "raw/404media.co_a-secure-chat-apps-encryption-is-so-bad-it-is-meaningless.md",
+      "description": "Concise newsroom-style article with inline links and author metadata."
+    },
+    {
+      "id": "arstechnica_airsnitch_article_chrome",
+      "html": "html/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.html",
+      "markdown": "raw/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.md",
+      "description": "Security article with skip links and recommendation chrome that should be removed."
+    },
+    {
+      "id": "bitdefender_dll_sideloading",
+      "html": "html/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.html",
+      "markdown": "raw/techzone.bitdefender.com_en_tech-explainers_what-is-dll-sideloading.md",
+      "description": "Long technical explainer with diagrams and preserved code-like structure."
+    },
+    {
+      "id": "cisa_alert_kev_catalog",
+      "html": "html/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.html",
+      "markdown": "raw/cisa.gov_news-events_alerts_2026_03_03_cisa-adds-two-known-exploited-vulnerabilities-catalog.md",
+      "description": "Government alert page with concise body text and simple metadata."
+    },
+    {
+      "id": "node_release_tag_v2530",
+      "html": "html/github.com_nodejs_node_releases_tag_v25.3.0.html",
+      "markdown": "raw/github.com_nodejs_node_releases_tag_v25.3.0.md",
+      "description": "GitHub release page with long release notes and commit listings.",
+      "layer": "adapter"
+    },
+    {
+      "id": "github_issue_security_timeline",
+      "html": "html/github.com_BerriAI_litellm_issues_24518.html",
+      "markdown": "raw/github.com_BerriAI_litellm_issues_24518.md",
+      "description": "GitHub issue page with long-form security timeline content.",
+      "layer": "adapter"
+    },
+    {
+      "id": "github_blob_release_notes",
+      "html": "html/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.html",
+      "markdown": "raw/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.md",
+      "description": "GitHub blob page with plain-text release note content.",
+      "layer": "adapter"
+    },
+    {
+      "id": "nisos_remote_worker_fraud",
+      "html": "html/nisos.com_blog_dprk-remote-worker-fraud-interview.html",
+      "markdown": "raw/nisos.com_blog_dprk-remote-worker-fraud-interview.md",
+      "description": "Interview-style article with strong frontmatter and inline formatting."
+    },
+    {
+      "id": "0xmaz_hookchain_edr_bypass",
+      "html": "html/0xmaz.me_posts_HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques.html",
+      "markdown": "raw/0xmaz.me_posts_HookChain-A-Deep-Dive-into-Advanced-EDR-Bypass-Techniques.md",
+      "description": "Technical security article with partial selectors matching [class*='content'] patterns."
+    },
+    {
+      "id": "mitre_attack_t1102_001",
+      "html": "html/attack.mitre.org_techniques_T1102_001.html",
+      "markdown": "raw/attack.mitre.org_techniques_T1102_001.md",
+      "base_url": "https://attack.mitre.org/techniques/T1102/001/",
+      "description": "MITRE ATT&CK technique page with a metadata card that should render as bullets."
+    },
+    {
+      "id": "gdatasoftware_acr_stealer_infrastructure",
+      "html": "html/blog.gdatasoftware.com_2026_03_38385-acr-stealer-infrastructure.html",
+      "markdown": "raw/blog.gdatasoftware.com_2026_03_38385-acr-stealer-infrastructure.md",
+      "description": "G DATA blog article with topic chrome and nested article content that should render as a full document."
+    },
+    {
+      "id": "alyac_taket_shipping_smishing",
+      "html": "html/blog.alyac.co.kr_5035.html",
+      "markdown": "raw/blog.alyac.co.kr_5035.md",
+      "description": "Tistory article with Korean navigation chrome, comments, related posts, and sidebar blocks that should be removed."
+    },
+    {
+      "id": "bushidotoken_blackbasta_leaks_lessons_from_ascension",
+      "html": "html/bushidotoken.net_2025_02_blackbasta-leaks-lessons-from-ascension.html",
+      "markdown": "raw/bushidotoken.net_2025_02_blackbasta-leaks-lessons-from-ascension.md",
+      "description": "Blogger security article with label cloud widgets that should not replace the post body."
+    },
+    {
+      "id": "ethiack_waf_parameter_pollution",
+      "html": "html/blog.ethiack.com_blog_bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution.html",
+      "markdown": "raw/blog.ethiack.com_blog_bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution.md",
+      "description": "HubSpot article with social-link wrappers and a rich-text body that should render as full prose."
+    },
+    {
+      "id": "gdatasoftware_kiss_loader_analysis",
+      "html": "html/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.html",
+      "markdown": "raw/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.md",
+      "description": "G DATA article with topic chrome, search overlay noise, and nested article content."
+    },
+    {
+      "id": "elastic_phantom_in_the_vault",
+      "html": "html/elastic.co_security-labs_phantom-in-the-vault.html",
+      "markdown": "raw/elastic.co_security-labs_phantom-in-the-vault.md",
+      "description": "Elastic Security Labs article with MITRE metadata and references that should stay structured."
+    },
+    {
+      "id": "fortinet_threat_report_automated_cyberattacks",
+      "html": "html/fortinet.com_corporate_about-us_newsroom_press-releases_2025_fortinet-threat-report-reveals-record-surge-in-automated-cyberattacks.html",
+      "markdown": "raw/fortinet.com_corporate_about-us_newsroom_press-releases_2025_fortinet-threat-report-reveals-record-surge-in-automated-cyberattacks.md",
+      "description": "Fortinet press release with a link-dense shell that should resolve to the article body."
+    },
+    {
+      "id": "endorlabs_openclaw_ai_sast_vulnerabilities",
+      "html": "html/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.html",
+      "markdown": "raw/endorlabs.com_learn_how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities.md",
+      "description": "Endor Labs article with AI helper chrome and structured vulnerability summaries."
+    },
+    {
+      "id": "1password_ai_phishing_protection",
+      "html": "html/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.html",
+      "markdown": "raw/1password.com_blog_as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection.md",
+      "description": "Security blog post testing partial selectors with real-world content."
+    },
+    {
+      "id": "acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil",
+      "html": "html/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.html",
+      "markdown": "raw/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.md",
+      "description": "Acronis article with language picker and breadcrumb chrome that should be removed."
+    },
+    {
+      "id": "safedep_malicious_ixpresso_core_npm_rat",
+      "html": "html/safedep.io_malicious-ixpresso-core-npm-rat.html",
+      "markdown": "raw/safedep.io_malicious-ixpresso-core-npm-rat.md",
+      "description": "SafeDep article with compact hero chrome that should be removed."
+    },
+    {
+      "id": "aikido_axios_npm_compromised_maintainer_hijacked_rat",
+      "html": "html/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.html",
+      "markdown": "raw/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.md",
+      "base_url": "https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat/",
+      "description": "Aikido article with compact metadata bar and promotional wrappers that should be removed."
+    },
+    {
+      "id": "encryptionconsulting_enterprise_guide_to_pqc_migration",
+      "html": "html/encryptionconsulting.com_enterprise-guide-to-pqc-migration.html",
+      "markdown": "raw/encryptionconsulting.com_enterprise-guide-to-pqc-migration.md",
+      "base_url": "https://www.encryptionconsulting.com/enterprise-guide-to-pqc-migration/",
+      "description": "PQC migration article with compact CTA cards that should be removed."
+    },
+    {
+      "id": "adnanthekhan_clinejection",
+      "html": "html/adnanthekhan_clinejection.html",
+      "markdown": "raw/adnanthekhan_clinejection.md",
+      "description": "Technical article with code spans, anchor fragments, and email-protection markup."
+    },
+    {
+      "id": "dragos_threat_voltzite",
+      "html": "html/dragos_threat_voltzite.html",
+      "markdown": "raw/dragos_threat_voltzite.md",
+      "description": "Threat profile page with heading-led sections and nested lists."
+    }
+  ]
+}

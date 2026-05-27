@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from domdown.domdown import Domdown
-from domdown.types import DomdownOptions, DomdownResponse
+from .api import html_to_markdown
+from ._core import DomdownOptions, HtmlMetadata, HtmlToMarkdownResult
+from ._pipeline import HtmlToMarkdownPipeline
 
-__all__ = ["Domdown", "DomdownOptions", "DomdownResponse"]
+__version__ = "0.1.0"
+
+__all__ = [
+    "__version__",
+    "DomdownOptions",
+    "HtmlMetadata",
+    "HtmlToMarkdownResult",
+    "HtmlToMarkdownPipeline",
+    "html_to_markdown",
+]
