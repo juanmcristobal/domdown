@@ -111,6 +111,7 @@ def _remove_structural_chrome(root: Tag) -> None:
         if _is_small_structural_block(node) and (
             _looks_like_header_block(node)
             or _looks_like_related_block(node)
+            or _looks_like_category_block(node)
             or _looks_like_navigation_block(node)
             or _looks_like_tag_block(node)
             or _looks_like_boilerplate(node)
@@ -185,6 +186,19 @@ def _looks_like_related_block(node: Tag) -> bool:
         return True
     marker_text = _marker_text(node)
     return any(marker in marker_text for marker in ("related", "recommend"))
+
+
+def _looks_like_category_block(node: Tag) -> bool:
+    """Detect compact article category blocks that only label link lists."""
+
+    text = node.get_text(" ", strip=True).lower()
+    if "categories" not in text:
+        return False
+    link_count = len(node.find_all("a"))
+    word_count = len(text.split())
+    if link_count < 2 or word_count > 24:
+        return False
+    return True
 
 
 def _looks_like_boilerplate(node: Tag) -> bool:

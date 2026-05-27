@@ -264,6 +264,87 @@ def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_article_category_blocks() -> None:
+    """Cleanup should drop category wrappers that only repeat article metadata."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="article-categories">
+            <div class="entry-meta-label">Categories</div>
+            <div class="entry-categories">
+              <a href="/news">News</a>
+              <a href="/tips">Tips</a>
+            </div>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Categories" not in text
+    assert "News" not in text
+    assert "Tips" not in text
+    assert "Body" in text
+
+
+def test_clean_root_removes_category_label_link_lists_without_class_hint() -> None:
+    """Cleanup should drop compact category link lists even without a site-specific class."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <section>
+            <div>Categories</div>
+            <a href="/security">Security</a>
+            <a href="/ransomware">Ransomware</a>
+          </section>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Categories" not in text
+    assert "Security" not in text
+    assert "Ransomware" not in text
+    assert "Body" in text
+
+
+def test_clean_root_removes_company_box_promos() -> None:
+    """Cleanup should drop compact company promo boxes inside article content."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <div class="company-box">
+            <div class="title">Monthly digest from the Acronis Blog</div>
+            <a href="/en/blog/posts/example">Article</a>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Monthly digest" not in text
+    assert "Article" not in text
+    assert "Body" in text
+
+
 def test_clean_root_removes_long_copyright_footer_block() -> None:
     """Legal footer text should be removed even when it is longer than a compact block."""
 
