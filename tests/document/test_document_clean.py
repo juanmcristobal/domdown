@@ -241,6 +241,47 @@ def test_clean_root_removes_long_copyright_footer_block() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_tistory_article_chrome_blocks() -> None:
+    """Tistory article utilities and related blocks should not survive cleanup."""
+
+    soup = BeautifulSoup(
+        """
+        <article class="article_cont">
+          <div class="article_util">좋아요 - 댓글달기 0</div>
+          <div class="tt_article_useless_p_margin contents_style">
+            <p>Body</p>
+          </div>
+          <div class="container_postbtn">공유하기 게시글 관리</div>
+          <div class="another_category another_category_color_gray">다른 글</div>
+          <div class="box_related_article">관련글</div>
+          <div class="box_comment">댓글 영역</div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(
+        soup.article,
+        (
+            ".article_util",
+            ".container_postbtn",
+            ".another_category",
+            ".box_related_article",
+            ".box_comment",
+        ),
+        SKIP_TAGS,
+    )
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "좋아요 - 댓글달기" not in text
+    assert "공유하기" not in text
+    assert "다른 글" not in text
+    assert "관련글" not in text
+    assert "댓글 영역" not in text
+    assert "Body" in text
+
+
 def test_clean_root_keeps_long_workaround_paragraphs() -> None:
     """Cleanup should not treat normal prose with 'recommended' as related chrome."""
 

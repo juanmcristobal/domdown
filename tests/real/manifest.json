@@ -78,6 +78,12 @@
       "description": "G DATA blog article with topic chrome and nested article content that should render as a full document."
     },
     {
+      "id": "alyac_taket_shipping_smishing",
+      "html": "html/blog.alyac.co.kr_5035.html",
+      "markdown": "raw/blog.alyac.co.kr_5035.md",
+      "description": "Tistory article with Korean navigation chrome, comments, related posts, and sidebar blocks that should be removed."
+    },
+    {
       "id": "gdatasoftware_kiss_loader_analysis",
       "html": "html/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.html",
       "markdown": "raw/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.md",
