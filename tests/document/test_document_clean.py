@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from bs4 import BeautifulSoup
-from pathlib import Path
 
 from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
 from domdown._document import clean_root, choose_root, parse_html
@@ -456,10 +455,29 @@ def test_clean_root_removes_html_comments() -> None:
 def test_clean_root_removes_blog_feed_card_strips() -> None:
     """Cleanup should drop compact related-post feeds rendered as cards."""
 
-    html = Path(
-        "/home/juanmcristobal/projects/github/domdown/tests/real/html/aikido.dev_blog_axios-npm-compromised-maintainer-hijacked-rat.html"
-    ).read_text()
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(
+        """
+        <article>
+          <p>Body</p>
+          <section class="blog_category_section">
+            <div class="card">
+              <h2>Supply Chain Attack Targets Laravel-Lang Packages with Credential Stealer</h2>
+              <img src="/img-1.png" alt="Card 1" />
+            </div>
+            <div class="card">
+              <h2>Google API keys keep working after you delete them</h2>
+              <img src="/img-2.png" alt="Card 2" />
+            </div>
+            <div class="card">
+              <h2>The Wild West of VS Code extensions and how a poisoned extension breached GitHub</h2>
+              <img src="/img-3.png" alt="Card 3" />
+            </div>
+            <h2>Latest from Aikido Endpoint</h2>
+          </section>
+        </article>
+        """,
+        "lxml",
+    )
     feed = soup.find(class_="blog_category_section")
     assert feed is not None
     assert _looks_like_article_feed_block(feed)
