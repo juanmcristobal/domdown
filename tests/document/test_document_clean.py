@@ -132,6 +132,30 @@ def test_clean_root_removes_social_follow_and_sponsored_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_keeps_article_body_wrappers_that_contain_social_in_class_name() -> None:
+    """Cleanup should not drop a substantive article wrapper just because its class mentions social."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="blog-post--social-link">
+            <div class="blog-post__body">
+              <p>Body paragraph one with enough substance to stay in place.</p>
+              <p>Body paragraph two with enough additional prose to be treated as content.</p>
+            </div>
+          </div>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, DEFAULT_REMOVE_SELECTORS, SKIP_TAGS)
+
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Body" in text
+
+
 def test_clean_root_removes_fixed_ad_wrappers() -> None:
     """Cleanup should strip fixed ad wrappers that sit outside the article body."""
 

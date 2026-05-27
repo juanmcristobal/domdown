@@ -90,6 +90,12 @@
       "description": "Blogger security article with label cloud widgets that should not replace the post body."
     },
     {
+      "id": "ethiack_waf_parameter_pollution",
+      "html": "html/blog.ethiack.com_blog_bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution.html",
+      "markdown": "raw/blog.ethiack.com_blog_bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution.md",
+      "description": "HubSpot article with social-link wrappers and a rich-text body that should render as full prose."
+    },
+    {
       "id": "gdatasoftware_kiss_loader_analysis",
       "html": "html/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.html",
       "markdown": "raw/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.md",

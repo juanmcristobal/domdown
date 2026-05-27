@@ -25,8 +25,12 @@ SHARE_SELECTORS = (
     ".more-link",
     "[class*='share']",
     "[id*='share']",
-    "[class*='social']",
-    "[id*='social']",
+    "[class*='social-sharing']",
+    "[id*='social-sharing']",
+    "[class*='social-links']",
+    "[id*='social-links']",
+    "[class*='socials']",
+    "[id*='socials']",
 )
 
 # Direct children that are still broad enough to be considered content shells

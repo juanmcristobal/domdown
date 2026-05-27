@@ -1,0 +1,3843 @@
+<!doctype html><html lang="en"><head>
+    <meta charset="utf-8">
+    
+    <!-- use only when the page has forms in the webpage -->
+    <!--
+      <link rel="preconnect" href="https://js.hsforms.net">
+      <link rel="preconnect" href="https://js.hscollectedforms.net"> 
+    -->
+    <link rel="preconnect" href="https://cdn2.hubspot.net">
+    <link rel="preconnect" href="https://static.hsappstatic.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">    
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">   
+    
+    
+    <title>Bypassing WAFs for Fun and JS Injection with Parameter Pollution</title>
+    <link rel="shortcut icon" href="https://blog.ethiack.com/hubfs/favicon%20(1).svg">
+    <meta name="description" content="Technical deep dive into bypassing a strict Web Application Firewall using HTTP Parameter Pollution, leveraging multi-parameter payload splitting to achieve JavaScript injection and evade detection.">
+    
+      
+    
+    
+    
+    
+<!--     
+        <script>
+          // override the hbspt functionality while hubspot is loading
+          var hbspt = {
+             //push form to hubcache queue
+             forms:{create:function(c){hubspot.forms.push(c)}},
+          };
+
+          // cache hubspot forms here
+          var hubcache = {
+                  forms:[],
+                  letsgo:function(){
+                      for (var i in hubspot.forms){
+                        //hubspot is now loaded
+                        hbspt.forms.create(hubcache.forms[i]);
+                      }            
+                  }
+              }
+          </script>
+          <script 
+             type="text/javascript" 
+             defer 
+             src="//js.hsforms.net/forms/v2.js" 
+             onload="hubcache.letsgo()">
+          </script> -->
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:description" content="Technical deep dive into bypassing a strict Web Application Firewall using HTTP Parameter Pollution, leveraging multi-parameter payload splitting to achieve JavaScript injection and evade detection.">
+    <meta property="og:title" content="Bypassing WAFs for Fun and JS Injection with Parameter Pollution">
+    <meta name="twitter:description" content="Technical deep dive into bypassing a strict Web Application Firewall using HTTP Parameter Pollution, leveraging multi-parameter payload splitting to achieve JavaScript injection and evade detection.">
+    <meta name="twitter:title" content="Bypassing WAFs for Fun and JS Injection with Parameter Pollution">
+
+    
+
+    
+    <style>
+a.cta_button{-moz-box-sizing:content-box !important;-webkit-box-sizing:content-box !important;box-sizing:content-box !important;vertical-align:middle}.hs-breadcrumb-menu{list-style-type:none;margin:0px 0px 0px 0px;padding:0px 0px 0px 0px}.hs-breadcrumb-menu-item{float:left;padding:10px 0px 10px 10px}.hs-breadcrumb-menu-divider:before{content:'›';padding-left:10px}.hs-featured-image-link{border:0}.hs-featured-image{float:right;margin:0 0 20px 20px;max-width:50%}@media (max-width: 568px){.hs-featured-image{float:none;margin:0;width:100%;max-width:100%}}.hs-screen-reader-text{clip:rect(1px, 1px, 1px, 1px);height:1px;overflow:hidden;position:absolute !important;width:1px}
+</style>
+
+<link class="hs-async-css" rel="preload" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973194725/1768308549524/template_blog.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973194725/1768308549524/template_blog.min.css"></noscript>
+<link class="hs-async-css" rel="preload" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59974662373/1768308564086/template_library.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59974662373/1768308564086/template_library.min.css"></noscript>
+<link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973686494/1768308562475/template_main.min.css">
+<link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973514445/1768308552835/template_theme-overrides.min.css">
+<link class="hs-async-css" rel="preload" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973582069/1744244172697/module_header-toggler.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973582069/1744244172697/module_header-toggler.min.css"></noscript>
+
+<style>
+  #header-top-module-4 .au-toggler--icon svg {
+    fill: rgba(0, 169, 135,100%);
+  }
+
+  #header-top-module-4 .au-menu-toggler {
+    padding: 0px;
+margin-top: 0px;
+margin-bottom: 0px;
+
+  } 
+</style>
+
+
+<style>
+  #module_16860490530343 .au-button {
+    transition: 0.2s linear all;
+    
+    border: 0px solid rgba(255, 159, 13,0%);
+    
+    
+    border-radius: 0px;
+    
+    
+    background-color: rgba(0, 169, 135,100%);
+    
+    
+  }
+
+  #module_16860490530343 .au-button:hover {
+    transition: 0.2s linear all;
+    
+    background-color: rgba(0, 232, 145,100%);
+    
+    
+    border: 0px solid rgba(255, 159, 13,0%);
+    
+  } 
+
+  #module_16860490530343 .au-button span {
+    
+    color: rgba(255, 255, 255,100%);
+    
+  }
+
+  #module_16860490530343 .au-button:hover span {
+    
+    color: rgba(10, 43, 33,100%);
+    
+  }
+
+  #module_16860490530343.au-mb-align--left {
+    text-align: left;
+  }
+
+  #module_16860490530343.au-mb-align--center {
+    text-align: center;
+  }
+
+  #module_16860490530343.au-mb-align--right {
+    text-align: right;
+  }
+
+  @media only screen and (min-width: 992px) {
+    #module_16860490530343.au-lp-align--left {
+      text-align: left;
+    }
+
+    #module_16860490530343.au-lp-align--center {
+      text-align: center;
+    }
+
+    #module_16860490530343.au-lp-align--right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #widget_1684840726382 .au-button {
+    transition: 0.2s linear all;
+    
+    border: 0px solid rgba(255, 159, 13,0%);
+    
+    
+    border-radius: 0px;
+    
+    
+    background-color: rgba(0, 232, 145,100%);
+    
+    
+  }
+
+  #widget_1684840726382 .au-button:hover {
+    transition: 0.2s linear all;
+    
+    background-color: rgba(0, 169, 135,100%);
+    
+    
+    border: 0px solid rgba(255, 159, 13,0%);
+    
+  } 
+
+  #widget_1684840726382 .au-button span {
+    
+    color: rgba(10, 43, 33,100%);
+    
+  }
+
+  #widget_1684840726382 .au-button:hover span {
+    
+    color: rgba(255, 255, 255,100%);
+    
+  }
+
+  #widget_1684840726382.au-mb-align--left {
+    text-align: left;
+  }
+
+  #widget_1684840726382.au-mb-align--center {
+    text-align: center;
+  }
+
+  #widget_1684840726382.au-mb-align--right {
+    text-align: right;
+  }
+
+  @media only screen and (min-width: 992px) {
+    #widget_1684840726382.au-lp-align--left {
+      text-align: left;
+    }
+
+    #widget_1684840726382.au-lp-align--center {
+      text-align: center;
+    }
+
+    #widget_1684840726382.au-lp-align--right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #widget_1679077036772.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #widget_1679077036772.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #widget_1679077036772.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #widget_1679077036772.au-image img {
+    
+    border-radius: 1px;
+    
+  }
+
+  @media (min-width: 992px) {
+    #widget_1679077036772.au-image--align-left {
+      text-align: left;
+    }
+
+    #widget_1679077036772.au-image--align-center {
+      text-align: center;
+    }
+
+    #widget_1679077036772.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+<link class="hs-async-css" rel="preload" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973514228/1744244164544/module_social-follow.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973514228/1744244164544/module_social-follow.min.css"></noscript>
+
+<style>
+  #widget_1691075480648.au-spacer {
+    height: 10px;
+    background-color: rgba(27, 92, 87,100%)
+  }
+
+  @media only screen and (min-width: 768px) {
+    #widget_1691075480648.au-spacer {
+      height: 10px;      
+    }
+  }
+  
+  @media only screen and (min-width: 992px) {
+    #widget_1691075480648.au-spacer {
+      height: 30px;
+    }
+  }
+</style>
+
+
+<style>
+  #widget_1689076240943.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #widget_1689076240943.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #widget_1689076240943.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #widget_1689076240943.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #widget_1689076240943.au-image--align-left {
+      text-align: left;
+    }
+
+    #widget_1689076240943.au-image--align-center {
+      text-align: center;
+    }
+
+    #widget_1689076240943.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #module_1700843184316.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1700843184316.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #module_1700843184316.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1700843184316.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #module_1700843184316.au-image--align-left {
+      text-align: left;
+    }
+
+    #module_1700843184316.au-image--align-center {
+      text-align: center;
+    }
+
+    #module_1700843184316.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #module_1700843188809.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1700843188809.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #module_1700843188809.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1700843188809.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #module_1700843188809.au-image--align-left {
+      text-align: left;
+    }
+
+    #module_1700843188809.au-image--align-center {
+      text-align: center;
+    }
+
+    #module_1700843188809.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #module_1715031328389.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1715031328389.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #module_1715031328389.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1715031328389.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #module_1715031328389.au-image--align-left {
+      text-align: left;
+    }
+
+    #module_1715031328389.au-image--align-center {
+      text-align: center;
+    }
+
+    #module_1715031328389.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #module_17429214767183.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #module_17429214767183.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #module_17429214767183.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #module_17429214767183.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #module_17429214767183.au-image--align-left {
+      text-align: left;
+    }
+
+    #module_17429214767183.au-image--align-center {
+      text-align: center;
+    }
+
+    #module_17429214767183.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+
+<style>
+  #module_1700843604186.au-image--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1700843604186.au-image--align-center-mb  {
+    text-align: center;
+  }
+
+  #module_1700843604186.au-image--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1700843604186.au-image img {
+    
+  }
+
+  @media (min-width: 992px) {
+    #module_1700843604186.au-image--align-left {
+      text-align: left;
+    }
+
+    #module_1700843604186.au-image--align-center {
+      text-align: center;
+    }
+
+    #module_1700843604186.au-image--align-right {
+      text-align: right;
+    }
+  }
+</style>
+
+<link class="hs-async-css" rel="preload" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973689019/1744244174473/module_icon-box.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973689019/1744244174473/module_icon-box.min.css"></noscript>
+
+<style>
+
+  #module_1685982325875 .au-icon-box__img svg {
+    fill: #FFFFFF;
+    
+  }
+
+  
+
+  #module_1685982325875 .au-icon-box__img svg {
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+  }
+
+  
+  #module_1685982325875 .au-icon-box__img img {
+    border-radius: 50%;
+  }
+
+  
+
+  #module_1685982325875.au-icon-box--card .au-card--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1685982325875.au-icon-box--card .au-card--align-center-mb {
+    text-align: center;
+  }
+
+  #module_1685982325875.au-icon-box--card .au-card--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1685982325875 .au-icon-box__col {
+    padding-top: 15px;
+padding-right: 20px;
+padding-bottom: 15px;
+padding-left: 20px;
+margin-bottom: 30px;
+
+  }
+
+  #module_1685982325875 .au-icon-box__text h1,
+  #module_1685982325875 .au-icon-box__text h2,
+  #module_1685982325875 .au-icon-box__text h3,
+  #module_1685982325875 .au-icon-box__text h4,
+  #module_1685982325875 .au-icon-box__text h5,
+  #module_1685982325875 .au-icon-box__text h6 {
+    
+  }
+
+  #module_1685982325875 .au-icon-box__text,
+  #module_1685982325875 .au-icon-box__text p,
+  #module_1685982325875 .au-icon-box__text span {
+    
+    color: rgba(238, 238, 238,100%)
+    
+  }
+
+  #module_1685982325875 .au-icon-box__col {
+    
+  }
+
+  @media only screen and (min-width: 768px) {
+    #module_1685982325875.au-icon-box--card .au-card--align-left {
+      text-align: left;
+    }
+
+    #module_1685982325875.au-icon-box--card .au-card--align-center {
+      text-align: center;
+    }
+
+    #module_1685982325875.au-icon-box--card .au-card--align-right {
+      text-align: right;
+    }
+
+    #module_1685982325875 .au-icon-box__col {
+      padding: 0px;
+margin-bottom: 40px;
+
+    }
+  }
+</style>
+
+
+<style>
+
+  #module_1686578573942 .au-icon-box__img svg {
+    fill: #FFFFFF;
+    
+  }
+
+  
+
+  #module_1686578573942 .au-icon-box__img svg {
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+  }
+
+  
+  #module_1686578573942 .au-icon-box__img img {
+    border-radius: 50%;
+  }
+
+  
+
+  #module_1686578573942.au-icon-box--card .au-card--align-left-mb {
+    text-align: left;
+  }
+
+  #module_1686578573942.au-icon-box--card .au-card--align-center-mb {
+    text-align: center;
+  }
+
+  #module_1686578573942.au-icon-box--card .au-card--align-right-mb {
+    text-align: right;
+  }
+
+  #module_1686578573942 .au-icon-box__col {
+    padding-top: 15px;
+padding-right: 20px;
+padding-bottom: 15px;
+padding-left: 100px;
+margin-bottom: 30px;
+
+  }
+
+  #module_1686578573942 .au-icon-box__text h1,
+  #module_1686578573942 .au-icon-box__text h2,
+  #module_1686578573942 .au-icon-box__text h3,
+  #module_1686578573942 .au-icon-box__text h4,
+  #module_1686578573942 .au-icon-box__text h5,
+  #module_1686578573942 .au-icon-box__text h6 {
+    
+  }
+
+  #module_1686578573942 .au-icon-box__text,
+  #module_1686578573942 .au-icon-box__text p,
+  #module_1686578573942 .au-icon-box__text span {
+    
+    color: rgba(238, 238, 238,100%)
+    
+  }
+
+  #module_1686578573942 .au-icon-box__col {
+    
+  }
+
+  @media only screen and (min-width: 768px) {
+    #module_1686578573942.au-icon-box--card .au-card--align-left {
+      text-align: left;
+    }
+
+    #module_1686578573942.au-icon-box--card .au-card--align-center {
+      text-align: center;
+    }
+
+    #module_1686578573942.au-icon-box--card .au-card--align-right {
+      text-align: right;
+    }
+
+    #module_1686578573942 .au-icon-box__col {
+      padding: 15px;
+margin-bottom: 40px;
+
+    }
+  }
+</style>
+
+
+<style>
+
+  #module_16878560932553 .au-icon-box__img svg {
+    fill: #FFFFFF;
+    
+  }
+
+  
+
+  #module_16878560932553 .au-icon-box__img svg {
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+  }
+
+  
+  #module_16878560932553 .au-icon-box__img img {
+    border-radius: 50%;
+  }
+
+  
+
+  #module_16878560932553.au-icon-box--card .au-card--align-left-mb {
+    text-align: left;
+  }
+
+  #module_16878560932553.au-icon-box--card .au-card--align-center-mb {
+    text-align: center;
+  }
+
+  #module_16878560932553.au-icon-box--card .au-card--align-right-mb {
+    text-align: right;
+  }
+
+  #module_16878560932553 .au-icon-box__col {
+    padding-top: 15px;
+padding-right: 20px;
+padding-bottom: 15px;
+padding-left: 100px;
+margin-bottom: 30px;
+
+  }
+
+  #module_16878560932553 .au-icon-box__text h1,
+  #module_16878560932553 .au-icon-box__text h2,
+  #module_16878560932553 .au-icon-box__text h3,
+  #module_16878560932553 .au-icon-box__text h4,
+  #module_16878560932553 .au-icon-box__text h5,
+  #module_16878560932553 .au-icon-box__text h6 {
+    
+  }
+
+  #module_16878560932553 .au-icon-box__text,
+  #module_16878560932553 .au-icon-box__text p,
+  #module_16878560932553 .au-icon-box__text span {
+    
+    color: rgba(250, 250, 250,100%)
+    
+  }
+
+  #module_16878560932553 .au-icon-box__col {
+    
+  }
+
+  @media only screen and (min-width: 768px) {
+    #module_16878560932553.au-icon-box--card .au-card--align-left {
+      text-align: left;
+    }
+
+    #module_16878560932553.au-icon-box--card .au-card--align-center {
+      text-align: center;
+    }
+
+    #module_16878560932553.au-icon-box--card .au-card--align-right {
+      text-align: right;
+    }
+
+    #module_16878560932553 .au-icon-box__col {
+      padding: 15px;
+margin-bottom: 40px;
+
+    }
+  }
+</style>
+
+<style>
+@font-face {
+  font-family: "FK Display";
+  src: url("https://blog.ethiack.com/hubfs/FKDisplay-RegularAlt.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FK Display";
+  src: url("https://blog.ethiack.com/hubfs/FKDisplay-RegularAlt.otf") format("opentype");
+  font-display: swap;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "FK Grotesk Mono";
+  src: url("https://blog.ethiack.com/hubfs/FKGroteskMono-Black.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "FK Display";
+  src: url("https://blog.ethiack.com/hubfs/FKDisplay-RegularAlt.otf") format("opentype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FK Display";
+  src: url("https://blog.ethiack.com/hubfs/FKDisplay-RegularAlt.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 400;
+}
+</style>
+
+<style>
+  @font-face {
+    font-family: "Space Mono";
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+    src: url("/_hcms/googlefonts/Space_Mono/700.woff2") format("woff2"), url("/_hcms/googlefonts/Space_Mono/700.woff") format("woff");
+  }
+  @font-face {
+    font-family: "Space Mono";
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+    src: url("/_hcms/googlefonts/Space_Mono/regular.woff2") format("woff2"), url("/_hcms/googlefonts/Space_Mono/regular.woff") format("woff");
+  }
+  @font-face {
+    font-family: "Montserrat";
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+    src: url("/_hcms/googlefonts/Montserrat/regular.woff2") format("woff2"), url("/_hcms/googlefonts/Montserrat/regular.woff") format("woff");
+  }
+  @font-face {
+    font-family: "Montserrat";
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+    src: url("/_hcms/googlefonts/Montserrat/700.woff2") format("woff2"), url("/_hcms/googlefonts/Montserrat/700.woff") format("woff");
+  }
+</style>
+
+<!-- Editor Styles -->
+<style id="hs_editor_style" type="text/css">
+#hs_cos_wrapper_footer-module-3  { display: block !important; padding-top: 15px !important }
+.header-top-row-0-force-full-width-section > .row-fluid {
+  max-width: none !important;
+}
+.header-top-module-5-flexbox-positioning {
+  display: -ms-flexbox !important;
+  -ms-flex-direction: column !important;
+  -ms-flex-align: end !important;
+  -ms-flex-pack: start;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: flex-start;
+}
+.header-top-module-5-flexbox-positioning > div {
+  max-width: 100%;
+  flex-shrink: 0 !important;
+}
+/* HubSpot Non-stacked Media Query Styles */
+@media (min-width:768px) {
+  .header-top-row-0-vertical-alignment > .row-fluid {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: row;
+    display: flex !important;
+    flex-direction: row;
+  }
+  .header-top-column-3-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .header-top-column-3-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .header-top-column-3-row-1-vertical-alignment > .row-fluid {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: row;
+    display: flex !important;
+    flex-direction: row;
+  }
+  .cell_1686304273695-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_1686304273695-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_16863042686613-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_16863042686613-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_1686304268661-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_1686304268661-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .header-top-column-1-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .header-top-column-1-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .footer-row-0-vertical-alignment > .row-fluid {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: row;
+    display: flex !important;
+    flex-direction: row;
+  }
+  .cell_1687863379597-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  .cell_1687863379597-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_1685728542907-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  .cell_1685728542907-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_1685728542907-row-1-vertical-alignment > .row-fluid {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: row;
+    display: flex !important;
+    flex-direction: row;
+  }
+  .cell_1687856317808-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_1687856317808-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_1686578750463-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  .cell_1686578750463-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .footer-column-1-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  .footer-column-1-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .footer-column-1-row-4-vertical-alignment > .row-fluid {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: row;
+    display: flex !important;
+    flex-direction: row;
+  }
+  .cell_1715031328387-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_1715031328387-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+  .cell_17008439644722-vertical-alignment {
+    display: -ms-flexbox !important;
+    -ms-flex-direction: column !important;
+    -ms-flex-pack: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .cell_17008439644722-vertical-alignment > div {
+    flex-shrink: 0 !important;
+  }
+}
+/* HubSpot Styles (default) */
+.header-top-row-0-margin {
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+}
+.header-top-row-0-padding {
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+.header-top-row-0-hidden {
+  display: none !important;
+}
+.header-top-row-0-background-layers {
+  background-image: linear-gradient(rgba(250, 250, 250, 0), rgba(250, 250, 250, 0)) !important;
+  background-position: left top !important;
+  background-size: auto !important;
+  background-repeat: no-repeat !important;
+}
+.header-top-column-3-margin {
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+}
+.header-top-column-3-padding {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+.cell_1686304273695-margin {
+  margin-top: 0px !important;
+}
+.cell_1686304273695-padding {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+.cell_16863042686613-padding {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  padding-left: 0px !important;
+  padding-right: 10px !important;
+}
+.cell_16863042686613-hidden {
+  display: flex !important;
+}
+.module_16860490530343-hidden {
+  display: block !important;
+}
+.cell_1686304268661-padding {
+  padding-right: 15px !important;
+}
+.header-top-column-1-padding {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+.footer-row-0-padding {
+  padding-top: 50px !important;
+  padding-bottom: 0px !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+.footer-row-0-hidden {
+  display: none !important;
+}
+.footer-row-0-background-layers {
+  background-image: linear-gradient(rgba(28, 92, 87, 1), rgba(28, 92, 87, 1)) !important;
+  background-position: left top !important;
+  background-size: auto !important;
+  background-repeat: no-repeat !important;
+}
+.footer-column-1-padding {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+.footer-column-1-row-0-padding {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+.footer-column-1-row-2-padding {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+/* HubSpot Styles (mobile) */
+@media (max-width: 992px) {
+  .cell_1686304273695-padding {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+  }
+  .widget_1684840726382-hidden {
+    display: block !important;
+  }
+  .module_16860490530343-hidden {
+    display: block !important;
+  }
+  .header-top-module-2-padding > #hs_cos_wrapper_header-top-module-2 {
+    padding-top: 0px !important;
+  }
+  .header-top-module-2-hidden {
+    display: block !important;
+  }
+  .module_1687855286644-padding > #hs_cos_wrapper_module_1687855286644 {
+    padding-top: 0px !important;
+  }
+  .module_1686578571484-padding > #hs_cos_wrapper_module_1686578571484 {
+    padding-top: 20px !important;
+  }
+}
+</style>
+    <script type="application/ld+json">
+{
+  "mainEntityOfPage" : {
+    "@type" : "WebPage",
+    "@id" : "https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"
+  },
+  "author" : {
+    "name" : "Bruno Mendes",
+    "url" : "https://blog.ethiack.com/blog/author/bruno-mendes",
+    "@type" : "Person"
+  },
+  "headline" : "Bypassing WAFs for Fun and JS Injection with Parameter Pollution",
+  "datePublished" : "2025-08-04T08:19:26.000Z",
+  "dateModified" : "2025-09-29T14:15:13.291Z",
+  "publisher" : {
+    "name" : "Ethiack",
+    "logo" : {
+      "url" : "https://blog.ethiack.com/hubfs/Logotype-Bright%20Green.png",
+      "@type" : "ImageObject"
+    },
+    "@type" : "Organization"
+  },
+  "@context" : "https://schema.org",
+  "@type" : "BlogPosting"
+}
+</script>
+
+
+    
+<!--  Added by GoogleAnalytics4 integration -->
+<script>
+var _hsp = window._hsp = window._hsp || [];
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+
+var useGoogleConsentModeV2 = true;
+var waitForUpdateMillis = 1000;
+
+
+if (!window._hsGoogleConsentRunOnce) {
+  window._hsGoogleConsentRunOnce = true;
+
+  gtag('consent', 'default', {
+    'ad_storage': 'denied',
+    'analytics_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'wait_for_update': waitForUpdateMillis
+  });
+
+  if (useGoogleConsentModeV2) {
+    _hsp.push(['useGoogleConsentModeV2'])
+  } else {
+    _hsp.push(['addPrivacyConsentListener', function(consent){
+      var hasAnalyticsConsent = consent && (consent.allowed || (consent.categories && consent.categories.analytics));
+      var hasAdsConsent = consent && (consent.allowed || (consent.categories && consent.categories.advertisement));
+
+      gtag('consent', 'update', {
+        'ad_storage': hasAdsConsent ? 'granted' : 'denied',
+        'analytics_storage': hasAnalyticsConsent ? 'granted' : 'denied',
+        'ad_user_data': hasAdsConsent ? 'granted' : 'denied',
+        'ad_personalization': hasAdsConsent ? 'granted' : 'denied'
+      });
+    }]);
+  }
+}
+
+gtag('js', new Date());
+gtag('set', 'developer_id.dZTQ1Zm', true);
+gtag('config', 'G-N4RJDFP24L');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N4RJDFP24L"></script>
+
+<!-- /Added by GoogleAnalytics4 integration -->
+
+
+<script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="3593d7c4-762f-4153-b0ac-2e64f6174ad4" data-blockingmode="auto" type="text/javascript"></script>
+
+<script>
+if (["ethiack.com", "lp.ethiack.com"].includes(location.hostname)) {
+  var script = document.createElement('script');
+  script.defer = true;
+  script.dataset.domain = "ethiack.com";
+  script.dataset.api = "https://plausible.io/api/event";
+  script.src = "https://plausible.io/js/script.file-downloads.tagged-events.js";
+  document.getElementsByTagName('head')[0].appendChild(script);
+
+  window.plausible = window.plausible || function() {
+    (window.plausible.q = window.plausible.q || []).push(arguments);
+  };
+}
+</script>
+
+<script>
+!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+twq('config','okiel');
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N4RJDFP24L"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N4RJDFP24L');
+</script>
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WX3J4C7M');</script>
+<!-- End Google Tag Manager -->
+<link rel="amphtml" href="https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution?hs_amp=true">
+
+<meta property="og:image" content="https://blog.ethiack.com/hubfs/Blog%20Post%20Covers%20(300%20x%20175%20px)-1.png">
+<meta property="og:image:width" content="300">
+<meta property="og:image:height" content="175">
+
+<meta name="twitter:image" content="https://blog.ethiack.com/hubfs/Blog%20Post%20Covers%20(300%20x%20175%20px)-1.png">
+
+
+<meta property="og:url" content="https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@s3np41k1r1t0">
+
+<link rel="canonical" href="https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution">
+<style>
+  .hs-search-field__bar{display:none}
+  .au-blog__widget ul li a:hover{color:none}
+  .blog-post__featured-img{display:none}
+</style>
+
+<meta property="og:type" content="article">
+<link rel="alternate" type="application/rss+xml" href="https://blog.ethiack.com/blog/rss.xml">
+<meta name="twitter:domain" content="blog.ethiack.com">
+<meta name="twitter:site" content="@ethiack">
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+    lang: en_US
+</script>
+
+<meta http-equiv="content-language" content="en">
+
+
+
+
+
+
+  <meta name="generator" content="HubSpot"></head>
+  <body>
+    <div class="body-wrapper   hs-content-id-262130688221 hs-blog-post hs-blog-id-59862272973">
+      
+        <div data-global-resource-path="@marketplace/MakeWebBetter/Austin/templates/partials/header.html"><header class="header header--with-navigation ">
+
+  
+  
+
+  
+
+  <!--   header-layout   -->
+  <div class="header-dnd-area2 au-header au-header--one">
+    <div class="container-fluid content-wrapper">
+<div class="row-fluid-wrapper">
+<div class="row-fluid">
+<div class="span12 widget-span widget-type-cell " style="" data-widget-type="cell" data-x="0" data-w="12">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 header-top-row-0-background-layers header-top-row-0-background-color dnd-section header-top-row-0-padding header-top-row-0-force-full-width-section header-top-row-0-margin header-top-row-0-vertical-alignment header-top-row-0-hidden">
+<div class="row-fluid ">
+<div class="span2 widget-span widget-type-cell header-top-column-1-vertical-alignment header-top-column-1-padding dnd-column" style="" data-widget-type="cell" data-x="0" data-w="2">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget header-top-module-2-padding dnd-module header-top-module-2-hidden" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_header-top-module-2" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+<div id="header-top-module-2" class="au-logo">
+  
+  
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a href="//25953430.hs-sites-eu1.com">
+  
+      
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/v1.png" alt="ethiack-logo" loading="lazy" style="max-width: 100%; height: auto;">
+    
+</a>
+  
+</div></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span10 widget-span widget-type-cell header-top-column-3-vertical-alignment header-top-column-3-margin header-top-column-3-padding dnd-column" style="" data-widget-type="cell" data-x="2" data-w="10">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_header-top-module-4" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+<!-- toggler -->
+<div id="header-top-module-4" class="au-menu-toggler-wrap">
+<!--   open icon -->
+<div class="au-menu-toggler">
+  
+  <div class="au-toggler--icon">
+    <span id="hs_cos_wrapper_header-top-module-4_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 448 512" aria-hidden="true"><g id="Bars1_layer"><path d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z" /></g></svg></span>
+  </div>
+  
+</div>
+
+<!-- close icon -->
+<div class="au-menu-toggler--close">
+  
+  <div class="au-toggler--icon">
+    <span id="hs_cos_wrapper_header-top-module-4_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512" aria-hidden="true"><g id="Window Close2_layer"><path d="M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm0 394c0 3.3-2.7 6-6 6H54c-3.3 0-6-2.7-6-6V86c0-3.3 2.7-6 6-6h404c3.3 0 6 2.7 6 6v340zM356.5 194.6L295.1 256l61.4 61.4c4.6 4.6 4.6 12.1 0 16.8l-22.3 22.3c-4.6 4.6-12.1 4.6-16.8 0L256 295.1l-61.4 61.4c-4.6 4.6-12.1 4.6-16.8 0l-22.3-22.3c-4.6-4.6-4.6-12.1 0-16.8l61.4-61.4-61.4-61.4c-4.6-4.6-4.6-12.1 0-16.8l22.3-22.3c4.6-4.6 12.1-4.6 16.8 0l61.4 61.4 61.4-61.4c4.6-4.6 12.1-4.6 16.8 0l22.3 22.3c4.7 4.6 4.7 12.1 0 16.8z" /></g></svg></span>
+  </div>
+  
+</div>
+  
+</div>
+
+<!-- Module Styles -->
+
+
+<!-- Module JS -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-4 header-top-column-3-row-1-vertical-alignment dnd-row">
+<div class="row-fluid ">
+<div class="span8 widget-span widget-type-cell cell_1686304268661-padding cell_1686304268661-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="0" data-w="8">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-5 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module header-top-module-5-flexbox-positioning" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_header-top-module-5" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+<style>
+  #hs_cos_wrapper_header-top-module-5 .menu__link { color:#FFFFFF; }
+
+#hs_cos_wrapper_header-top-module-5 .menu__child-toggle-icon { border-top-color:#FFFFFF; }
+
+#hs_cos_wrapper_header-top-module-5 .menu .menu__link:hover,
+#hs_cos_wrapper_header-top-module-5 .menu .menu__link:focus { color:#d7d7d7; }
+
+#hs_cos_wrapper_header-top-module-5 .menu__child-toggle-icon:hover,
+#hs_cos_wrapper_header-top-module-5 .menu__child-toggle-icon:focus { border-top-color:#d7d7d7; }
+
+#hs_cos_wrapper_header-top-module-5 .menu .menu__link:active { color:#ffffff; }
+
+#hs_cos_wrapper_header-top-module-5 .menu__child-toggle-icon:active { border-top-color:#ffffff; }
+
+#hs_cos_wrapper_header-top-module-5 .menu .menu__item--depth-1>.menu__link--active-link:after { background-color:#FFFFFF; }
+
+#hs_cos_wrapper_header-top-module-5 .menu .menu__submenu {
+  border:1px none #000000;
+  background-color:rgba(28,92,87,1.0);
+}
+
+@media (min-width:768px) {
+  #hs_cos_wrapper_header-top-module-5 .menu__submenu--level-2>.menu__item:first-child:before {
+    border:1px none #000000;
+    background-color:rgba(28,92,87,1.0);
+  }
+
+  #hs_cos_wrapper_header-top-module-5 .menu__link { color:#FFFFFF; }
+}
+
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__link,
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__link:hover,
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__link:focus {
+  background-color:rgba(28,92,87,1.0);
+  color:#FFFFFF;
+}
+
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__child-toggle-icon,
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__child-toggle-icon:hover,
+#hs_cos_wrapper_header-top-module-5 .menu__submenu .menu__child-toggle-icon:focus { border-top-color:#FFFFFF; }
+
+</style>
+
+
+
+
+
+
+
+<nav class="menu menu--desktop" aria-label="Main menu">
+  <ul class="menu__wrapper no-list">
+    
+
+
+
+
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/technology" aria-haspopup="true" aria-expanded="false">Product</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Product</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/technology">Our Technology</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/ai-automated-pentesting">AI Automated Pentesting</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/attack-surface-management">Attack Surface Management</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/elite-ethical-hacking">Elite Ethical Hacking</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/pricing" aria-haspopup="true" aria-expanded="false">Pricing</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Pricing</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/pricing">See Plans</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/startup-program">For Startups</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/for-mssps">For MSSPs</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/about" aria-haspopup="true" aria-expanded="false">Company</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Company</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/about">About</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/careers">Careers</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/contact">Contacts</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/hackers" aria-haspopup="true" aria-expanded="false">Hackers</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Hackers</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/hackers">Our Ethical Hackers</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="https://portal.ethiack.com/leaderboard">Leaderboard</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/blog" aria-haspopup="true" aria-expanded="false">Resources</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Resources</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/blog">Blog</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/news">Press Archives</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="https://blog.ethiack.com/blog/tag/case-studies">Case Studies</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+
+  </ul>
+</nav>
+
+<!-- mobile menu  -->
+<nav class="menu menu--mobile" aria-label="Main menu">
+  <ul class="menu__wrapper no-list">
+    
+
+
+
+
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/technology" aria-haspopup="true" aria-expanded="false">Product</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Product</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/technology">Our Technology</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/ai-automated-pentesting">AI Automated Pentesting</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/attack-surface-management">Attack Surface Management</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="http://ethiack.com/elite-ethical-hacking">Elite Ethical Hacking</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/pricing" aria-haspopup="true" aria-expanded="false">Pricing</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Pricing</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/pricing">See Plans</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/startup-program">For Startups</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/for-mssps">For MSSPs</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/about" aria-haspopup="true" aria-expanded="false">Company</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Company</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/about">About</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/careers">Careers</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/contact">Contacts</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/hackers" aria-haspopup="true" aria-expanded="false">Hackers</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Hackers</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/hackers">Our Ethical Hackers</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="https://portal.ethiack.com/leaderboard">Leaderboard</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+<li class="menu__item menu__item--depth-1 menu__item--has-submenu hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link menu__link--toggle  " href="//25953430.hs-sites-eu1.com/blog" aria-haspopup="true" aria-expanded="false">Resources</a>
+  
+  
+  
+  <button class="menu__child-toggle no-button" aria-expanded="false">
+    <span class="show-for-sr">Show submenu for Resources</span>
+    <span class="menu__child-toggle-icon"></span>
+  </button>
+  <ul class="menu__submenu menu__submenu--level-2 no-list">
+    
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/blog">Blog</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="//25953430.hs-sites-eu1.com/news">Press Archives</a>
+  
+  
+</li>
+
+    
+    
+<li class="menu__item menu__item--depth-2  hs-skip-lang-url-rewrite">
+  
+  <a class="menu__link   " href="https://blog.ethiack.com/blog/tag/case-studies">Case Studies</a>
+  
+  
+</li>
+
+    
+  </ul>
+  
+  
+</li>
+
+
+
+
+  </ul>
+</nav></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span2 widget-span widget-type-cell cell_16863042686613-vertical-alignment cell_16863042686613-hidden cell_16863042686613-padding dnd-column" style="" data-widget-type="cell" data-x="8" data-w="2">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-6 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module module_16860490530343-hidden" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_16860490530343" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"> 
+
+<!-- Alignment Choice Mobile  -->
+
+
+
+
+<!-- Alignment Choice Desktop -->
+
+
+
+
+<!-- button -->
+<div id="module_16860490530343" class="au-btn au-mb-align--center au-lp-align--right">
+  
+
+
+
+
+
+
+
+
+
+
+<a href="https://portal.ethiack.com/login?ref=website" class="au-button au-button--filled" target="_blank" rel="noopener">
+  
+  <span class="au-button__text">Login</span>
+</a>
+</div>
+
+<!-- button Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span2 widget-span widget-type-cell cell_1686304273695-vertical-alignment cell_1686304273695-padding dnd-column cell_1686304273695-margin" style="" data-widget-type="cell" data-x="10" data-w="2">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-7 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget widget_1684840726382-hidden dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_widget_1684840726382" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"> 
+
+<!-- Alignment Choice Mobile  -->
+
+
+
+
+<!-- Alignment Choice Desktop -->
+
+
+
+
+<!-- button -->
+<div id="widget_1684840726382" class="au-btn au-mb-align--center au-lp-align--center">
+  
+
+
+
+
+
+
+
+
+
+
+<a href="https://portal.ethiack.com/signup" class="au-button au-button--filled" target="_blank" rel="noopener">
+  
+  <span class="au-button__text">Signup</span>
+</a>
+</div>
+
+<!-- button Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div>
+</div>
+</div>
+    
+  </div>
+
+  
+  
+  
+
+</header></div>
+      
+
+      
+<div class="body-container body-container--blog-post">
+
+  
+
+  <article class="blog-post-wrap">
+    <div class="content-wrapper">
+      <div class="blog-post__header">
+        <div class="blog-post">
+          
+          <h1 class="blog-post__title"><span id="hs_cos_wrapper_name" class="hs_cos_wrapper hs_cos_wrapper_meta_field hs_cos_wrapper_type_text" style="" data-hs-cos-general-type="meta_field" data-hs-cos-type="text">Bypassing WAFs for Fun and JS Injection with Parameter Pollution</span></h1>
+          <div class="blog-post__meta">
+            
+            <a href="https://blog.ethiack.com/blog/author/bruno-mendes" rel="author">
+              <img src="https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=50&amp;height=50&amp;name=1657583561080.jpeg" height="50" width="50" loading="lazy" srcset="https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=25&amp;height=25&amp;name=1657583561080.jpeg 25w, https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=50&amp;height=50&amp;name=1657583561080.jpeg 50w, https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=75&amp;height=75&amp;name=1657583561080.jpeg 75w, https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=100&amp;height=100&amp;name=1657583561080.jpeg 100w, https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=125&amp;height=125&amp;name=1657583561080.jpeg 125w, https://blog.ethiack.com/hs-fs/hubfs/1657583561080.jpeg?width=150&amp;height=150&amp;name=1657583561080.jpeg 150w" sizes="(max-width: 50px) 100vw, 50px">
+            </a>
+            
+            <div class="blog-post__meta-time">
+              
+              <a href="https://blog.ethiack.com/blog/author/bruno-mendes" rel="author">
+                Bruno Mendes
+              </a>
+              
+              
+              <time datetime="2025-08-04 08:19:26" class="blog-post__timestamp">
+                04/08/25 09:19
+              </time>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="blog-post__featured-img" style="background-image: url(https://blog.ethiack.com/hubfs/Blog%20Post%20Covers%20%28300%20x%20175%20px%29-1.png);">
+    </div>
+    
+    <div class="content-wrapper">
+      <div class="blog-post au-blog-post   blog-post--social-link">
+        
+        <div class="blog-post__social-sharing">
+          <div class="social-links">
+            
+            <a href="https://twitter.com/intent/tweet?text=I+found+this+interesting+blog+post&amp;url=https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution" target="_blank" rel="noopener" class="social-links__icon">
+              <svg width="32" height="32" viewbox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M28.3199 8.35836C27.3973 8.76708 26.4186 9.03523 25.4166 9.15388C26.4721 8.52233 27.2619 7.52853 27.639 6.35772C26.6468 6.94669 25.5612 7.36143 24.429 7.58396C23.956 7.07945 23.3845 6.67746 22.7497 6.4029C22.115 6.12834 21.4307 5.98705 20.7391 5.9878C17.9474 5.9878 15.6838 8.25084 15.6838 11.0432C15.6838 11.439 15.7286 11.8252 15.815 12.1955C11.6134 11.9846 7.88856 9.9718 5.39512 6.91292C4.94554 7.68446 4.7093 8.56171 4.71064 9.45468C4.70997 10.287 4.91492 11.1066 5.30726 11.8406C5.6996 12.5747 6.26719 13.2005 6.9596 13.6624C6.15694 13.6369 5.37197 13.4201 4.67 13.03C4.66936 13.0512 4.66936 13.072 4.66936 13.0937C4.66936 15.5424 6.41176 17.5856 8.72408 18.0505C7.97952 18.2521 7.19886 18.2816 6.4412 18.1369C7.0844 20.1449 8.95128 21.607 11.1634 21.648C9.37269 23.0533 7.16136 23.8155 4.88504 23.8121C4.47704 23.8121 4.0748 23.7884 3.67896 23.7414C5.99042 25.2266 8.6806 26.0149 11.4281 26.0121C20.7266 26.0121 25.8114 18.3094 25.8114 11.6297C25.8114 11.4108 25.8063 11.1923 25.7967 10.975C26.787 10.2601 27.6415 9.37394 28.3199 8.35836Z" fill="#6E41E2" />
+              </svg>
+            </a>
+            
+            
+            <a href="http://www.facebook.com/share.php?u=https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution" target="_blank" rel="noopener" class="social-links__icon">
+              <svg width="32" height="32" viewbox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M26.2483 4.47998H5.75166C5.41439 4.47998 5.09093 4.61396 4.85245 4.85245C4.61396 5.09093 4.47998 5.41439 4.47998 5.75166V26.2486C4.48007 26.5858 4.61408 26.9092 4.85256 27.1476C5.09104 27.386 5.41445 27.52 5.75166 27.52H16.7862V18.5977H13.7837V15.1206H16.7862V12.5561C16.7862 9.58014 18.6038 7.95998 21.2585 7.95998C22.5302 7.95998 23.623 8.05438 23.9417 8.09694V11.207L22.1005 11.208C20.6566 11.208 20.3773 11.8941 20.3773 12.9008V15.1209H23.8205L23.3721 18.5981H20.3773V27.52H26.2486C26.5858 27.5199 26.9092 27.3859 27.1476 27.1474C27.386 26.9089 27.52 26.5855 27.52 26.2483V5.75166C27.52 5.41439 27.386 5.09093 27.1475 4.85245C26.909 4.61396 26.5856 4.47998 26.2483 4.47998Z" fill="#6E41E2" />
+              </svg>
+            </a>
+            
+            
+            <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution" target="_blank" rel="noopener" class="social-links__icon">
+              <svg width="32" height="32" viewbox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M25.8134 4.47998H6.18078C5.2419 4.47998 4.47998 5.22398 4.47998 6.14014V25.8576C4.47998 26.775 5.2419 27.52 6.18078 27.52H25.8134C26.7529 27.52 27.52 26.775 27.52 25.8576V6.14014C27.52 5.22398 26.7529 4.47998 25.8134 4.47998ZM11.3133 24.1133H7.89438V13.1184H11.3133V24.1133ZM9.60382 11.615C9.34359 11.615 9.08591 11.5637 8.84551 11.4641C8.6051 11.3645 8.38668 11.2185 8.20273 11.0344C8.01878 10.8503 7.8729 10.6318 7.77343 10.3914C7.67396 10.1509 7.62285 9.89317 7.62302 9.63294C7.62302 9.10764 7.83169 8.60386 8.20314 8.23242C8.57458 7.86097 9.07836 7.6523 9.60366 7.6523C10.129 7.6523 10.6327 7.86097 11.0042 8.23242C11.3756 8.60386 11.5843 9.10764 11.5843 9.63294C11.5843 10.1583 11.3757 10.6623 11.0043 11.0339C10.633 11.4056 10.1292 11.6146 9.60382 11.615ZM24.112 24.1133H20.6985V18.7667C20.6985 17.4912 20.6736 15.8512 18.9222 15.8512C17.1437 15.8512 16.8726 17.2403 16.8726 18.6742V24.1136H13.4566V13.1184H16.735V14.6198H16.7817C17.2381 13.7558 18.3529 12.8441 20.0157 12.8441C23.4736 12.8441 24.1123 15.1206 24.1123 18.0822V24.1133H24.112Z" fill="#6E41E2" />
+              </svg>
+            </a>
+            
+          </div>
+        </div>
+        
+        <div class="blog-post__body">
+          <span id="hs_cos_wrapper_post_body" class="hs_cos_wrapper hs_cos_wrapper_meta_field hs_cos_wrapper_type_rich_text" style="" data-hs-cos-general-type="meta_field" data-hs-cos-type="rich_text"><p style="text-align: justify; line-height: 1.75;">During a recent autonomous pentest, our engine identified a fascinating XSS vulnerability in one of our client's applications. The target was an ASP.NET application running behind a Web Application Firewall (WAF) with a very strict configuration. The vulnerability itself was straightforward. An attacker could break out of a Javascript string delimited by single quotes. However, since the application was protected by a highly restrictive WAF, conventional XSS payloads were effectively blocked. I’m here to tell you the story of how bypassing this WAF led us down a rabbit hole.&nbsp;</p>
+<!--more-->
+<p style="font-weight: bold; text-align: justify; line-height: 1.75;"><br><span style="font-weight: normal;">This scenario presented us with a classic security challenge: </span><span style="color: #00e891; font-weight: normal;">How do you demonstrate the exploitability of a vulnerability when defensive mechanisms are actively preventing its exploitation?</span></p>
+<p style="text-align: justify; line-height: 1.75;"><br>For us, this was a PoC||GTFO situation. As always, the devil is in the details. We needed to get creative and understand how we could abuse the parsing differences between the WAF engine, the parameter parser and the Javascript interpreter that will ultimately execute the code in the victim browser.&nbsp;</p>
+<p style="text-align: justify; line-height: 1.75;">Our breakthrough came when we reminded ourselves of previous engagements where we abused ASP.NET's parameter pollution behavior to exploit other types of injections. Combining this technique with the specific context of the vulnerability we had in hands seemed very possible. We could build valid Javascript by splitting the code between different parameters to avoid WAF detection.</p>
+<p style="text-align: justify; line-height: 1.75;">&nbsp;</p>
+<h2 style="font-weight: normal; font-size: 24px;"><span style="color: #00e891;">Building a Payload</span></h2>
+<h3><span style="color: #00e891;"><span style="color: #00a987; font-size: 18px;">Understanding Parameter Pollution</span><br></span></h3>
+<p style="text-align: justify; line-height: 1.75;">HTTP Parameter Pollution is a technique that exploits the inconsistent ways different technologies handle duplicate HTTP parameters. When multiple parameters with the same name are present in a request, various web frameworks process them differently. Some concatenate all values, others take only the first or last occurrence, and some even create arrays.<br><br>The behavior of parameter pollution varies significantly across different web technologies. A very comprehensive summary of how the different frameworks behave was already compiled by other researchers [1-3].<br><br>Since our use case was very specific, we filtered all the frameworks that did not include all of the parameters in the final output, leaving us with 5 different frameworks:<br><br></p>
+<div data-hs-responsive-table="true" style="overflow-x: auto; max-width: 100%; width: 95%; margin-left: auto; margin-right: auto;">
+<table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #99acc2; height: 294px;">
+<tbody>
+<tr style="height: 45px;">
+<td style="width: 33.3623%; padding: 4px; height: 45px; text-align: left; vertical-align: middle;"><strong><span style="color: #00e891;">Framework</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;"><strong><span style="color: #00e891;">Input</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;"><strong><span style="color: #00e891;">Output</span></strong></td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 33.3623%; padding: 4px; height: 45px; text-align: left; vertical-align: middle;"><strong><span style="color: #ffffff;">ASP.NET</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1&amp;param=val2</td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1,val2</td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 33.3623%; padding: 4px; height: 45px; text-align: left; vertical-align: middle;"><strong><span style="color: #ffffff;">ASP</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1&amp;param=val2</td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1,val2</td>
+</tr>
+<tr style="height: 68.9931px;">
+<td style="width: 33.3623%; padding: 4px; height: 68.9931px; text-align: left; vertical-align: middle;"><strong><span style="color: #ffffff;">Golang net/http - r.URL.Query()[“param”]</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 68.9931px; vertical-align: middle; text-align: left;">param=val1&amp;param=val2</td>
+<td style="width: 33.3623%; padding: 4px; height: 68.9931px; vertical-align: middle; text-align: left;">param=['val1','val2']</td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 33.3623%; padding: 4px; height: 45px; text-align: left; vertical-align: middle;"><strong><span style="color: #ffffff;">Python - Zope</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1&amp;param=val2</td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=['val1','val2']</td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 33.3623%; padding: 4px; height: 45px; text-align: left; vertical-align: middle;"><strong><span style="color: #ffffff;">Node.js</span></strong></td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1&amp;param=val2</td>
+<td style="width: 33.3623%; padding: 4px; height: 45px; vertical-align: middle; text-align: left;">param=val1,val2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="text-align: justify; line-height: 1.75;">Fortunately, ASP.NET’s behavior is particularly interesting and fits our use case. When ASP.NET encounters multiple parameters with the same name, it concatenates their values with commas using the <span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">HttpUtility.ParseQueryString()</span>&nbsp;method. This behavior is documented in <a href="https://learn.microsoft.com/en-us/dotnet/api/system.web.httputility.parsequerystring?view=net-9.0"><span>Microsoft's official documentation</span></a>, which states that “multiple occurrences of the same query string parameter are listed as a single entry with a comma separating each value”.</p>
+<p style="text-align: justify; line-height: 1.75;">The power of this class of parameter pollution becomes apparent when combined with Javascript injection contexts. Consider a scenario similar to what we were facing, where user input is reflected within a Javascript string:</p>
+<p style="text-align: justify; line-height: 1.75;"><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">userInput = 'USER_CONTROLLED_DATA';</span><br><br>A simple approach to the problem might attempt to break out using quotes and inject code:<br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">'; alert(1); //</span><br><br>However, most WAFs are equipped to detect such obvious patterns (as we will see later in this blog post). The parameter pollution approach takes a different strategy.<br><br>Javascript's syntax allows for comma-separated expressions, where multiple statements can be executed in sequence. This language feature, combined with ASP.NET's comma concatenation behavior, creates an opportunity for sophisticated bypasses.<br><br>When ASP.NET processes a query string like:<br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">/?q=1'&amp;q=alert(1)&amp;q='2</span><br><br>It concatenates these values into:<br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">1',alert(1),'2</span><br><br>When this gets inserted into the Javascript context above:<br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">userInput = '1',alert(1),'2';</span><br><br>The resulting Javascript is syntactically valid and will execute the alert function. The comma operator in Javascript evaluates each expression from left to right and returns the value of the last expression. This pattern is widely used in Javascript minification and obfuscation.</p>
+<h2 style="font-weight: normal; font-size: 24px; text-align: justify; line-height: 1.75;"><span style="color: #00e891;"><br>Breaking WAFs for fun and JS Injectio</span><span style="color: #00e891;">n</span></h2>
+<p style="text-align: justify; line-height: 1.75;">Since we were pretty deep into this rabbit hole already we decided it would be a good idea to test the most popular WAFs for this idea we just had. Obviously, we did not think that this could be some kind of holy grail universal WAF bypass, but our curiosity would kill us if we left this research topic without knowing exactly how good this technique was.<br><br></p>
+<h3 style="font-size: 18px;"><span style="color: #00a987; font-size: 20px;">Types of WAF Technologies</span></h3>
+<p style="text-align: justify; line-height: 1.75;">Modern Web Application Firewalls operate using two primary detection methodologies, each with distinct advantages and limitations in defending against sophisticated attacks.<br><br><span style="color: #00e891; font-weight: bold;">Signature-Based WAFs</span> were one of the main forms of defense in traditional web security. These systems maintain databases of known attack patterns and compare incoming requests against these signatures. When a match is detected, the WAF can log, alert, or block the request. The main advantage of signature-based detection lies in its precision. When an attack matches a known signature, false positives are typically low. Signatures may also be ranked by their confidence level, allowing for configurations that prefer lower false positive rates to stricter security. However, these systems struggle with novel attack vectors and require constant signature updates to remain effective.</p>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa; font-weight: bold;">Machine Learning-Based WAFs </span>represent the next step in web application security. These systems analyze traffic patterns and user behavior to identify anomalous requests that may indicate attacks. Unlike signature-based systems, ML-powered WAFs can potentially detect 0-days and previously unknown attack vectors. This obviously comes at a cost as a low false positive rate may not be guaranteed and if not combined with a good pre-trained source of truth, may leave applications with low traffic levels susceptible to attacks.<br><br></p>
+<h3 style="font-weight: normal; font-size: 20px;"><span style="color: #00a987;">Why do WAFs struggle with Parameter Pollution</span></h3>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #00e891;"></span>We came up with a couple of reasons as to why traditional WAFs face several challenges when attempting to detect parameter pollution-based attacks:</p>
+<ul>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">WAFs typically analyze individual parameters. They may miss the relationship between multiple parameters that, when combined, form malicious code.</li>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">Most WAFs lack a deep understanding of how different web frameworks handle parameter parsing. They may not simulate ASP.NET's specific comma concatenation behavior.</li>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">Rule-based WAFs rely on known attack patterns. The parameter pollution technique creates payloads that don't match traditional XSS signatures while remaining functionally equivalent.</li>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">When combining this technique with diverse obfuscation techniques, the actual malicious intent becomes difficult to detect through static analysis.</li>
+</ul>
+<p style="text-align: justify; line-height: 1.75;">To detect these attacks, WAFs would need to implement framework specific parameter parsing logic and context aware Javascript analysis, capabilities that extend far beyond pattern matching. It is also worth noting that equipping a WAF with the necessary means to do this kind of analysis would be a performance nightmare, as WAFs are designed to introduce as little overhead as possible when proxying requests.<br><br></p>
+<h3 style="font-weight: normal; font-size: 20px;"><span style="color: #00a987;">WAF Configurations tested</span></h3>
+<p style="text-align: justify; line-height: 1.75;">Our evaluation included 17 different WAF configurations spanning major cloud providers and security vendors. All configurations represent diverse approaches to web security, from traditional rule-based to machine learning-based solutions.</p>
+<div data-hs-responsive-table="true" style="overflow-x: auto; max-width: 100%; width: 91%; margin-left: auto; margin-right: auto;">
+<table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #99acc2; height: 1317px;">
+<tbody>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px; vertical-align: middle;"><strong><span style="color: #00e891;">Vendor</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px; vertical-align: middle;"><strong><span style="color: #00e891;">Configuration</span></strong></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px; vertical-align: middle;"><strong><span style="color: #00e891;">Rule Sets</span></strong></td>
+</tr>
+<tr style="height: 141px;">
+<td style="width: 23.425%; padding: 4px; height: 141px;"><strong><span style="color: #fafafa;">AWS WAF - AWS Managed Rule Set</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 141px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 141px;"><span style="color: #fafafa;">Admin protection, Amazon IP reputation list, Anonymous IP list, Core rule set, Known bad inputs, Linux operating system, PHP application, POSIX operating system, SQL database, Windows operating system, WordPress application</span></td>
+</tr>
+<tr style="height: 76px;">
+<td style="width: 23.425%; padding: 4px; height: 76px;"><strong><span style="color: #fafafa;">AWS WAF - Cloudbric Rule Set</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 76px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 76px;"><span style="color: #fafafa;">API Protection, OWASP Top 10 Rule Set</span></td>
+</tr>
+<tr style="height: 93px;">
+<td style="width: 23.425%; padding: 4px; height: 93px;"><strong><span style="color: #fafafa;">AWS WAF - Cyber Security Cloud Rule Set</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 93px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 93px;"><span style="color: #fafafa;">API Gateway/Serverless, HighSecurity OWASP Set</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">AWS WAF - F5 Rule Set</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">API Security Rules, Web Exploits OWASP Rules, CVE</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">AWS WAF - Fortinet Rule Set</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">API Security, OWASP Top 10 - The Complete Rule Set</span></td>
+</tr>
+<tr style="height: 93px;">
+<td style="width: 23.425%; padding: 4px; height: 93px;"><strong><span style="color: #fafafa;">Google Cloud Armor</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 93px;"><span style="color: #fafafa;">Maximum sensitivity on all rules</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 93px;"><span style="color: #fafafa;">sqli, xss, lfi, rfi, rce, methodenforcement, scannerdetection, protocolattack, php, sessionfixation, java, nodejs - v33-stable</span></td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 23.425%; padding: 4px; height: 45px;"><strong><span style="color: #fafafa;">Azure WAF</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default Rule Set 2.1</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">FortiWeb</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Inline Standard Protection</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">FortiWeb</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Extended Standard Protection</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default</span></td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 23.425%; padding: 4px; height: 45px;"><strong><span style="color: #fafafa;">Cloudflare WAF</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Cloudflare Managed + OWASP Core</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">open-appsec</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Medium+ Sensitivity</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default, Basic Model</span></td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 23.425%; padding: 4px; height: 45px;"><strong><span style="color: #fafafa;">open-appsec</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 45px;"><span style="color: #fafafa;">High+ Sensitivity</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default, Basic Model</span></td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">open-appsec</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Only Critical Sensitivity</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;"><span style="color: #fafafa;">Default, Basic Model</span></td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 23.425%; padding: 4px; height: 45px;"><strong><span style="color: #fafafa;">Akamai</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default</span></td>
+<td style="width: 56.0781%; padding: 4px; height: 45px;"><span style="color: #fafafa;">Default</span></td>
+</tr>
+<tr style="height: 93px;">
+<td style="width: 23.425%; padding: 4px; height: 93px;"><strong><span style="color: #fafafa;">F5 Big-IP Advanced WAF</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 93px;">Signature staging disabled + Low accuracy signatures</td>
+<td style="width: 56.0781%; padding: 4px; height: 93px;">Rapid Deployment Policy</td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">NGINX App Protect WAF</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;">Default</td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;">Default</td>
+</tr>
+<tr style="height: 69px;">
+<td style="width: 23.425%; padding: 4px; height: 69px;"><strong><span style="color: #fafafa;">NGINX App Protect WAF</span></strong></td>
+<td style="width: 20.4673%; padding: 4px; height: 69px;">Strict</td>
+<td style="width: 56.0781%; padding: 4px; height: 69px;">Strict</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size: 10px;">&nbsp;</p>
+<h3 style="font-weight: normal; font-size: 20px;"><span style="color: #00a987;">Testing Methodology</span></h3>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;">We developed three payloads to evaluate each WAF susceptibility to parameter pollution-based Javascript injection attacks:</span></p>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;"><span style="font-weight: bold; color: #00e891;">Payload 1 - Simple injection:</span><br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">q=';alert(1),'</span><br><br>This baseline payload tests basic Javascript injection detection capabilities by very clearly attempting to break out of a string context and execute code in a single parameter.<br><br><span style="font-weight: bold; color: #00e891;">Payload 2 - Parameter Pollution with Semicolon:</span><br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">q=1'+1;let+asd=window&amp;q=def='al'+'ert'+;asd[def](1&amp;q=2);'</span><br><br>This payload introduces parameter pollution with some clever variable assignments and string concatenation to evade pattern matching.<br><br><span style="font-weight: bold; color: #00e891;">Payload 3 - Parameter Pollution with Line Breaks:</span><br><br><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">q=1'%0aasd=window&amp;q=def="al"+"ert"&amp;q=asd[def](1)+'</span><br><br>This payload uses a new line instead of the semicolon to start a new Javascript expression. We specifically forced both payloads to work independently of the injection context as not all contexts may work with the comma operator so a new Javascript expression must be created.<br><br><span style="font-weight: bold; color: #00e891;">Payload 4 - Our heuristic-based approach:</span><br><br>We also tested each WAF with the current capabilities of our engine, to infer whether our heuristic-based techniques can detect this type of XSS in assets protected by WAFs.<br><br></span></p>
+<h3 style="font-weight: normal; font-size: 20px;"><span style="color: #00e891;"><span style="color: #00a987;">Testing Results</span></span></h3>
+<p>The test results are shown in the table below (✅ = blocked, ❌ = bypass/undetected):<br><br></p>
+<div data-hs-responsive-table="true" style="overflow-x: auto; max-width: 100%; width: 94%; margin-left: auto; margin-right: auto;">
+<table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #99acc2; height: 1576px;">
+<tbody>
+<tr style="height: 50.5556px;">
+<td style="width: 20.0176%; padding: 4px; height: 50.5556px;"><strong><span style="color: #00e891;">WAF</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 50.5556px; text-align: center;"><strong><span style="color: #00e891;">Payload 1</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 50.5556px; text-align: center;"><strong><span style="color: #00e891;">Payload 2</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 50.5556px; text-align: center;"><strong><span style="color: #00e891;">Payload 3</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 50.5556px; text-align: center;"><strong><span style="color: #00e891;">Ethiack Engine</span></strong></td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">AWS WAF - AWS Managed</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">AWS WAF - Cloudbric rule set</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">AWS WAF - Cyber Security Cloud rule set</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">AWS WAF - F5 rule set</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">AWS WAF - Fortinet rule set</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 140.564px;">
+<td style="width: 20.0176%; padding: 4px; height: 140.564px;"><strong><span style="color: #fafafa;">Google Cloud Armor - Preconfigured ModSecurity rules</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 140.564px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 140.564px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 140.564px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 140.564px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">Azure WAF - Microsoft Default Rule Set 2.1</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">FortiWeb - Inline Standard Protection</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">FortiWeb - Inline Extended Protection</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 116.562px;">
+<td style="width: 20.0176%; padding: 4px; height: 116.562px;"><strong><span style="color: #fafafa;">Cloudflare WAF - Managed and OWASP Core Rule Set</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 116.562px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 116.562px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 116.562px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 116.562px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">open-appsec* - Medium+</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">open-appsec* - High+</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 68.559px;">
+<td style="width: 20.0176%; padding: 4px; height: 68.559px;"><strong><span style="color: #fafafa;">open-appsec* - Critical</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 68.559px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 45px;">
+<td style="width: 20.0176%; padding: 4px; height: 45px;"><strong><span style="color: #fafafa;">Akamai</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; height: 45px; text-align: center;">✅</td>
+<td style="width: 20.0176%; padding: 4px; height: 45px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 45px; text-align: center;">❌</td>
+<td style="width: 20.0176%; padding: 4px; height: 45px; text-align: center;">❌</td>
+</tr>
+<tr style="height: 140.564px;">
+<td style="width: 20.0176%; padding: 4px; height: 140.564px;"><strong><span style="color: #fafafa;">F5 BIG-IP Advanced WAF - Rapid Deployment Policy</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 140.564px;">✅</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 140.564px;">❌</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 140.564px;">❌</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 140.564px;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">F5 NGINX App Protect WAF - Default</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">✅</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">✅</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">❌</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">❌</td>
+</tr>
+<tr style="height: 92.5608px;">
+<td style="width: 20.0176%; padding: 4px; height: 92.5608px;"><strong><span style="color: #fafafa;">F5 NGINX App Protect WAF - Strict</span></strong></td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">✅</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">✅</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">❌</td>
+<td style="width: 20.0176%; padding: 4px; text-align: center; height: 92.5608px;">❌</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="text-align: justify; line-height: 1.75; font-size: 12px;"><span style="color: #dbe4cd;">*Results obtained using the Basic Model in the default configuration of open-appsec.</span></p>
+<p style="text-align: justify; line-height: 1.75; font-size: 12px;"><span style="color: #dbe4cd;"></span><span style="color: #dbe4cd;"></span><span style="font-size: 16px;">The testing results revealed a couple of interesting insights about modern WAF capabilities:</span></p>
+<p style="text-align: justify; line-height: 1.75;">Only 5 configurations successfully <span style="color: #fafafa; font-weight: bold;">blocked</span> 3 payloads:</p>
+<ul style="text-align: justify; line-height: 1.75;">
+<li aria-level="1">Google Cloud Armor with ModSecurity rules</li>
+<li aria-level="1">Azure WAF with Microsoft's Default Rule Set 2.1</li>
+<li aria-level="1">All 3 open-appsec configurations.&nbsp;</li>
+</ul>
+<p style="text-align: justify; line-height: 1.75;">3 AWS WAF Rule Sets were <span style="color: #fafafa; font-weight: bold;">bypassed</span> by every payload tested:</p>
+<ul>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">AWS Managed Rules</li>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">Cyber Security Cloud rule set</li>
+<li style="text-align: justify; line-height: 1.75;" aria-level="1">F5 rule set</li>
+</ul>
+<p style="text-align: justify; line-height: 1.75;">The percentage of vulnerable WAFs increased as payload complexity increased. The simple payload (Payload 1) achieved only a 17.6% bypass rate, while the most complicated parameter pollution payload (Payload 3) <span style="color: #00e891; font-weight: bold;">bypassed 70.6% of tested configurations</span>. However, our heuristic-based approach showed a <span style="color: #00e891; font-weight: bold;">100% detection rate</span>, effectively bypassing all WAF defenses.</p>
+<p style="text-align: justify; line-height: 1.75;">The data reveals that traditional signature-based WAFs struggle with parameter pollution techniques, while more modern solutions incorporating machine learning demonstrate superior defensive capabilities but prove themselves<span style="color: #fafafa;"> <span style="font-weight: bold;">insufficient </span></span>(at least with low amounts of training data) <span style="color: #00e891; font-weight: bold;">in avoiding our proprietary heuristic-based detection mechanisms.</span></p>
+<p style="text-align: justify; line-height: 1.75;">&nbsp;</p>
+<h2 style="font-weight: normal; font-size: 24px; text-align: justify; line-height: 1.75;"><span style="color: #00e891;">Can Our Hackbot Do It Better?<br></span></h2>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;">Following our manual evaluation, our curiosity continued to get the best of us and we decided to deploy our completely autonomous hackbot against the WAF configurations that had successfully blocked all our manually crafted test payloads (Google Cloud Armor, Azure WAF and open-appsec). The goal was to discover whether the hackbot could find something that we had missed.<br></span></p>
+<h3 style="text-align: justify; line-height: 1.75; font-size: 20px;"><span style="color: #00a987;">Azure WAF</span></h3>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;">The hackbot found a bypass for the previously undefeated Azure WAF with Microsoft Default Rule Set 2.1. While our manually crafted payloads had been completely blocked, the hackbot discovered a surprisingly simple bypass that had escaped our payload brainstorming:<br></span></p>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;"><span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">test\\';alert(1);//<br></span><br></span><span style="color: #fafafa;">This payload leverages a subtle parsing discrepancy in how Azure WAF handles escaped characters compared to how Javascript processes them. The double backslash and single quote combination (<span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">\\’</span>) is interpreted differently by the WAF's pattern matching and the Javascript parser. While Javascript will escape the backslack that is escaping the quote, Azure WAF will interpret the backslack escaping the quote as an escaped quote.<br><br><img src="https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=501&amp;height=563&amp;name=image%20(21).png" width="501" height="563" loading="lazy" alt="image (21)" style="height: auto; max-width: 100%; width: 501px; margin-left: auto; margin-right: auto; display: block;" srcset="https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=251&amp;height=282&amp;name=image%20(21).png 251w, https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=501&amp;height=563&amp;name=image%20(21).png 501w, https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=752&amp;height=845&amp;name=image%20(21).png 752w, https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=1002&amp;height=1126&amp;name=image%20(21).png 1002w, https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=1253&amp;height=1408&amp;name=image%20(21).png 1253w, https://blog.ethiack.com/hs-fs/hubfs/image%20(21).png?width=1503&amp;height=1689&amp;name=image%20(21).png 1503w" sizes="(max-width: 501px) 100vw, 501px"><br></span><span style="color: #fafafa;"></span></p>
+<h3><span style="color: #00a987; font-size: 20px;">Google Cloud Armor</span><span style="color: #fafafa;"></span></h3>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;">Unfortunately, the hackbot did not find a bypass for the very strict Google Cloud Armor configuration. However, during its struggles to find a payload that would effectively bypass the WAF, it did find some interesting applicational behaviors that we had missed during our analysis.<br><br>When exploring the application, it came to a conclusion that the parameter parsing made by the server was case insensitive and started using that technique to try and bypass the WAF in the following tests. </span></p>
+<p style="text-align: justify; line-height: 1.75;"><span style="color: #fafafa;">And how cool is </span><span style="color: #fafafa;">that?!</span></p>
+<p><span style="color: #fafafa;"><img src="https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=872&amp;height=1884&amp;name=image%20(23).png" width="872" height="1884" loading="lazy" alt="image (23)" style="height: auto; max-width: 100%; width: 872px; margin-left: auto; margin-right: auto; display: block;" srcset="https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=436&amp;height=942&amp;name=image%20(23).png 436w, https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=872&amp;height=1884&amp;name=image%20(23).png 872w, https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=1308&amp;height=2826&amp;name=image%20(23).png 1308w, https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=1744&amp;height=3768&amp;name=image%20(23).png 1744w, https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=2180&amp;height=4710&amp;name=image%20(23).png 2180w, https://blog.ethiack.com/hs-fs/hubfs/image%20(23).png?width=2616&amp;height=5652&amp;name=image%20(23).png 2616w" sizes="(max-width: 872px) 100vw, 872px"></span><span style="color: #fafafa;"><br></span></p>
+<h3 style="font-size: 20px;"><span style="color: #00a987;">open-appsec</span></h3>
+<p style="text-align: justify; line-height: 1.75;">The story was very different when we threw it against open-appsec**. We went in expecting nothing but our hackbot proved us wrong in record time.&nbsp;&nbsp;<span style="color: #00e891; font-weight: bold;">It only took 30 seconds to find a valid bypass</span> for open-appsec in the Critical configuration. Absolutely mindblowing. Don’t get me wrong, the Azure WAF bypass did not take much more time, but this one takes the crown.<br><br></p>
+<p><span style="color: #fafafa;"><img src="https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=875&amp;height=493&amp;name=image%20(25).png" width="875" height="493" loading="lazy" alt="image (25)" style="height: auto; max-width: 100%; width: 875px; margin-left: auto; margin-right: auto; display: block;" srcset="https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=438&amp;height=247&amp;name=image%20(25).png 438w, https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=875&amp;height=493&amp;name=image%20(25).png 875w, https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=1313&amp;height=740&amp;name=image%20(25).png 1313w, https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=1750&amp;height=986&amp;name=image%20(25).png 1750w, https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=2188&amp;height=1233&amp;name=image%20(25).png 2188w, https://blog.ethiack.com/hs-fs/hubfs/image%20(25).png?width=2625&amp;height=1479&amp;name=image%20(25).png 2625w" sizes="(max-width: 875px) 100vw, 875px"><br></span></p>
+<p style="text-align: justify; line-height: 1.75;">Since open-appsec relies on machine learning to make its decisions, we decided to see if our hackbot could adapt if the original payload got blocked. To do this, we generated enough traffic so that the <em>alert </em>based payload started being blocked by the WAF, and we let the hackbot do its magic.</p>
+<p style="text-align: justify; line-height: 1.75; font-size: 16px;">This time, almost instantly, it found a bypass using <em>confirm </em>instead of <em>alert</em>.<br><span></span></p>
+<p><img src="https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=880&amp;height=428&amp;name=image%20(26)-1.png" width="880" height="428" loading="lazy" alt="image (26)-1" style="height: auto; max-width: 100%; width: 880px; margin-left: auto; margin-right: auto; display: block;" srcset="https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=440&amp;height=214&amp;name=image%20(26)-1.png 440w, https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=880&amp;height=428&amp;name=image%20(26)-1.png 880w, https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=1320&amp;height=642&amp;name=image%20(26)-1.png 1320w, https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=1760&amp;height=856&amp;name=image%20(26)-1.png 1760w, https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=2200&amp;height=1070&amp;name=image%20(26)-1.png 2200w, https://blog.ethiack.com/hs-fs/hubfs/image%20(26)-1.png?width=2640&amp;height=1284&amp;name=image%20(26)-1.png 2640w" sizes="(max-width: 880px) 100vw, 880px"></p>
+<p style="text-align: justify; line-height: 1.75;"><br>We also tested in the Medium+ and High+ configurations and just as rapidly it managed to not only replicate the same results but also find additional payloads such as <span style="font-family: 'Andale Mono', AndaleMono, 'Lucida Console', monospace;">q='+new Function('a'+'lert(1)')()+'</span></p>
+<p style="text-align: justify; line-height: 1.75;"><span style="font-size: 12px; color: #dbe4cd;">**Results obtained using the Basic Model in the default configuration of open-appsec.</span></p>
+<p style="text-align: justify; line-height: 1.75;">Smart stuff for such a little guy!</p>
+<p style="text-align: justify; line-height: 1.75;">These findings highlight one of the most important principles that we believe in:<br><span style="font-weight: bold;"></span></p>
+<blockquote>
+<p style="font-size: 18px;"><span style="font-weight: bold;"><br><span style="color: #00e891;">Automation Complements Manual Testing: </span></span></p>
+<p style="font-size: 18px; text-align: justify;"><span style="font-weight: bold;"></span><span style="font-size: 16px;">While human expertise is crucial for developing new attack techniques, hackbots can aid in exploring variations that might be overlooked in manual testing. This is great because it means that us humans can focus on more creative vulnerabilities like we just did!</span></p>
+</blockquote>
+<p>&nbsp;</p>
+<h2 style="text-align: justify; font-size: 24px; font-weight: normal;"><span style="color: #00e891;">Final Thoughts</span></h2>
+<h3 style="font-size: 20px;"><span style="color: #00a987;">The Parameter Pollution Rabbit Hole</span></h3>
+<p style="line-height: 1.75; text-align: justify;">The most striking finding from our manual research is the effectiveness of parameter pollution techniques against traditional WAFs. With bypass success rates escalating from 17.6% for simple payloads to 70.6% for complex parameter pollution payloads, the data clearly demonstrates that WAFs relying on pattern matching struggle to defend against attacks that exploit fundamental differences in parsing between WAFs and web applications.<br><br>This vulnerability comes from one of the most fundamental security challenges: WAFs must make security decisions without fully simulating the application's parsing behavior. ASP.NET's comma concatenation behavior creates a differential that is difficult to detect through traditional signature analysis.</p>
+<p style="line-height: 1.75; text-align: justify;">&nbsp;</p>
+<h3 style="font-size: 20px;"><span style="color: #00a987;">The Machine Learning Superiority</span></h3>
+<p style="text-align: justify; line-height: 1.75;">The superior detection rate of machine learning-based WAFs suggests that behavioral detection offers significant advantages over rule-based approaches. These systems can identify malicious payloads even when they don't match known signatures, providing protection against novel attack vectors.<br><br>However, our hackbot proved that this model still has flaws. Even though we managed to confirm the adaptability of this type of WAF to malicious traffic (by generating benign traffic), our hackbot managed to circumvent the learning process and find an alternative bypass almost immediately.</p>
+<p>&nbsp;</p>
+<h3 style="font-size: 20px;"><span style="color: #00a987;">The Complexity Paradox</span></h3>
+<p style="text-align: justify; line-height: 1.75;">Perhaps our most disappointing discovery is that sophisticated attack techniques can coexist with surprisingly simple bypasses. While we developed complex parameter pollution payloads that defeated most WAFs, our Hackbot revealed that even seemingly robust products like Azure WAF and open-appsec could be bypassed using relatively straightforward payloads.<br><br>This finding highlighted a critical vulnerability in basic security strategies: organizations may invest in costly WAF technologies while remaining vulnerable to attacks that exploit basic implementation gaps or configuration oversights. This reminds us that WAFs must not be used as a fix for the root problems of insecure code.</p>
+<p>&nbsp;</p>
+<h3 style="font-size: 20px;"><span style="color: #00a987;">The Rise of Hackbots</span></h3>
+<p style="text-align: justify; line-height: 1.75;">Finally, this blog post also serves as a demonstration of the power of Hackbots.</p>
+<p style="text-align: justify; line-height: 1.75;">We made it clear that our&nbsp;engine can be as stealthy as possible and detect this type of XSS without alerting any of the tested WAFs. On the other hand, we also leveraged the raw hacking power of our hackbot to reach even higher and perform a much more detailed and systematic evaluation of WAFs that were previously unbeaten by our research alone.</p>
+<p>&nbsp;</p>
+<p style="text-align: justify; line-height: 1.75;"><span>We’ll be discussing what’s next in hackbots and AI security at </span><a target="_blank" data-stringify-link="http://hackaicon.ethiack.com?utm_source=verifier_blog_post" data-sk="tooltip_parent" href="//hackaicon.ethiack.com/?utm_source=verifier_blog_post" rel="noopener noreferrer">HackAIcon.&nbsp;</a><span style="letter-spacing: 0px; background-color: transparent;">Hope to see you around!<br><br></span></p>
+<h4 style="text-align: justify; font-size: 18px; font-weight: normal;"><span style="color: #00a987;">References</span></h4>
+<p style="text-align: justify;">[1] <a href="https://swisskyrepo.github.io/PayloadsAllTheThings/HTTP%20Parameter%20Pollution/#methodology">https://swisskyrepo.github.io/PayloadsAllTheThings/HTTP%20Parameter%20Pollution/#methodology</a>&nbsp;<br>[2] <a href="https://www.intigriti.com/researchers/hackademy/http-parameter-pollution">https://www.intigriti.com/researchers/hackademy/http-parameter-pollution </a><br>[3] <a href="https://www.madlab.it/slides/BHEU2011/whitepaper-bhEU2011.pdf">https://www.madlab.it/slides/BHEU2011/whitepaper-bhEU2011.pdf</a></p></span>
+        </div>
+        
+      </div>
+    </div>
+  </article>
+  <div class="pagination-section">
+    <div class="content-wrapper">
+      <div class="blog-post">
+        <div class="post-pagination">
+          <div class="prev-post">
+            
+            <div class="nav-text">Previous Post
+              <h6><a href="/blog/dont-fear-the-ai-reaper-using-llms-to-hack-better-and-faster">Don’t Fear The AI Reaper: Using LLMs to Hack Better and Faster</a>
+              </h6>
+            </div>
+            
+          </div>
+          <div class="next-post">
+            
+            <div class="nav-text">Next Post
+              <h6><a href="/blog/ai-pentesting-without-the-noise-hackbots-and-the-verifier">AI Pentesting Without the Noise: Hackbots and the Verifier</a>
+              </h6>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  
+
+  
+</div>
+
+
+
+
+      
+       <div data-global-resource-path="@marketplace/MakeWebBetter/Austin/templates/partials/footer.html"><footer class="footer">
+
+  
+  <div class="container-fluid footer-dnd-area1 content-wrapper">
+<div class="row-fluid-wrapper">
+<div class="row-fluid">
+<div class="span12 widget-span widget-type-cell " style="" data-widget-type="cell" data-x="0" data-w="12">
+
+</div><!--end widget-span -->
+</div>
+</div>
+</div>
+  
+
+  <div class="container-fluid footer-dnd-area2 footer__container content-wrapper">
+<div class="row-fluid-wrapper">
+<div class="row-fluid">
+<div class="span12 widget-span widget-type-cell " style="" data-widget-type="cell" data-x="0" data-w="12">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 footer-row-0-background-color footer-row-0-vertical-alignment dnd-section footer-row-0-padding footer-row-0-hidden footer-row-0-background-layers">
+<div class="row-fluid ">
+<div class="span4 widget-span widget-type-cell footer-column-1-padding footer-column-1-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="0" data-w="4">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-2 footer-column-1-row-0-padding dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_widget_1679077036772" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="widget_1679077036772" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/logo_grass%20(3).png" alt="logo_grass (3)" loading="lazy" width="100%" style="max-width: 230px; max-height: 45px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_footer-module-3" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module widget-type-rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><span id="hs_cos_wrapper_footer-module-3_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="rich_text"><p style="font-size: 16px; text-align: center;">Securing technological progress <br>and rewarding Ethical Hackers.</p></span></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-4 footer-column-1-row-2-padding dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_widget_1684842208422" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+<div class="au-social-links">
+
+  
+
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+
+  <a class="au-social-links__link" href="https://discord.gg/F9JpzczsBH" target="_blank" rel="noopener">
+    <span id="hs_cos_wrapper_widget_1684842208422_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon au-social-links__icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 448 512" aria-labelledby="discord3" role="img"><title id="discord3">Follow us on discord</title><g id="discord3_layer"><path d="M297.216 243.2c0 15.616-11.52 28.416-26.112 28.416-14.336 0-26.112-12.8-26.112-28.416s11.52-28.416 26.112-28.416c14.592 0 26.112 12.8 26.112 28.416zm-119.552-28.416c-14.592 0-26.112 12.8-26.112 28.416s11.776 28.416 26.112 28.416c14.592 0 26.112-12.8 26.112-28.416.256-15.616-11.52-28.416-26.112-28.416zM448 52.736V512c-64.494-56.994-43.868-38.128-118.784-107.776l13.568 47.36H52.48C23.552 451.584 0 428.032 0 398.848V52.736C0 23.552 23.552 0 52.48 0h343.04C424.448 0 448 23.552 448 52.736zm-72.96 242.688c0-82.432-36.864-149.248-36.864-149.248-36.864-27.648-71.936-26.88-71.936-26.88l-3.584 4.096c43.52 13.312 63.744 32.512 63.744 32.512-60.811-33.329-132.244-33.335-191.232-7.424-9.472 4.352-15.104 7.424-15.104 7.424s21.248-20.224 67.328-33.536l-2.56-3.072s-35.072-.768-71.936 26.88c0 0-36.864 66.816-36.864 149.248 0 0 21.504 37.12 78.08 38.912 0 0 9.472-11.52 17.152-21.248-32.512-9.728-44.8-30.208-44.8-30.208 3.766 2.636 9.976 6.053 10.496 6.4 43.21 24.198 104.588 32.126 159.744 8.96 8.96-3.328 18.944-8.192 29.44-15.104 0 0-12.8 20.992-46.336 30.464 7.68 9.728 16.896 20.736 16.896 20.736 56.576-1.792 78.336-38.912 78.336-38.912z" /></g></svg></span>
+  </a>
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+
+  <a class="au-social-links__link" href="https://www.linkedin.com/company/ethiack/" target="_blank" rel="noopener">
+    <span id="hs_cos_wrapper_widget_1684842208422__2" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon au-social-links__icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 448 512" aria-labelledby="linkedin4" role="img"><title id="linkedin4">Follow us on LinkedIn</title><g id="linkedin4_layer"><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z" /></g></svg></span>
+  </a>
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+
+  <a class="au-social-links__link" href="https://x.com/ethiack" target="_blank" rel="noopener">
+    <span id="hs_cos_wrapper_widget_1684842208422__3" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon au-social-links__icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512" aria-labelledby="twitter5" role="img"><title id="twitter5">Follow us on Twitter</title><g id="twitter5_layer"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z" /></g></svg></span>
+  </a>
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+
+  <a class="au-social-links__link" href="https://github.com/ethiack" target="_blank" rel="noopener">
+    <span id="hs_cos_wrapper_widget_1684842208422__4" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_icon au-social-links__icon" style="" data-hs-cos-general-type="widget" data-hs-cos-type="icon"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 496 512" aria-labelledby="github6" role="img"><title id="github6">Follow us on Github</title><g id="github6_layer"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z" /></g></svg></span>
+  </a>
+  
+
+</div>
+
+
+
+<style>
+  #hs_cos_wrapper_widget_1684842208422 .au-social-links {
+  justify-content:center;
+  text-align:left;
+}
+
+@media only screen and (min-width:992px) {
+  #hs_cos_wrapper_widget_1684842208422 .au-social-links {
+    justify-content:center;
+    text-align:center;
+  }
+}
+
+#hs_cos_wrapper_widget_1684842208422 .au-social-links__link { margin-right:10px; }
+
+#hs_cos_wrapper_widget_1684842208422 .au-social-links__icon {
+  height:20px;
+  width:20px;
+  padding:10px;
+}
+
+#hs_cos_wrapper_widget_1684842208422 .au-social-links__icon svg {
+  fill:#FFFFFF;
+  fill:rgba(255,255,255,100%);
+  height:20px;
+  width:20px;
+}
+
+</style></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-5 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-cell dnd-column" style="" data-widget-type="cell" data-x="0" data-w="12">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-6 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_widget_1691075480648" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><!-- Spacer -->
+<div id="widget_1691075480648" class="au-spacer">
+</div>
+
+<!-- Module Style -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-7 dnd-row">
+<div class="row-fluid ">
+<div class="span6 widget-span widget-type-cell dnd-column" style="" data-widget-type="cell" data-x="0" data-w="6">
+
+<div class="row-fluid-wrapper row-depth-2 row-number-1 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_widget_1689076240943" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="widget_1689076240943" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/GDPR.png" alt="GDPR" loading="lazy" width="100%" style="max-width: 120px; max-height: 120px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span6 widget-span widget-type-cell dnd-column" style="" data-widget-type="cell" data-x="6" data-w="6">
+
+<div class="row-fluid-wrapper row-depth-2 row-number-2 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1700843184316" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="module_1700843184316" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/ISO27001-Ethiack.png" alt="ISO27001-Ethiack" loading="lazy" width="100%" style="max-width: 120px; max-height: 120px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 dnd-row footer-column-1-row-4-vertical-alignment">
+<div class="row-fluid ">
+<div class="span6 widget-span widget-type-cell cell_17008439644722-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="0" data-w="6">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-2 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1700843188809" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="module_1700843188809" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/Ethiack-badge.png" alt="Ethiack-badge" loading="lazy" width="100%" style="max-width: 120px; max-height: 120px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span6 widget-span widget-type-cell cell_1715031328387-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="6" data-w="6">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-3 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1715031328389" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="module_1715031328389" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/SeloID%20(1).png" alt="SeloID (1)" loading="lazy" width="100%" style="max-width: 120px; max-height: 120px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-4 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_17429214767183" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="module_17429214767183" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+   <img class="" src="https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=769&amp;height=284&amp;name=logos%20website%20(12).png" alt="logos website (12)" width="769" height="284" srcset="https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=385&amp;height=142&amp;name=logos%20website%20(12).png 385w, https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=769&amp;height=284&amp;name=logos%20website%20(12).png 769w, https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=1154&amp;height=426&amp;name=logos%20website%20(12).png 1154w, https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=1538&amp;height=568&amp;name=logos%20website%20(12).png 1538w, https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=1923&amp;height=710&amp;name=logos%20website%20(12).png 1923w, https://blog.ethiack.com/hs-fs/hubfs/logos%20website%20(12).png?width=2307&amp;height=852&amp;name=logos%20website%20(12).png 2307w" sizes="(max-width: 769px) 100vw, 769px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-5 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-cell dnd-column" style="" data-widget-type="cell" data-x="0" data-w="12">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-6 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1700843604186" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+<div id="module_1700843604186" class="au-image au-image--align-center au-image--align-center-mb">
+  
+
+
+
+
+   <img class="" src="https://blog.ethiack.com/hubfs/CENTRO2030_BarraCofinan_Ass_White_2600px.png" alt="CENTRO2030_BarraCofinan_Ass_White_2600px" width="100%" style="max-width: 2000px; max-height: 323.7216455209535px">
+</div>
+
+<!-- Module Styles -->
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span3 widget-span widget-type-cell cell_1686578750463-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="4" data-w="3">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-7 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1685982315021" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module widget-type-rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><span id="hs_cos_wrapper_module_1685982315021_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="rich_text"><div class="au-footer__menu-heading au-footer__menu-icon-heading">
+<h6><span style="color: #00a987;">PRODUCT</span></h6>
+</div></span></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-8 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1685982325875" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="module_1685982325875" class="au-icon-box au-icon-box--compact">
+  <div class="au-icon-box__row">
+
+    
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p style="font-size: 12px;"><a href="https://ethiack.com/technology" rel="noopener">Technology</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p style="font-size: 12px;"><a href="https://ethiack.com/pricing" rel="noopener">Pricing</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/ai-automated-pentesting" rel="noopener">AI Automated Pentesting</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/elite-ethical-hacking" rel="noopener">Elite Ethical Hacking</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/attack-surface-management" rel="noopener">Attack Surface Management</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/risk-exposure-management" rel="noopener">Risk Exposure Management</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/risk-based-vulnerability-management" rel="noopener">Risk-Based Vulnerability Management</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/continuous-automated-red-teaming" rel="noopener">Continuous Automated Red Teaming</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/request-scan" rel="noopener">Passive Recon Scan</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://support.ethiack.com/knowledge" rel="noopener">Knowledge Base</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://status.ethiack.com/" rel="noopener" target="_blank">Product Status</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+
+  </div>
+</div>
+
+
+
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span2 widget-span widget-type-cell cell_1685728542907-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="7" data-w="2">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-9 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget module_1686578571484-padding dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1686578571484" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module widget-type-rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><span id="hs_cos_wrapper_module_1686578571484_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="rich_text"><div class="au-footer__menu-heading au-footer__menu-icon-heading">
+<h6><span style="color: #00a987;">COMPANY</span></h6>
+</div></span></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-10 cell_1685728542907-row-1-vertical-alignment dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-cell dnd-column cell_1687856317808-vertical-alignment" style="" data-widget-type="cell" data-x="0" data-w="12">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-11 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1686578573942" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="module_1686578573942" class="au-icon-box au-icon-box--compact">
+  <div class="au-icon-box__row">
+
+    
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/about" rel="noopener">About</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/hackers" rel="noopener">Hackers</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/blog" rel="noopener">Blog</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/careers" rel="noopener" target="_blank">Careers</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/contact" rel="noopener">Contacts</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <a href="https://ethiack.com/news" rel="noopener">Press Archives</a>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <a href="https://partners.ethiack.com" rel="noopener" target="_blank">Partners Portal Login</a>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <a href="https://ethiack.com/ethiack-portal-ipn" rel="noopener" target="_blank">Ethiack Portal</a>
+        </div>
+      </div>
+
+    </div>
+
+    
+
+  </div>
+</div>
+
+
+
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+<div class="span3 widget-span widget-type-cell cell_1687863379597-vertical-alignment dnd-column" style="" data-widget-type="cell" data-x="9" data-w="3">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-12 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget module_1687855286644-padding dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1687855286644" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module widget-type-rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><span id="hs_cos_wrapper_module_1687855286644_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="rich_text"><div class="au-footer__menu-heading au-footer__menu-icon-heading">
+<h6><span style="color: #00a987;">LEGAL</span></h6>
+</div></span></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-13 dnd-row">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget dnd-module" style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_16878560932553" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="module_16878560932553" class="au-icon-box au-icon-box--compact">
+  <div class="au-icon-box__row">
+
+    
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/terms-of-service" rel="noopener">Terms of Service</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/security-policy" rel="noopener">Security Policy</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/privacy-policy" rel="noopener">Privacy Policy</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://ethiack.com/cookie-policy" rel="noopener">Cookie Policy</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="au-icon-box__col au-icon-box__col--one au-card--align-left au-card--align-center-mb">
+
+      
+
+      <div class="au-icon-box__img">
+        
+        
+
+
+   <img class="" src="" alt="" loading="">
+        
+      </div>
+
+      
+
+      <div class="au-icon-box__content">
+        <div class="au-icon-box__text">
+          <p><a href="https://www.livroreclamacoes.pt/INICIO/" rel="noopener" target="_blank">Complaint Book</a></p>
+        </div>
+      </div>
+
+    </div>
+
+    
+
+  </div>
+</div>
+
+
+
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+</div><!--end widget-span -->
+</div>
+</div>
+</div>
+
+  
+  <div class="container-fluid footer-dnd-area3 content-wrapper">
+<div class="row-fluid-wrapper">
+<div class="row-fluid">
+<div class="span12 widget-span widget-type-cell " style="" data-widget-type="cell" data-x="0" data-w="12">
+
+</div><!--end widget-span -->
+</div>
+</div>
+</div>
+  
+
+
+  
+  
+  <div class="au-scroll-to-top__wrap">
+    <div class="au-scroll-to-top__btn" style="opacity: 0;">
+      <svg width="48" height="48" viewbox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="24" fill="#5eff88" />
+        <path d="M24 35L24 13" stroke="#050C0D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M33 22L24 13L15 22" stroke="#050C0D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+  </div>
+  
+  
+</footer></div>
+      
+    </div>
+    <script>
+      Array.from(document.getElementsByClassName("hs-menu-wrapper")).forEach(
+        function (element) {
+          element.classList.remove("hs-menu-wrapper");
+        }
+      );
+    </script>
+    
+<!-- HubSpot performance collection script -->
+<script defer src="/hs/hsstatic/content-cwv-embed/static-1.1293/embed.js"></script>
+<script src="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973194717/1768308554485/template_library.min.js"></script>
+<script async defer src="https://blog.ethiack.com/hubfs/hub_generated/template_assets/1/59973522402/1768308552810/template_main.min.js"></script>
+<script>
+var hsVars = hsVars || {}; hsVars['language'] = 'en';
+</script>
+
+<script src="/hs/hsstatic/cos-i18n/static-1.53/bundles/project.js"></script>
+
+<script defer>
+  $( '.au-menu-toggler').click(function() {
+    $(this).addClass('au-toggle-open');
+    $(this).parents('.row-fluid').toggleClass('show-menu');
+  });
+  $( '.au-menu-toggler--close').click(function() {
+    $(this).parents('.row-fluid').toggleClass('show-menu');
+    $(this).siblings('.au-menu-toggler').removeClass('au-toggle-open');
+  });
+</script>
+
+<script async defer src="https://blog.ethiack.com/hubfs/hub_generated/module_assets/1/59973194487/1744244159062/module_menu.min.js"></script>
+
+<!-- Start of HubSpot Analytics Code -->
+<script type="text/javascript">
+var _hsq = _hsq || [];
+_hsq.push(["setContentType", "blog-post"]);
+_hsq.push(["setCanonicalUrl", "https:\/\/blog.ethiack.com\/blog\/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"]);
+_hsq.push(["setPageId", "262130688221"]);
+_hsq.push(["setContentMetadata", {
+    "contentPageId": 262130688221,
+    "legacyPageId": "262130688221",
+    "contentFolderId": null,
+    "contentGroupId": 59862272973,
+    "abTestId": null,
+    "languageVariantId": 262130688221,
+    "languageCode": "en",
+    
+    
+}]);
+</script>
+
+<script type="text/javascript" id="hs-script-loader" async defer src="/hs/scriptloader/25953430.js"></script>
+<!-- End of HubSpot Analytics Code -->
+
+
+<script type="text/javascript">
+var hsVars = {
+    render_id: "f79171f0-bb22-4ed5-93cd-3514f5ca31c7",
+    ticks: 1778123597621,
+    page_id: 262130688221,
+    
+    content_group_id: 59862272973,
+    portal_id: 25953430,
+    app_hs_base_url: "https://app-eu1.hubspot.com",
+    cp_hs_base_url: "https://cp-eu1.hubspot.com",
+    language: "en",
+    analytics_page_type: "blog-post",
+    scp_content_type: "",
+    
+    analytics_page_id: "262130688221",
+    category_id: 3,
+    folder_id: 0,
+    is_hubspot_user: false
+}
+</script>
+
+
+<script defer src="/hs/hsstatic/HubspotToolsMenu/static-1.640/js/index.js"></script>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WX3J4C7M" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<div id="fb-root"></div>
+  <script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v3.0";
+  fjs.parentNode.insertBefore(js, fjs);
+ }(document, 'script', 'facebook-jssdk'));</script> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="https://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+ 
+
+
+    
+    <script>
+      // Passive event listeners
+        jQuery.event.special.touchstart = {
+            setup: function( _, ns, handle ) {
+                this.addEventListener("touchstart", handle, { passive: !ns.includes("noPreventDefault") });
+            }
+        };
+        jQuery.event.special.touchmove = {
+            setup: function( _, ns, handle ) {
+                this.addEventListener("touchmove", handle, { passive: !ns.includes("noPreventDefault") });
+            }
+        };
+
+    </script>
+    
+    
+  
+</body></html>
