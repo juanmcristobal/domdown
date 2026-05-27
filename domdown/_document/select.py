@@ -456,4 +456,30 @@ def _looks_like_chrome(tag: Tag) -> bool:
     exact_layout_markers = {"sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
     if marker_tokens & exact_layout_markers:
         return True
+    if _looks_like_tag_cloud(tag, marker_text):
+        return True
     return any(marker in marker_text for marker in NOISE_MARKERS if marker not in exact_layout_markers)
+
+
+def _looks_like_tag_cloud(tag: Tag, marker_text: str) -> bool:
+    """Detect tag clouds or label widgets that are mostly link lists."""
+
+    if tag.name not in {"ul", "ol", "div", "nav"}:
+        return False
+    link_count = len(tag.find_all("a"))
+    if link_count < 12:
+        return False
+    paragraph_count = len(tag.find_all("p"))
+    heading_count = len(tag.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
+    if paragraph_count > 0 or heading_count > 0:
+        return False
+    if any(marker in marker_text for marker in ("label-widget-content", "list-label-widget-content", "tag-cloud", "tags", "label-cloud")):
+        return True
+    parent = tag.parent if isinstance(tag.parent, Tag) else None
+    if parent is None:
+        return False
+    parent_classes = parent.get("class", []) if isinstance(parent.get("class"), list) else [str(parent.get("class", ""))]
+    parent_marker_text = " ".join(str(token).lower() for token in parent_classes)
+    if parent.get("id"):
+        parent_marker_text = f"{parent_marker_text} {str(parent.get('id')).lower()}".strip()
+    return any(marker in parent_marker_text for marker in ("widget-content", "label-widget-content", "list-label-widget-content", "tag-cloud", "tags"))
