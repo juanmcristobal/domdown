@@ -38,7 +38,6 @@ jobs:
       - name: PyTest
         run: |
           coverage run --source domdown -m pytest
-          pytest tests/
       - name: Coverage
         run: |
           coverage report --show-missing --fail-under=95
