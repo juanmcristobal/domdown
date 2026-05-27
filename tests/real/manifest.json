@@ -84,6 +84,12 @@
       "description": "Tistory article with Korean navigation chrome, comments, related posts, and sidebar blocks that should be removed."
     },
     {
+      "id": "bushidotoken_blackbasta_leaks_lessons_from_ascension",
+      "html": "html/bushidotoken.net_2025_02_blackbasta-leaks-lessons-from-ascension.html",
+      "markdown": "raw/bushidotoken.net_2025_02_blackbasta-leaks-lessons-from-ascension.md",
+      "description": "Blogger security article with label cloud widgets that should not replace the post body."
+    },
+    {
       "id": "gdatasoftware_kiss_loader_analysis",
       "html": "html/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.html",
       "markdown": "raw/blog.gdatasoftware.com_2026_03_38399-analysis-kissloader.md",
