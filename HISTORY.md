@@ -7,7 +7,8 @@
 * First release.
 
 
-## 0.1.1 (2026-05-31)
+## 0.2.0 (2026-06-03)
 
 
 * Fix release workflow checkout for PyPI publish.
+* Change installation instructions to use `pip install domdown` (breaking change).
