@@ -229,7 +229,7 @@ from domdown import (
 Install from this repository:
 
 ```bash
-pip install git+https://github.com/juanmcristobal/domdown.git
+pip install domdown
 ```
 
 Install locally for development:

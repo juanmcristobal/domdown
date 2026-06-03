@@ -4,7 +4,7 @@ from .api import html_to_markdown
 from ._core import DomdownOptions, HtmlMetadata, HtmlToMarkdownResult
 from ._pipeline import HtmlToMarkdownPipeline
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "__version__",
