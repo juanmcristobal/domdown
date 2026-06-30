@@ -116,6 +116,30 @@ def test_extract_metadata_reads_visible_published_time_when_meta_is_missing() ->
     assert metadata.published == "2026-03-03T12:00:00Z"
 
 
+def test_extract_metadata_falls_back_to_base_url_when_metadata_is_missing() -> None:
+    """When metadata is absent, the extractor should fall back to the page URL."""
+
+    soup = BeautifulSoup(
+        """
+        <html lang="en">
+          <head></head>
+          <body>
+            <article>
+              <p>Body only.</p>
+            </article>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    metadata = extract_metadata(soup, DomdownOptions(base_url="https://t.me/SBUkr/17916"))
+
+    assert metadata.title == "SBUkr 17916"
+    assert metadata.source == "https://t.me/SBUkr/17916"
+    assert metadata.canonical_url == "https://t.me/SBUkr/17916"
+
+
 def test_extract_metadata_prefers_visible_author_and_combines_tags() -> None:
     """Visible article metadata should stay primary while tags are combined."""
 

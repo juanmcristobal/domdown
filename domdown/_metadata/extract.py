@@ -7,6 +7,7 @@ from .._core.options import DomdownOptions
 from .helpers import (
     collect_meta_contents,
     collect_texts,
+    derive_title_from_url,
     first_image_src,
     first_list,
     first_text,
@@ -56,6 +57,8 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     source = normalize_source(
         first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url
     )
+    if not source and options.base_url:
+        source = normalize_source(options.base_url)
     visible_author = collect_texts(soup, AUTHOR_VISIBLE_SELECTORS)
     meta_author = tuple(
         value for value in (meta_content(soup, selector) for selector in AUTHOR_META_SELECTORS) if value
@@ -72,6 +75,12 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     canonical_url = normalize_source(
         first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url
     )
+    if not canonical_url and options.base_url:
+        canonical_url = normalize_source(options.base_url)
+    if not canonical_url:
+        canonical_url = source
+    if not title:
+        title = derive_title_from_url(canonical_url or source or options.base_url)
     image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
     return HtmlMetadata(
         title=title or None,

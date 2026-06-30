@@ -3,7 +3,7 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions
-from domdown.markdown.links import render_link
+from domdown.markdown.links import _looks_like_image_popup, render_link
 
 
 def test_render_link_formats_normal_and_image_links() -> None:
@@ -33,3 +33,17 @@ def test_render_link_omits_empty_anchor_chrome() -> None:
     soup = BeautifulSoup("<a href='https://example.com'></a>", "lxml")
 
     assert render_link(soup.a, DomdownOptions()) == ""
+
+
+def test_render_link_and_popup_detection_cover_edge_cases() -> None:
+    """Image popups without alt text should render as linked images and expose the popup heuristic."""
+
+    soup = BeautifulSoup(
+        "<a class='pswp cursor-zoom-in' href='https://example.com/gallery'><img src='https://example.com/gallery.png' /></a>",
+        "lxml",
+    )
+
+    assert _looks_like_image_popup(soup.a)
+    assert (
+        render_link(soup.a, DomdownOptions()) == "[![](https://example.com/gallery.png)](https://example.com/gallery)"
+    )

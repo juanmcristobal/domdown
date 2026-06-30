@@ -20,6 +20,6 @@ class FrontmatterStage:
         if context.metadata is None or not context.options.emit_frontmatter:
             context.rendered_document = context.markdown
             return context
-        context.frontmatter = render_frontmatter(context.metadata)
+        context.frontmatter = render_frontmatter(context.metadata, context.options.frontmatter_opts)
         context.rendered_document = compose_document(context.frontmatter, context.markdown)
         return context

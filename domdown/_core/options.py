@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True, slots=True)
 class DomdownOptions:
-    """Configuration for HTML parsing, cleanup, and output shaping."""
+    """Configuration for HTML parsing, cleanup, and output shaping.
+
+    `base_url` resolves relative URLs during parsing. `frontmatter_opts`
+    provides per-key fallback values when rendering frontmatter.
+    """
 
     base_url: str | None = None
+    frontmatter_opts: dict[str, object] = field(default_factory=dict)
     created: str | None = None
     extract_metadata: bool = True
     emit_frontmatter: bool = True

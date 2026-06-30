@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
@@ -9,6 +10,7 @@ from domdown.stages import (
     MarkdownStage,
     MetadataStage,
     ParseStage,
+    PipelineStage,
     PostProcessStage,
     PreserveStage,
 )
@@ -36,6 +38,17 @@ def test_metadata_stage_extracts_metadata() -> None:
 
     assert context.metadata is not None
     assert context.metadata.title == "Title"
+
+
+def test_metadata_stage_leaves_context_unchanged_without_document() -> None:
+    """The metadata stage should no-op when no document was selected."""
+
+    context = PipelineContext(html="", options=DomdownOptions())
+
+    result = MetadataStage().run(context)
+
+    assert result is context
+    assert result.metadata is None
 
 
 def test_preserve_stage_resolves_relative_links_and_images() -> None:
@@ -79,6 +92,22 @@ def test_preserve_stage_can_derive_a_base_url_from_metadata_when_options_do_not_
     assert context.document.img["srcset"] == "https://example.com/img-1x.png 1x, https://example.com/img-2x.png 2x"
 
 
+def test_preserve_stage_keeps_absolute_links_when_base_url_is_inferred() -> None:
+    """Inferred bases should not rewrite already absolute links."""
+
+    soup = BeautifulSoup("<div><a href='https://example.com/story'>Story</a></div>", "lxml")
+    context = PipelineContext(
+        html="",
+        options=DomdownOptions(),
+        document=soup.div,
+        metadata=HtmlMetadata(source="https://example.com/articles/feature/"),
+    )
+
+    context = PreserveStage().run(context)
+
+    assert context.document.a["href"] == "https://example.com/story"
+
+
 def test_markdown_stage_renders_markdown_text() -> None:
     """The markdown stage should render the document subtree."""
 
@@ -98,6 +127,16 @@ def test_postprocess_stage_normalizes_markdown() -> None:
     context = PostProcessStage().run(context)
 
     assert context.markdown == "A\n\nB"
+
+
+def test_pipeline_stage_protocol_raises_not_implemented_error() -> None:
+    """The abstract pipeline stage contract should remain explicit."""
+
+    class DummyStage(PipelineStage):
+        name = "dummy"
+
+    with pytest.raises(NotImplementedError):
+        DummyStage().run(PipelineContext(html="", options=DomdownOptions()))
 
 
 def test_frontmatter_stage_combines_metadata_and_body() -> None:

@@ -26,3 +26,11 @@ def test_resolve_url_falls_back_for_malformed_urls() -> None:
     """Malformed URLs should not crash URL resolution."""
 
     assert resolve_url("https://[invalid-ipv6]/path", "https://example.com") == "https://[invalid-ipv6]/path"
+
+
+def test_resolve_srcset_skips_empty_chunks() -> None:
+    """Srcset parsing should ignore empty candidates."""
+
+    assert resolve_srcset(" , /img/a.png 1x, , /img/b.png 2x ", "https://example.com") == (
+        "https://example.com/img/a.png 1x, https://example.com/img/b.png 2x"
+    )

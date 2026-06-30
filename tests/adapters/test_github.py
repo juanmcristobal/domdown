@@ -1,10 +1,53 @@
 from __future__ import annotations
 
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
 import pytest
+from bs4 import BeautifulSoup
 
 from domdown import html_to_markdown
+from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
 from domdown.adapters import GitHubAdapter
-from tests.real import RealExampleCase, load_real_cases
+
+REAL_TESTS_DIR = Path(__file__).resolve().parents[1] / "real"
+REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
+
+
+@dataclass(frozen=True, slots=True)
+class RealExampleCase:
+    """A real-world GitHub regression case stored under tests/real."""
+
+    id: str
+    html_path: Path
+    markdown_path: Path
+    description: str = ""
+
+    def html_text(self) -> str:
+        return self.html_path.read_text(encoding="utf-8")
+
+    def markdown_text(self) -> str:
+        return self.markdown_path.read_text(encoding="utf-8")
+
+
+def load_real_cases(layer: str | None = "core") -> list[RealExampleCase]:
+    """Load the curated real-world regression cases from the manifest."""
+
+    payload = json.loads(REAL_MANIFEST_PATH.read_text(encoding="utf-8"))
+    cases: list[RealExampleCase] = []
+    for item in payload.get("cases", []):
+        if layer is not None and item.get("layer", "core") != layer:
+            continue
+        cases.append(
+            RealExampleCase(
+                id=item["id"],
+                html_path=REAL_TESTS_DIR / item["html"],
+                markdown_path=REAL_TESTS_DIR / item["markdown"],
+                description=item.get("description", ""),
+            )
+        )
+    return cases
 
 
 def _github_cases() -> list[RealExampleCase]:
@@ -54,3 +97,64 @@ def test_github_release_expands_lazy_asset_fragment() -> None:
     assert "### Assets" in actual
     assert "https://github.com/nodejs/node/archive/refs/tags/v25.3.0.zip" in actual
     assert "https://github.com/nodejs/node/archive/refs/tags/v25.3.0.tar.gz" in actual
+
+
+def test_github_issue_adaptor_rewrites_body_and_author_from_metadata() -> None:
+    """Issue pages should narrow to the repository content and adopt the issue author."""
+
+    adapter = GitHubAdapter()
+    soup = BeautifulSoup(
+        """
+        <html>
+          <head>
+            <meta property="og:site_name" content="GitHub" />
+            <meta property="og:url" content="https://github.com/example/repo/issues/123" />
+            <meta property="og:author:username" content="octocat" />
+          </head>
+          <body>
+            <div class="repository-content">
+              <article><h1>Issue title</h1><p>Issue body.</p></article>
+            </div>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+    context = PipelineContext(
+        html="",
+        options=DomdownOptions(),
+        document=soup,
+        metadata=HtmlMetadata(title="Issue title"),
+    )
+
+    context = adapter.refine_metadata(context)
+
+    assert context.document is not None
+    assert context.document.name == "div"
+    assert context.metadata is not None
+    assert context.metadata.author == ("octocat",)
+
+
+def test_github_security_page_detection_leaves_generic_pages_alone() -> None:
+    """Security pages should not be narrowed unless a dedicated branch matches."""
+
+    adapter = GitHubAdapter()
+    soup = BeautifulSoup(
+        """
+        <html>
+          <head>
+            <meta property="og:site_name" content="GitHub" />
+            <meta property="og:url" content="https://github.com/security/advisories/GHSA-1234" />
+          </head>
+          <body>
+            <article><h1>Advisory</h1><p>Body</p></article>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+    context = PipelineContext(html="", options=DomdownOptions(), document=soup)
+
+    context = adapter.refine_metadata(context)
+
+    assert context.document is soup

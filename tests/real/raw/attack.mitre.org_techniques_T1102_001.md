@@ -1,5 +1,7 @@
 ---
 title: "Web Service: Dead Drop Resolver, Sub-technique T1102.001 - Enterprise | MITRE ATT&CK®"
+source: "https://attack.mitre.org/techniques/T1102/001/"
+canonical_url: "https://attack.mitre.org/techniques/T1102/001/"
 language: en
 domdown_version: 0.3.0
 image: /theme/images/mitre_attack_logo.png

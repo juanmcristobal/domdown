@@ -42,6 +42,35 @@ def test_render_frontmatter_serializes_metadata_in_document_order() -> None:
     )
 
 
+def test_render_frontmatter_uses_fallback_fields_for_missing_metadata() -> None:
+    """Frontmatter serialization should backfill missing fields from fallback options."""
+
+    metadata = HtmlMetadata()
+
+    assert render_frontmatter(
+        metadata,
+        {
+            "title": "Fallback Title",
+            "source": "https://example.com/posts/fallback-title",
+            "canonical_url": "https://example.com/posts/fallback-title",
+            "author": ("Fallback Author",),
+            "tags": ("Threat Intelligence", "Campaign Analysis"),
+        },
+    ) == (
+        "---\n"
+        "title: Fallback Title\n"
+        'source: "https://example.com/posts/fallback-title"\n'
+        'canonical_url: "https://example.com/posts/fallback-title"\n'
+        "domdown_version: 0.3.0\n"
+        "author:\n"
+        '  - "Fallback Author"\n'
+        "tags:\n"
+        "  - Threat Intelligence\n"
+        "  - Campaign Analysis\n"
+        "---"
+    )
+
+
 def test_compose_document_combines_frontmatter_and_body() -> None:
     """Document composition should prepend frontmatter only when present."""
 

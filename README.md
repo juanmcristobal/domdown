@@ -58,7 +58,9 @@ html = """
 
 markdown = html_to_markdown(
     html,
-    DomdownOptions(base_url="https://example.com/research/campaign"),
+    DomdownOptions(
+        base_url="https://example.com/research/campaign",
+    ),
 )
 
 print(markdown)
@@ -170,6 +172,7 @@ print(result.warnings)
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `base_url` | `None` | Source URL used for metadata and relative URL resolution. |
+| `frontmatter_opts` | `{}` | Per-key fallback values used when rendering frontmatter. |
 | `created` | `None` | Creation date to include in metadata/frontmatter. |
 | `extract_metadata` | `True` | Enables metadata extraction. |
 | `emit_frontmatter` | `True` | Prepends YAML frontmatter to `document`. |
@@ -191,6 +194,10 @@ from domdown import DomdownOptions
 
 options = DomdownOptions(
     base_url="https://example.com/article",
+    frontmatter_opts={
+        "title": "Example Article",
+        "source": "https://example.com/article",
+    },
     emit_frontmatter=True,
     preserve_images=True,
     remove_selectors=(".share-widget", ".newsletter-signup"),

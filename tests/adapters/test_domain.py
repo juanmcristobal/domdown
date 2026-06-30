@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from bs4 import BeautifulSoup
+
 from domdown._pipeline import HtmlToMarkdownPipeline
 from domdown.adapters import DomainAdapterSpec, make_domain_adapter
+from domdown.adapters.domain import _class_name, _host_matches, _normalize_host, _normalize_suffix, _page_host
 
 
 def test_declarative_domain_adapter_can_be_declared_with_a_single_spec() -> None:
@@ -69,3 +72,25 @@ def test_declarative_domain_adapter_matches_www_hosts() -> None:
     result = pipeline.run(html)
 
     assert result.markdown == "# Title\n\nBody"
+
+
+def test_domain_adapter_helpers_cover_host_normalization_and_empty_class_names() -> None:
+    """Domain helper functions should normalize hosts and fall back for empty names."""
+
+    soup = BeautifulSoup(
+        """
+        <html>
+          <head>
+            <link rel="canonical" href="https://www.example.com/post" />
+          </head>
+          <body></body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    assert _page_host(soup, ("link[rel='canonical']",)) == "example.com"
+    assert _normalize_host("WWW.Example.com") == "example.com"
+    assert _normalize_suffix("example.com") == ".example.com"
+    assert _host_matches("www.example.com", ("example.com",), ()) is True
+    assert _class_name("") == "Domain"

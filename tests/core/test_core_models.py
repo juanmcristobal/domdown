@@ -13,6 +13,7 @@ def test_options_include_pipeline_controls() -> None:
 
     assert {
         "base_url",
+        "frontmatter_opts",
         "created",
         "extract_metadata",
         "emit_frontmatter",
