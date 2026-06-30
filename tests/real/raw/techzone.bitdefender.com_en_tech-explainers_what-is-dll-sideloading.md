@@ -3,7 +3,7 @@ title: What is DLL Sideloading – Bitdefender TechZone
 source: "https://techzone.bitdefender.com/en/tech-explainers/what-is-dll-sideloading.html"
 canonical_url: "https://techzone.bitdefender.com/en/tech-explainers/what-is-dll-sideloading.html"
 language: en
-domdown_version: 0.3.0
+domdown_version: 0.3.1
 image: ../../css/image/corporate-logo.svg
 description: "DLL sideloading exploits the Windows DLL search order to force legitimate, signed binaries to execute malicious code. Analyze passive and active exploitation methods used by threat actors to bypass application control and evade signature-based detection."
 ---

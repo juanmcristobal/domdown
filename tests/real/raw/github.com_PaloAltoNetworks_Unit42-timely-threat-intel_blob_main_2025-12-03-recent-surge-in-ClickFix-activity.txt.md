@@ -4,7 +4,7 @@ source: "https://github.com/PaloAltoNetworks/Unit42-timely-threat-intel/blob/mai
 site_name: GitHub
 canonical_url: "https://github.com/PaloAltoNetworks/Unit42-timely-threat-intel/blob/main/2025-12-03-recent-surge-in-ClickFix-activity.txt"
 language: en
-domdown_version: 0.3.0
+domdown_version: 0.3.1
 image: "https://opengraph.githubassets.com/7da4400e4f44a00689b12a902a9275f3709f62f23c5f4914452ba9b8aceb9541/PaloAltoNetworks/Unit42-timely-threat-intel"
 author:
   - "PaloAltoNetworks"
