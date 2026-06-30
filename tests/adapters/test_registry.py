@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from domdown._core import DomdownOptions, PipelineContext
-from domdown.adapters import AdapterRegistry, build_default_registry
 from domdown._pipeline import HtmlToMarkdownPipeline
+from domdown.adapters import AdapterRegistry, build_default_registry
 
 
 @dataclass(slots=True)

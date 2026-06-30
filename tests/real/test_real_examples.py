@@ -4,6 +4,7 @@ import pytest
 
 from domdown import html_to_markdown
 from domdown._core import DomdownOptions
+
 from . import RealExampleCase, load_real_cases
 
 

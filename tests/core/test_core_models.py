@@ -13,6 +13,7 @@ def test_options_include_pipeline_controls() -> None:
 
     assert {
         "base_url",
+        "frontmatter_opts",
         "created",
         "extract_metadata",
         "emit_frontmatter",
@@ -48,4 +49,5 @@ def test_metadata_result_and_context_surface() -> None:
         "frontmatter",
         "rendered_document",
         "warnings",
+        "matched_adapters",
     } <= context_fields

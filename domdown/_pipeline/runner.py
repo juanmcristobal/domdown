@@ -4,7 +4,16 @@ from dataclasses import dataclass, field
 from typing import Sequence
 
 from .._core import DomdownOptions, HtmlToMarkdownResult, PipelineContext
-from ..adapters import AdapterRegistry, ArticleAdapter, GitHubAdapter, build_default_registry
+from ..adapters import (
+    AdapterRegistry,
+    ArticleAdapter,
+    BleepingComputerAdapter,
+    CyberSecurityNewsAdapter,
+    GitHubAdapter,
+    MediumAdapter,
+    TheHackerNewsAdapter,
+    build_default_registry,
+)
 from ..stages.base import PipelineStage
 from ..stages.clean import CleanStage
 from ..stages.frontmatter import FrontmatterStage
@@ -28,7 +37,13 @@ class HtmlToMarkdownPipeline:
         """Populate the default stage chain when none is supplied."""
 
         if not self.adapters:
-            self.adapters = (GitHubAdapter(),)
+            self.adapters = (
+                GitHubAdapter(),
+                MediumAdapter(),
+                BleepingComputerAdapter(),
+                CyberSecurityNewsAdapter(),
+                TheHackerNewsAdapter(),
+            )
         self.adapter_registry = build_default_registry(self.adapters)
         if not self.stages:
             self.stages = (
@@ -48,6 +63,7 @@ class HtmlToMarkdownPipeline:
         for stage in self.stages:
             context = stage.run(context)
             if getattr(stage, "name", "") == "parse":
+                context.matched_adapters = self.adapter_registry.matching(context)
                 context = self.adapter_registry.preprocess(context)
             elif getattr(stage, "name", "") == "metadata":
                 context = self.adapter_registry.refine_metadata(context)

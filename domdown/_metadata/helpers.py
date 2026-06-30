@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 
 from bs4 import BeautifulSoup, Tag
 
@@ -121,7 +121,7 @@ def normalize_title(value: str, site_name: str | None = None) -> str:
 
 
 def normalize_source(value: str | None, base_url: str | None = None) -> str:
-    """Normalize a source URL without inventing missing metadata."""
+    """Normalize a source URL and resolve relative paths when possible."""
 
     source = (value or "").strip()
     if not source:
@@ -129,6 +129,24 @@ def normalize_source(value: str | None, base_url: str | None = None) -> str:
     if base_url and source.startswith("/"):
         return urljoin(base_url, source)
     return source
+
+
+def derive_title_from_url(value: str | None) -> str:
+    """Derive a readable fallback title from a URL when no title metadata exists."""
+
+    if not value:
+        return ""
+    parsed = urlsplit(value)
+    segments = [segment for segment in parsed.path.split("/") if segment]
+    if not segments:
+        host = parsed.hostname or ""
+        return host[4:] if host.startswith("www.") else host
+
+    chosen = segments[-1]
+    if chosen.isdigit() and len(segments) > 1:
+        chosen = segments[-2]
+        return f"{_titleize_path_segment(chosen)} {segments[-1]}"
+    return _titleize_path_segment(chosen)
 
 
 def looks_like_date(value: str) -> bool:
@@ -178,3 +196,23 @@ def _strip_title_suffix(title: str, site_tokens: set[str]) -> str:
         if "github" in site_tokens and "/" in tail and " " not in tail:
             return head.strip()
     return title
+
+
+def _titleize_path_segment(segment: str) -> str:
+    """Turn a URL path segment into a human-readable title fragment."""
+
+    text = unquote(segment).replace("-", " ").replace("_", " ").strip()
+    if not text:
+        return ""
+    tokens = [token for token in text.split() if token]
+    if len(tokens) > 1 and tokens[0].isdigit():
+        tokens = tokens[1:]
+    normalized: list[str] = []
+    for token in tokens:
+        if token.islower():
+            normalized.append(token.capitalize())
+        elif token.isupper() and len(token) <= 4:
+            normalized.append(token)
+        else:
+            normalized.append(token)
+    return " ".join(normalized).strip()

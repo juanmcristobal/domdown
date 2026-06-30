@@ -20,3 +20,4 @@ class PipelineContext:
     frontmatter: str | None = None
     rendered_document: str | None = None
     warnings: list[str] = field(default_factory=list)
+    matched_adapters: tuple[Any, ...] | None = None

@@ -455,5 +455,7 @@ def test_select_private_helpers_cover_refinement_fallbacks() -> None:
     shallow = parse_html("<html><body><div class='article-shell'><p>Short text.</p></div></body></html>")
     assert _refine_content_root(shallow.div).name == "div"
 
-    small = parse_html("<html><body><div class='article-shell'><div class='content'><p>Just a few words here.</p></div></div></body></html>")
+    small = parse_html(
+        "<html><body><div class='article-shell'><div class='content'><p>Just a few words here.</p></div></div></body></html>"
+    )
     assert _best_content_subtree(small.div).name == "div"

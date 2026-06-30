@@ -5,8 +5,9 @@ from bs4 import BeautifulSoup
 from .._core.metadata import HtmlMetadata
 from .._core.options import DomdownOptions
 from .helpers import (
-    collect_texts,
     collect_meta_contents,
+    collect_texts,
+    derive_title_from_url,
     first_image_src,
     first_list,
     first_text,
@@ -24,8 +25,8 @@ from .selectors import (
     DESCRIPTION_SELECTORS,
     IMAGE_SELECTORS,
     PUBLISHED_SELECTORS,
-    SOURCE_SELECTORS,
     SITE_NAME_SELECTORS,
+    SOURCE_SELECTORS,
     TAG_META_SELECTORS,
     TAG_VISIBLE_SELECTORS,
     TITLE_SELECTORS,
@@ -53,21 +54,33 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
         ),
         site_name,
     )
-    source = normalize_source(first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url)
+    source = normalize_source(
+        first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url
+    )
+    if not source and options.base_url:
+        source = normalize_source(options.base_url)
     visible_author = collect_texts(soup, AUTHOR_VISIBLE_SELECTORS)
     meta_author = tuple(
-        value
-        for value in (meta_content(soup, selector) for selector in AUTHOR_META_SELECTORS)
-        if value
+        value for value in (meta_content(soup, selector) for selector in AUTHOR_META_SELECTORS) if value
     )
-    author_sources = (meta_author, visible_author) if options.author_priority == "metadata" else (visible_author, meta_author)
+    author_sources = (
+        (meta_author, visible_author) if options.author_priority == "metadata" else (visible_author, meta_author)
+    )
     author = first_list(*author_sources)
     author = tuple(item for item in author if item and not looks_like_date(item) and not looks_like_url(item))
     published = first_text(*(meta_content(soup, selector) for selector in PUBLISHED_SELECTORS))
     description = first_text(*(meta_content(soup, selector) for selector in DESCRIPTION_SELECTORS))
     tags = _merge_tags(extract_tags(soup), options.frontmatter_tags)
     language = html_tag.get("lang") if html_tag and html_tag.get("lang") else None
-    canonical_url = normalize_source(first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url)
+    canonical_url = normalize_source(
+        first_text(*(meta_content(soup, selector) for selector in SOURCE_SELECTORS)), options.base_url
+    )
+    if not canonical_url and options.base_url:
+        canonical_url = normalize_source(options.base_url)
+    if not canonical_url:
+        canonical_url = source
+    if not title:
+        title = derive_title_from_url(canonical_url or source or options.base_url)
     image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
     return HtmlMetadata(
         title=title or None,

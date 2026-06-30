@@ -4,7 +4,6 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-
 REAL_TESTS_DIR = Path(__file__).resolve().parent
 REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
 

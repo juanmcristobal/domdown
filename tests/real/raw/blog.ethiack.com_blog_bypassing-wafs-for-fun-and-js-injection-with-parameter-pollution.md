@@ -3,6 +3,7 @@ title: Bypassing WAFs for Fun and JS Injection with Parameter Pollution
 source: "https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"
 canonical_url: "https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"
 language: en
+domdown_version: 0.3.0
 image: "https://blog.ethiack.com/hubfs/Blog%20Post%20Covers%20(300%20x%20175%20px)-1.png"
 author:
   - "Bruno Mendes"

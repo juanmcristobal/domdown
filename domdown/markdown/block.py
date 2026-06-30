@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from html import escape
 from urllib.parse import urlsplit
 
@@ -66,9 +67,7 @@ def render_container(node: Tag, options: DomdownOptions) -> str:
     """Render a tag by recursively rendering each child block."""
 
     parts = [
-        (part, _is_list_block_node(child, options))
-        for child in node.children
-        if (part := render_block(child, options))
+        (part, _is_list_block_node(child, options)) for child in node.children if (part := render_block(child, options))
     ]
     return normalize_markdown_text(_join_block_parts(parts))
 
@@ -167,7 +166,8 @@ def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
     if _contains_email_protection(node):
         return False
     if any(
-        isinstance(child, Tag) and child.name.lower() in {"p", "ul", "figure", "blockquote", "pre", "h1", "h2", "h3", "h4", "h5", "h6"}
+        isinstance(child, Tag)
+        and child.name.lower() in {"p", "ul", "figure", "blockquote", "pre", "h1", "h2", "h3", "h4", "h5", "h6"}
         for child in node.find_all(recursive=False)
     ):
         return False
@@ -198,7 +198,9 @@ def _collect_definition_items_from_node(node: Tag, options: DomdownOptions) -> l
     if len(direct_children) < 2:
         return []
 
-    if any(child.name.lower() in {"p", "ul", "ol", "table", "figure", "blockquote", "pre"} for child in direct_children):
+    if any(
+        child.name.lower() in {"p", "ul", "ol", "table", "figure", "blockquote", "pre"} for child in direct_children
+    ):
         return []
 
     nested_items: list[tuple[str, str]] = []
@@ -310,7 +312,9 @@ def _heading_title_link(node: Tag, options: DomdownOptions) -> str | None:
     anchors = [child for child in node.children if isinstance(child, Tag) and child.name.lower() == "a"]
     if len(anchors) != 1:
         return None
-    non_whitespace_children = [child for child in node.children if not isinstance(child, NavigableString) or str(child).strip()]
+    non_whitespace_children = [
+        child for child in node.children if not isinstance(child, NavigableString) or str(child).strip()
+    ]
     if len(non_whitespace_children) != 1 or non_whitespace_children[0] is not anchors[0]:
         return None
     text = render_inline_children(anchors[0], options)
@@ -321,9 +325,7 @@ def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
     """Render heading text while skipping permalink anchors."""
 
     has_permalink_anchor = any(
-        isinstance(child, Tag)
-        and child.name.lower() == "a"
-        and str(child.get("href", "")).startswith("#")
+        isinstance(child, Tag) and child.name.lower() == "a" and str(child.get("href", "")).startswith("#")
         for child in node.children
     )
     parts: list[str] = []

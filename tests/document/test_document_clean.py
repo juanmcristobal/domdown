@@ -3,12 +3,12 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
-from domdown._document import clean_root, choose_root, parse_html
+from domdown._document import choose_root, clean_root, parse_html
 from domdown._document.clean import (
     _is_small_structural_block,
     _looks_like_about_block,
-    _looks_like_boilerplate,
     _looks_like_article_feed_block,
+    _looks_like_boilerplate,
     _looks_like_header_block,
     _looks_like_link_chrome,
     _looks_like_noise,

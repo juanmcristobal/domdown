@@ -11,7 +11,10 @@ def test_render_image_prefers_lazy_loaded_sources() -> None:
 
     soup = BeautifulSoup("<img alt='Cybersecurity' data-src='/image.png' />", "lxml")
 
-    assert render_image(soup.img, DomdownOptions(base_url="https://example.com")) == "![Cybersecurity](https://example.com/image.png)"
+    assert (
+        render_image(soup.img, DomdownOptions(base_url="https://example.com"))
+        == "![Cybersecurity](https://example.com/image.png)"
+    )
 
 
 def test_render_image_prefers_largest_srcset_candidate() -> None:
@@ -28,4 +31,7 @@ def test_render_image_prefers_largest_srcset_candidate() -> None:
         "lxml",
     )
 
-    assert render_image(soup.img, DomdownOptions(base_url="https://example.com")) == "![Illustration](https://example.com/large.png)"
+    assert (
+        render_image(soup.img, DomdownOptions(base_url="https://example.com"))
+        == "![Illustration](https://example.com/large.png)"
+    )

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from domdown import html_to_markdown, DomdownOptions
+from domdown import DomdownOptions, html_to_markdown
 from domdown._constants.selectors import NOISE_MARKERS
 
 
@@ -27,7 +27,7 @@ class TestNoiseMarkers:
             "ad-box",
             "promo-block",
         ]
-        
+
         for marker in defuddle_markers:
             assert marker in NOISE_MARKERS, f"{marker} not in NOISE_MARKERS"
 
@@ -46,9 +46,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Main Article" in result
         assert "Main article content here" in result
         assert "Read more" not in result
@@ -69,9 +69,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Real Article" in result
         assert "Real article content" in result
         assert "Related Article" not in result
@@ -92,9 +92,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Post Title" in result
         assert "Post content" in result
         assert "Author: John" not in result
@@ -115,9 +115,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Main Content" in result
         assert "Main article" in result
         assert "Sidebar" not in result
@@ -138,9 +138,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Article" in result
         assert "Article content" in result
         assert "Related" not in result
@@ -161,9 +161,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Real Content" in result
         assert "Real article content here" in result
         assert "Read more" not in result
@@ -184,9 +184,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Important Article" in result
         assert "This discusses read-more patterns" in result
         assert "modern web design" in result
@@ -208,9 +208,9 @@ class TestNoiseMarkers:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         assert "Article" in result
         assert "Article content" in result
         assert "Share this" not in result

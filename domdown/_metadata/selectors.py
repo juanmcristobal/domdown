@@ -53,9 +53,7 @@ DESCRIPTION_SELECTORS = (
 )
 
 # Selectors for preview image metadata.
-IMAGE_SELECTORS = (
-    "meta[property='og:image']",
-)
+IMAGE_SELECTORS = ("meta[property='og:image']",)
 
 # Selectors for visible tag/category metadata.
 TAG_VISIBLE_SELECTORS = (
