@@ -41,7 +41,7 @@ def test_github_blob_uses_embedded_raw_lines_without_line_numbers() -> None:
     assert body.startswith("2025-12-03 (WEDNESDAY): RECENT SURGE IN CLICKFIX ACTIVITY")
     assert not body.startswith("1\n\n2\n\n3")
     assert "\n\n- https://x.com/Unit42_Intel/status/1996363155237187909\n\n" not in body
-    assert "  -- Mimicking Google's \"Aw Snap!\" error" in body
+    assert '  -- Mimicking Google\'s "Aw Snap!" error' in body
 
 
 def test_github_release_expands_lazy_asset_fragment() -> None:

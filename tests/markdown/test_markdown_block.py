@@ -93,10 +93,7 @@ def test_render_block_ignores_empty_absolute_permalink_anchors_in_headings() -> 
         "lxml",
     )
 
-    assert (
-        render_block(soup.h2, DomdownOptions())
-        == "## Technical analysis: How the attack unfolds"
-    )
+    assert render_block(soup.h2, DomdownOptions()) == "## Technical analysis: How the attack unfolds"
 
 
 def test_render_block_renders_captioned_figures_as_image_then_caption() -> None:
@@ -124,7 +121,10 @@ def test_render_block_renders_captioned_figures_as_image_then_caption() -> None:
         "lxml",
     )
 
-    assert render_block(soup.figure, DomdownOptions()) == '![](/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F021f5a89f9b3ba1755f9a2315bc63be855259532-3840x1762.png&w=3840&q=75)\n\n_Left:_Character archetypes form a "persona space," with the Assistant at one extreme of the "Assistant Axis." _Right:_ Capping drift along this axis prevents models (here, Llama 3.3 70B) from drifting into alternative personas and behaving in harmful ways.'
+    assert (
+        render_block(soup.figure, DomdownOptions())
+        == '![](/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F021f5a89f9b3ba1755f9a2315bc63be855259532-3840x1762.png&w=3840&q=75)\n\n_Left:_Character archetypes form a "persona space," with the Assistant at one extreme of the "Assistant Axis." _Right:_ Capping drift along this axis prevents models (here, Llama 3.3 70B) from drifting into alternative personas and behaving in harmful ways.'
+    )
 
 
 def test_render_block_covers_inline_and_block_fallbacks() -> None:
@@ -221,9 +221,12 @@ def test_definition_list_helpers_cover_explicit_labels_and_anchor_rows() -> None
     )
 
     assert _looks_like_definition_list(soup.div, DomdownOptions()) is True
-    assert render_definition_list(soup.div, DomdownOptions()) == """- **Platforms:** Windows
+    assert (
+        render_definition_list(soup.div, DomdownOptions())
+        == """- **Platforms:** Windows
 - **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/">Version Permalink</a>
 - **Version:** 2.0"""
+    )
 
 
 def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
@@ -249,9 +252,12 @@ def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
         "lxml",
     )
 
-    assert render_definition_list(soup.div, DomdownOptions()) == """- **Pixplus Pro Utilities View:** <a href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">Pixplus Pro Utilities View</a>
+    assert (
+        render_definition_list(soup.div, DomdownOptions())
+        == """- **Pixplus Pro Utilities View:** <a href="https://apps.apple.com/us/app/pixplus-pro/id6762183243">Pixplus Pro Utilities View</a>
 - **Seller:** Hangzhou Denghong Technology Co., Ltd.
 - **Category:** Utilities"""
+    )
 
 
 def test_render_explicit_definition_list_as_markdown_bullets() -> None:
@@ -406,9 +412,12 @@ def test_definition_list_anchor_with_malformed_url_falls_back_to_text() -> None:
         "lxml",
     )
 
-    assert render_block(soup.div, DomdownOptions()) == """- **Version Permalink:** Version Permalink
+    assert (
+        render_block(soup.div, DomdownOptions())
+        == """- **Version Permalink:** Version Permalink
 - **Version:** 2.0
 - **Created:** 14 January 2020"""
+    )
 
 
 def test_render_container_collapses_empty_children() -> None:
@@ -464,12 +473,15 @@ def test_render_block_normalizes_metadata_panel_to_definition_list() -> None:
         "lxml",
     )
 
-    assert render_block(soup.div, DomdownOptions()) == """- **Platforms:** Windows
+    assert (
+        render_block(soup.div, DomdownOptions())
+        == """- **Platforms:** Windows
 - **Version:** 2.0
 - **Created:** 14 January 2020
 - **Last Modified:** 12 May 2026
 - **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/" title="Permalink to this version of T1055.004">Version Permalink</a>
 - **Live Version:** <a href="/versions/v19/techniques/T1055/004/" title="Go to the live version of T1055.004">Live Version</a>"""
+    )
 
 
 def test_render_block_does_not_reclassify_article_body_as_definition_list() -> None:
@@ -509,7 +521,9 @@ def test_render_acronis_article_skips_decorative_background_images() -> None:
     html_path = Path("tests/real/html/acronis_boto_cor_de_rosa_campaign_astaroth_whatsapp_brazil.html")
     output = html_to_markdown(
         html_path.read_text(encoding="utf-8"),
-        DomdownOptions(base_url="https://www.acronis.com/en/tru/posts/boto-cor-de-rosa-campaign-reveals-astaroth-whatsapp-based-worm-activity-in-brazil/"),
+        DomdownOptions(
+            base_url="https://www.acronis.com/en/tru/posts/boto-cor-de-rosa-campaign-reveals-astaroth-whatsapp-based-worm-activity-in-brazil/"
+        ),
     )
     body = output.split("---", 2)[-1].lstrip()
 

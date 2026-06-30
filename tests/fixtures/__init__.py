@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .article_shell import ARTICLE_SHELL_HTML
 from .article_regressions import (
     ARTICLE_ARTICLE_CHROME_HTML,
     ARTICLE_DIVI_ABOUT_AND_FAQ_HTML,
@@ -10,6 +9,7 @@ from .article_regressions import (
     ARTICLE_META_AND_ABOUT_HTML,
     ARTICLE_PAID_ACCESS_HTML,
 )
+from .article_shell import ARTICLE_SHELL_HTML
 
 __all__ = [
     "ARTICLE_SHELL_HTML",

@@ -48,4 +48,5 @@ def test_metadata_result_and_context_surface() -> None:
         "frontmatter",
         "rendered_document",
         "warnings",
+        "matched_adapters",
     } <= context_fields

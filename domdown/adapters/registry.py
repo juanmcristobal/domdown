@@ -16,6 +16,8 @@ class AdapterRegistry:
     def matching(self, context: PipelineContext) -> tuple[ArticleAdapter, ...]:
         """Return adapters that want to handle the current document."""
 
+        if context.matched_adapters is not None:
+            return tuple(context.matched_adapters)
         return tuple(adapter for adapter in self.adapters if adapter.matches(context))
 
     def preprocess(self, context: PipelineContext) -> PipelineContext:

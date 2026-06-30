@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup, Tag
 
-from .._constants import CONTENT_SELECTORS_EXACT, CONTENT_SELECTORS_FALLBACK, NOISE_MARKERS, REFINABLE_CHILD_TAGS, ROOT_SELECTORS
+from .._constants import (
+    CONTENT_SELECTORS_EXACT,
+    CONTENT_SELECTORS_FALLBACK,
+    NOISE_MARKERS,
+    REFINABLE_CHILD_TAGS,
+    ROOT_SELECTORS,
+)
 
 
 def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
@@ -50,11 +56,7 @@ def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
         else:
             shell_child = _best_page_shell_child(current)
             candidate = shell_child or _best_content_subtree(current)
-            if (
-                shell_child is not None
-                and candidate is shell_child
-                and _looks_like_page_shell(candidate)
-            ):
+            if shell_child is not None and candidate is shell_child and _looks_like_page_shell(candidate):
                 deeper_candidate = _best_content_subtree(candidate)
                 if deeper_candidate is not candidate and not _looks_like_chrome(deeper_candidate):
                     candidate_words = len(candidate.get_text(" ", strip=True).split())
@@ -113,7 +115,9 @@ def _collect_root_candidates(soup: BeautifulSoup, selectors: tuple[str, ...]) ->
     return list(candidates.values())
 
 
-def _collect_candidates(root: Tag, selectors: tuple[str, ...], container_names: set[str], tier: int) -> list[tuple[Tag, int, int]]:
+def _collect_candidates(
+    root: Tag, selectors: tuple[str, ...], container_names: set[str], tier: int
+) -> list[tuple[Tag, int, int]]:
     """Collect unique content candidates for a given selector tier."""
 
     candidates: list[tuple[Tag, int, int]] = []
@@ -135,7 +139,11 @@ def _collect_direct_candidates(root: Tag, container_names: set[str], tier: int) 
     candidates: list[tuple[Tag, int, int]] = []
     seen: set[int] = set()
     for index, node in enumerate(root.find_all(recursive=False)):
-        if isinstance(node, Tag) and node.name in REFINABLE_CHILD_TAGS and (node.name in container_names or _is_dense_content(node)):
+        if (
+            isinstance(node, Tag)
+            and node.name in REFINABLE_CHILD_TAGS
+            and (node.name in container_names or _is_dense_content(node))
+        ):
             if id(node) in seen:
                 continue
             candidates.append((node, tier, index))
@@ -156,7 +164,7 @@ def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag |
         reverse=True,
     )
     non_body_candidates = [item for item in ranked if item[0].name != "body"]
-    for candidate, _, _ in (non_body_candidates or ranked):
+    for candidate, _, _ in non_body_candidates or ranked:
         if not _looks_like_chrome(candidate):
             return candidate
     return None
@@ -172,7 +180,9 @@ def _root_candidate_penalty(candidate: Tag) -> float:
         penalty -= 180.0
     if candidate.name not in {"article", "main"} and candidate.find("main", recursive=False) is not None:
         penalty -= 180.0
-    classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    classes = (
+        candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    )
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
     layout_tokens = {
@@ -266,7 +276,9 @@ def _root_penalty(root: Tag, candidate: Tag, candidate_count: int) -> float:
         return -120.0
     if _contains_page_shell_child(candidate):
         return -90.0
-    classes = candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    classes = (
+        candidate.get("class", []) if isinstance(candidate.get("class"), list) else [str(candidate.get("class", ""))]
+    )
     marker_tokens = {token for token in " ".join(str(token).lower() for token in classes).split() if token}
     marker_tokens |= {str(candidate.get("id", "")).lower()} if candidate.get("id") else set()
     if candidate_count > 1 and marker_tokens & {"wrapper", "container-fluid", "page-wrapper"}:
@@ -287,14 +299,22 @@ def _is_dense_content(node: Tag) -> bool:
         return False
     if _contains_page_shell_child(node):
         return False
-    class_text = " ".join(node.get("class", []) if isinstance(node.get("class"), list) else [str(node.get("class", ""))]).lower()
+    class_text = " ".join(
+        node.get("class", []) if isinstance(node.get("class"), list) else [str(node.get("class", ""))]
+    ).lower()
     id_text = str(node.get("id", "")).lower()
     class_tokens = {token for token in class_text.split() if token}
     marker_tokens = class_tokens | ({id_text} if id_text else set())
     if marker_tokens & {"wrapper", "row", "sidebar", "footer", "nav", "promo"}:
         return False
     text_words = len(node.get_text(" ", strip=True).split())
-    structural_children = sum(1 for child in node.find_all(recursive=False) if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "table", "pre", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"})
+    structural_children = sum(
+        1
+        for child in node.find_all(recursive=False)
+        if isinstance(child, Tag)
+        and child.name
+        in {"p", "ul", "ol", "li", "figure", "table", "pre", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"}
+    )
     return text_words >= 20 or structural_children >= 2
 
 
@@ -304,9 +324,7 @@ def _looks_like_page_shell(tag: Tag) -> bool:
     if not isinstance(tag, Tag):
         return False
     direct_child_names = {
-        child.name
-        for child in tag.find_all(recursive=False)
-        if isinstance(child, Tag) and child.name
+        child.name for child in tag.find_all(recursive=False) if isinstance(child, Tag) and child.name
     }
     if tag.name in {"main", "article"}:
         return False
@@ -344,7 +362,9 @@ def _score_content(tag: Tag) -> float:
     """Score a subtree by its likely article relevance."""
 
     text = tag.get_text(" ", strip=True)
-    class_text = " ".join(tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]).lower()
+    class_text = " ".join(
+        tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]
+    ).lower()
     id_text = str(tag.get("id", "")).lower()
     marker_text = f"{class_text} {id_text}"
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
@@ -473,13 +493,21 @@ def _looks_like_tag_cloud(tag: Tag, marker_text: str) -> bool:
     heading_count = len(tag.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
     if paragraph_count > 0 or heading_count > 0:
         return False
-    if any(marker in marker_text for marker in ("label-widget-content", "list-label-widget-content", "tag-cloud", "tags", "label-cloud")):
+    if any(
+        marker in marker_text
+        for marker in ("label-widget-content", "list-label-widget-content", "tag-cloud", "tags", "label-cloud")
+    ):
         return True
     parent = tag.parent if isinstance(tag.parent, Tag) else None
     if parent is None:
         return False
-    parent_classes = parent.get("class", []) if isinstance(parent.get("class"), list) else [str(parent.get("class", ""))]
+    parent_classes = (
+        parent.get("class", []) if isinstance(parent.get("class"), list) else [str(parent.get("class", ""))]
+    )
     parent_marker_text = " ".join(str(token).lower() for token in parent_classes)
     if parent.get("id"):
         parent_marker_text = f"{parent_marker_text} {str(parent.get('id')).lower()}".strip()
-    return any(marker in parent_marker_text for marker in ("widget-content", "label-widget-content", "list-label-widget-content", "tag-cloud", "tags"))
+    return any(
+        marker in parent_marker_text
+        for marker in ("widget-content", "label-widget-content", "list-label-widget-content", "tag-cloud", "tags")
+    )

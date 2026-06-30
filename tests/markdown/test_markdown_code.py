@@ -45,4 +45,7 @@ def test_render_code_block_preserves_multiline_source_with_inline_spans() -> Non
         "lxml",
     )
 
-    assert render_code_block(soup.pre, DomdownOptions()) == "```\n#!/usr/bin/env node\nasync function demo() {\n  return 1;\n}\n```"
+    assert (
+        render_code_block(soup.pre, DomdownOptions())
+        == "```\n#!/usr/bin/env node\nasync function demo() {\n  return 1;\n}\n```"
+    )

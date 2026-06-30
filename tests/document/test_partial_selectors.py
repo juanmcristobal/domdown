@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from domdown import html_to_markdown, DomdownOptions
+from domdown import DomdownOptions, html_to_markdown
 from domdown._constants.selectors import CONTENT_SELECTORS_FALLBACK, ROOT_SELECTORS
 
 
@@ -19,11 +19,11 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
-        assert 'Dynamic Content' in result
-        assert 'This content has dynamic class names' in result
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
+        assert "Dynamic Content" in result
+        assert "This content has dynamic class names" in result
         assert len(result) > 50
 
     def test_partial_selectors_content_id(self):
@@ -38,11 +38,11 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
-        assert 'ID Content' in result
-        assert 'This content uses id with content' in result
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
+        assert "ID Content" in result
+        assert "This content uses id with content" in result
         assert len(result) > 50
 
     def test_exact_selectors_have_priority(self):
@@ -61,9 +61,9 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         # Note: System finds content via partial selectors when exact selectors are ambiguous
         # Both elements are valid and system works correctly
         assert len(result) > 50
@@ -87,10 +87,10 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
-        assert 'Combined Match' in result
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
+        assert "Combined Match" in result
         assert len(result) > 50
 
     def test_partial_selectors_multiple_matches(self):
@@ -109,12 +109,12 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         # Should prefer main content over sidebar
-        assert 'Main Content' in result
-        assert 'This is the real article content' in result
+        assert "Main Content" in result
+        assert "This is the real article content" in result
 
     def test_partial_selectors_no_match(self):
         """Test behavior when partial selectors don't match."""
@@ -128,9 +128,9 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
         # Should still extract something (falls back to body or other selectors)
         assert len(result) > 0
 
@@ -146,10 +146,10 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
-        assert 'Framework Content' in result
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
+        assert "Framework Content" in result
         assert len(result) > 50
 
     def test_partial_selectors_regression_existing_behavior(self):
@@ -164,8 +164,8 @@ class TestPartialSelectors:
           </body>
         </html>
         """
-        
-        result = html_to_markdown(html, DomdownOptions(base_url='https://example.com/test'))
-        
-        assert 'Standard Article' in result
-        assert 'This uses exact selector .article' in result
+
+        result = html_to_markdown(html, DomdownOptions(base_url="https://example.com/test"))
+
+        assert "Standard Article" in result
+        assert "This uses exact selector .article" in result

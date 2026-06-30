@@ -3,7 +3,15 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 
 from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
-from domdown.stages import CleanStage, FrontmatterStage, MarkdownStage, MetadataStage, ParseStage, PostProcessStage, PreserveStage
+from domdown.stages import (
+    CleanStage,
+    FrontmatterStage,
+    MarkdownStage,
+    MetadataStage,
+    ParseStage,
+    PostProcessStage,
+    PreserveStage,
+)
 
 
 def test_parse_stage_builds_the_document_tree() -> None:

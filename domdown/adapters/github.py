@@ -173,16 +173,9 @@ def _raw_blob_text(document: Tag | None) -> str:
         except json.JSONDecodeError:
             continue
         raw_lines = (
-            payload.get("payload", {})
-            .get("blob", {})
-            .get("rawLines")
-            or payload.get("payload", {})
-            .get("codeViewBlobLayoutRoute", {})
-            .get("blob", {})
-            .get("rawLines")
-            or payload.get("payload", {})
-            .get("codeViewBlobLayoutRoute.StyledBlob", {})
-            .get("rawLines")
+            payload.get("payload", {}).get("blob", {}).get("rawLines")
+            or payload.get("payload", {}).get("codeViewBlobLayoutRoute", {}).get("blob", {}).get("rawLines")
+            or payload.get("payload", {}).get("codeViewBlobLayoutRoute.StyledBlob", {}).get("rawLines")
         )
         if isinstance(raw_lines, list) and all(isinstance(line, str) for line in raw_lines):
             return "\n".join(raw_lines).strip()

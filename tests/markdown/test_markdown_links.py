@@ -18,8 +18,13 @@ def test_render_link_formats_normal_and_image_links() -> None:
 
     assert render_link(links[0], DomdownOptions()) == "[Example](https://example.com)"
     assert render_link(links[1], DomdownOptions()) == "https://example.com/image.png"
-    assert render_link(links[2], DomdownOptions()) == "[![](https://example.com/gallery.png)](https://example.com/gallery)"
-    assert render_link(links[3], DomdownOptions()) == "[![Gallery](https://example.com/gallery.png)](https://example.com/gallery)"
+    assert (
+        render_link(links[2], DomdownOptions()) == "[![](https://example.com/gallery.png)](https://example.com/gallery)"
+    )
+    assert (
+        render_link(links[3], DomdownOptions())
+        == "[![Gallery](https://example.com/gallery.png)](https://example.com/gallery)"
+    )
 
 
 def test_render_link_omits_empty_anchor_chrome() -> None:

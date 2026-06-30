@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from bs4 import Comment, NavigableString, Tag
 import re
+
+from bs4 import Comment, NavigableString, Tag
 
 from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
 
@@ -13,7 +14,11 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         comment.extract()
 
     for text_node in list(root.find_all(string=True)):
-        if isinstance(text_node, NavigableString) and _looks_like_template_placeholder(str(text_node)) and not _is_within_code_block(text_node):
+        if (
+            isinstance(text_node, NavigableString)
+            and _looks_like_template_placeholder(str(text_node))
+            and not _is_within_code_block(text_node)
+        ):
             text_node.extract()
 
     for selector in remove_selectors:
@@ -129,7 +134,9 @@ def _looks_like_header_block(node: Tag) -> bool:
     if any(marker in marker_text for marker in HEADER_MARKERS):
         return True
     has_title_like_heading = bool(node.find(["h1", "h2"], recursive=False))
-    has_metadata = bool(node.find("time", recursive=False)) or any(token in marker_text for token in ("byline", "author", "date", "time", "meta"))
+    has_metadata = bool(node.find("time", recursive=False)) or any(
+        token in marker_text for token in ("byline", "author", "date", "time", "meta")
+    )
     text_words = len(node.get_text(" ", strip=True).split())
     paragraph_count = len(node.find_all("p"))
     return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
@@ -165,7 +172,9 @@ def _looks_like_hero_chrome(node: Tag) -> bool:
     if not any(marker in text for marker in ("back to ", "return to ", "go back to ")):
         return False
     has_title = bool(node.find(["h1", "h2"]))
-    has_metadata = bool(node.find("time")) or any(token in text for token in ("author", "read", "min", "date", "category"))
+    has_metadata = bool(node.find("time")) or any(
+        token in text for token in ("author", "read", "min", "date", "category")
+    )
     has_back_link = bool(
         node.find(
             lambda child: isinstance(child, Tag)
@@ -249,10 +258,7 @@ def _looks_like_cta_block(node: Tag) -> bool:
             and (
                 child.name == "button"
                 or "btn-wrapper" in (child.get("class") or ())
-                or any(
-                    token in _marker_text(child)
-                    for token in ("primary-btn", "secondary-btn", "button", "btn")
-                )
+                or any(token in _marker_text(child) for token in ("primary-btn", "secondary-btn", "button", "btn"))
             )
         )
     )
@@ -310,10 +316,38 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
         return True
     article_count = len(node.find_all("article"))
     if article_count >= 2:
-        return any(phrase in text for phrase in ("latest", "related", "similar posts", "more from", "you may also like", "recommended", "blogs")) and text_words <= 220
-    if any(phrase in text for phrase in ("the latest from", "latest from", "related articles", "similar posts", "more from", "you may also like", "recommended")):
+        return (
+            any(
+                phrase in text
+                for phrase in (
+                    "latest",
+                    "related",
+                    "similar posts",
+                    "more from",
+                    "you may also like",
+                    "recommended",
+                    "blogs",
+                )
+            )
+            and text_words <= 220
+        )
+    if any(
+        phrase in text
+        for phrase in (
+            "the latest from",
+            "latest from",
+            "related articles",
+            "similar posts",
+            "more from",
+            "you may also like",
+            "recommended",
+        )
+    ):
         return text_words <= 30
-    if any(token in marker_text for token in ("blog", "card", "posts", "feed", "related", "recommend", "category")) and card_like_children >= 2:
+    if (
+        any(token in marker_text for token in ("blog", "card", "posts", "feed", "related", "recommend", "category"))
+        and card_like_children >= 2
+    ):
         return text_words <= 220 and heading_count >= 2
     return False
 
@@ -361,7 +395,10 @@ def _looks_like_navigation_block(node: Tag) -> bool:
     if not text:
         return False
     marker_text = _marker_text(node)
-    if any(marker in marker_text for marker in ("breadcrumb", "breadcrumbs", "translation", "translations", "menu", "nav", "toc", "socials")):
+    if any(
+        marker in marker_text
+        for marker in ("breadcrumb", "breadcrumbs", "translation", "translations", "menu", "nav", "toc", "socials")
+    ):
         return True
     if "other languages available" in text or "on this page" in text:
         return True
@@ -424,7 +461,10 @@ def _looks_like_tag_block(node: Tag) -> bool:
     links = [child for child in node.find_all("a") if isinstance(child, Tag)]
     if len(links) < 2:
         return False
-    if any(child.name in {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "table", "blockquote"} for child in node.find_all(recursive=False)):
+    if any(
+        child.name in {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "table", "blockquote"}
+        for child in node.find_all(recursive=False)
+    ):
         return False
     texts = [link.get_text(" ", strip=True).lower() for link in links]
     hrefs = [str(link.get("href") or "").strip().lower() for link in links]
@@ -473,7 +513,11 @@ def _is_small_structural_block(node: Tag) -> bool:
     """Limit structural cleanup to compact blocks so wrappers with body text survive."""
 
     text_words = len(node.get_text(" ", strip=True).split())
-    direct_blocks = sum(1 for child in node.find_all(recursive=False) if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "div", "section", "article"})
+    direct_blocks = sum(
+        1
+        for child in node.find_all(recursive=False)
+        if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "div", "section", "article"}
+    )
     return text_words <= 120 and direct_blocks <= 4
 
 

@@ -18,7 +18,9 @@ def render_list(node: Tag, options: DomdownOptions, ordered: bool, depth: int = 
     return "\n".join(items)
 
 
-def render_list_item(node: Tag, options: DomdownOptions, ordered: bool, index: int | None = None, depth: int = 0) -> str:
+def render_list_item(
+    node: Tag, options: DomdownOptions, ordered: bool, index: int | None = None, depth: int = 0
+) -> str:
     """Render a single list item including nested lists."""
 
     indent = "  " * depth
