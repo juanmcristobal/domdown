@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+DOMDOWN_VERSION = "0.3.0"
+
 from .selectors import (
     BOILERPLATE_PHRASES,
     CONTENT_SELECTORS,
@@ -17,6 +19,7 @@ from .selectors import (
 )
 
 __all__ = [
+    "DOMDOWN_VERSION",
     "BOILERPLATE_PHRASES",
     "CONTENT_SELECTORS",
     "CONTENT_SELECTORS_EXACT",

@@ -28,6 +28,7 @@ def test_render_frontmatter_serializes_metadata_in_document_order() -> None:
         "site_name: Example Platform\n"
         'canonical_url: "https://example.com/posts/example-article"\n'
         "language: en\n"
+        "domdown_version: 0.3.0\n"
         'image: "https://example.com/image.png"\n'
         "author:\n"
         '  - "The Hacker News"\n'

@@ -1,6 +1,7 @@
 ---
 title: "Web Service: Dead Drop Resolver, Sub-technique T1102.001 - Enterprise | MITRE ATT&CK®"
 language: en
+domdown_version: 0.3.0
 image: /theme/images/mitre_attack_logo.png
 ---
 # Web Service: Dead Drop Resolver

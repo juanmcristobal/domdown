@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .._constants import DOMDOWN_VERSION
 from .._core.metadata import HtmlMetadata
 from .._text.frontmatter import format_scalar, format_tag, quote_string
 
@@ -14,6 +15,7 @@ def render_frontmatter(metadata: HtmlMetadata) -> str:
         ("site_name", metadata.site_name),
         ("canonical_url", metadata.canonical_url),
         ("language", metadata.language),
+        ("domdown_version", DOMDOWN_VERSION),
         ("image", metadata.image),
     ]
     trailing_fields = [

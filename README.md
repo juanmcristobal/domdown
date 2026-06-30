@@ -70,6 +70,7 @@ Output:
 ---
 title: Credential theft campaign expands
 source: "https://example.com/research/campaign"
+domdown_version: 0.3.0
 description: A concise security article.
 ---
 # Credential theft campaign expands
