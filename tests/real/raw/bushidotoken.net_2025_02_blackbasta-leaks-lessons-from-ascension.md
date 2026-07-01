@@ -3,7 +3,7 @@ title: "BlackBasta Leaks: Lessons from the Ascension Health attack"
 source: "https://blog.bushidotoken.net/2025/02/blackbasta-leaks-lessons-from-ascension.html"
 canonical_url: "https://blog.bushidotoken.net/2025/02/blackbasta-leaks-lessons-from-ascension.html"
 language: en-GB
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh-qoL0E4JtCsVj8ok2ypVL4NMiNd8empJ3AiU6daFD2D3V2yxMZVoGgrWlwLlb4eC2HwbS5HRB-6k0nMEht3aEVc-f_Cgt4ei5exGzbq3v_uf_L9VTnMf2x3RATanSrAAnlrRKJJWzuFTD-as1pcQi1QmRFgHCBXqxk9smz41AUl-0JUL_bIuWleszY5Vu/w1200-h630-p-k-no-nu/blackbasta.png"
 author:
   - "February 27, 2025"
