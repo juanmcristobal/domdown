@@ -3,6 +3,7 @@ from __future__ import annotations
 from .base import ArticleAdapter
 from .bleepingcomputer import BleepingComputerAdapter
 from .cybersecuritynews import CyberSecurityNewsAdapter
+from .gbhackers import GBHackersAdapter
 from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
 from .github import GitHubAdapter
 from .medium import MediumAdapter
@@ -16,6 +17,7 @@ __all__ = [
     "CyberSecurityNewsAdapter",
     "DeclarativeDomainAdapter",
     "DomainAdapterSpec",
+    "GBHackersAdapter",
     "GitHubAdapter",
     "MediumAdapter",
     "TheHackerNewsAdapter",
