@@ -99,6 +99,31 @@ def test_gbhackers_adapter_removes_tagdiv_chrome_and_keeps_the_article_body() ->
     )
 
 
+def test_gbhackers_adapter_drops_follow_us_footer_copy() -> None:
+    pipeline = HtmlToMarkdownPipeline(adapters=(GBHackersAdapter(),))
+    html = """
+    <html>
+      <head>
+        <meta property="og:site_name" content="GBHackers Security | #1 Globally Trusted Cyber Security News Platform" />
+        <meta property="og:url" content="https://gbhackers.com/example/" />
+      </head>
+      <body>
+        <article>
+          <h1>Title</h1>
+          <p>Body paragraph.</p>
+          <p class="has-text-align-center has-background wp-block-paragraph">
+            <strong>Follow us on Google News, LinkedIn, and X to Get Instant Updates and Set GBH as a Preferred Source in Google.</strong>
+          </p>
+        </article>
+      </body>
+    </html>
+    """
+
+    result = pipeline.run(html)
+
+    assert result.markdown == "# Title\n\nBody paragraph."
+
+
 def test_thehackernews_adapter_removes_featured_resources_sidebar() -> None:
     pipeline = HtmlToMarkdownPipeline(adapters=(TheHackerNewsAdapter(),))
     html = """

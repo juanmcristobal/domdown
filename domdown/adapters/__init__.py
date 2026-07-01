@@ -3,8 +3,8 @@ from __future__ import annotations
 from .base import ArticleAdapter
 from .bleepingcomputer import BleepingComputerAdapter
 from .cybersecuritynews import CyberSecurityNewsAdapter
-from .gbhackers import GBHackersAdapter
 from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
+from .gbhackers import GBHackersAdapter
 from .github import GitHubAdapter
 from .medium import MediumAdapter
 from .registry import AdapterRegistry, build_default_registry

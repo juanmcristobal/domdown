@@ -19,6 +19,8 @@ GBHACKERS_SPEC = DomainAdapterSpec(
         ".td-next-prev-wrap",
     ),
     trim_before_first_heading=True,
+    trailing_noise_prefixes=("Follow us on", "**Follow us on"),
+    trailing_noise_patterns=(r"^Follow us on\b",),
 )
 
 GBHackersAdapter = make_domain_adapter(GBHACKERS_SPEC)
