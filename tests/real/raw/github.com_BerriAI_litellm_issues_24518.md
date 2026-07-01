@@ -4,7 +4,7 @@ source: "https://github.com/BerriAI/litellm/issues/24518"
 site_name: GitHub
 canonical_url: "https://github.com/BerriAI/litellm/issues/24518"
 language: en
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://opengraph.githubassets.com/46b931aabb677b81c306e2478e60887db6962f050ef53889f8cdbe4711209f1a/BerriAI/litellm/issues/24518"
 author:
   - "isfinne"

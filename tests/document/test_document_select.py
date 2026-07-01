@@ -392,6 +392,54 @@ def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
     assert root.name == "main"
 
 
+def test_choose_root_prefers_blog_content_over_tabbed_promotional_modules() -> None:
+    """HubSpot-style tabbed marketing blocks should not outrank the article body."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="body-container container-fluid">
+                  <div class="row-fluid-wrapper row-number-1">
+                    <div class="hero-wrap hero-post">
+                      <h1>Elliptic intelligence used by the FBI in action against Huione Group</h1>
+                      <div class="hero-dtls">
+                        <p>Elliptic Intel</p>
+                        <p>23 June, 2026</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row-fluid-wrapper row-number-2">
+                    <div class="span12 widget-span widget-type-cell">
+                      <div class="blog-content">
+                        <div class="entry-content">
+                          <p>Elliptic intelligence was used by the FBI in action against Huione.</p>
+                          <p>The action targeted the operators of Huione Group.</p>
+                          <p>More article text follows here.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="tabs-content">
+                    <div class="tab-content">
+                      <a href="/solutions/crypto-compliance">Crypto Compliance</a>
+                      <a href="/solutions/investigations">Investigations & Intelligence</a>
+                      <a href="/solutions/monitoring">Monitoring</a>
+                      <a href="/solutions/data-ingestion">Data Ingestion</a>
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.name == "div"
+    assert root.get("class") in (["entry-content"], ["blog-content"])
+
+
 def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
     """Selection helpers should keep their shell and scoring branches reachable."""
 

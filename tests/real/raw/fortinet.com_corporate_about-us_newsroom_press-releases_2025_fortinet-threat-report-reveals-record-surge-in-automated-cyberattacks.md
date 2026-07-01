@@ -4,7 +4,7 @@ source: "https://www.fortinet.com/corporate/about-us/newsroom/press-releases/202
 site_name: Fortinet
 canonical_url: "https://www.fortinet.com/corporate/about-us/newsroom/press-releases/2025/fortinet-threat-report-reveals-record-surge-in-automated-cyberattacks"
 language: en
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://www.fortinet.com/content/dam/fortinet/images/icons/fortinet-social-icon.jpg"
 description: "FortiGuard Labs 2025 Global Threat Landscape Report highlights a boom in Cybercrime-as-a-Service on the darknet, fueling a lucrative market for credentials, exploits, and access."
 tags:
