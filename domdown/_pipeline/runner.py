@@ -9,6 +9,7 @@ from ..adapters import (
     ArticleAdapter,
     BleepingComputerAdapter,
     CyberSecurityNewsAdapter,
+    GBHackersAdapter,
     GitHubAdapter,
     MediumAdapter,
     TheHackerNewsAdapter,
@@ -42,6 +43,7 @@ class HtmlToMarkdownPipeline:
                 MediumAdapter(),
                 BleepingComputerAdapter(),
                 CyberSecurityNewsAdapter(),
+                GBHackersAdapter(),
                 TheHackerNewsAdapter(),
             )
         self.adapter_registry = build_default_registry(self.adapters)
