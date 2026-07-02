@@ -369,6 +369,7 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
         return False
     cta_phrases = (
         "book a demo",
+        "act now",
         "star on github",
         "start free",
         "get started",
@@ -376,16 +377,25 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
         "sign up",
         "try free",
         "view all blogs",
+        "webinar",
+        "register now",
+        "search products",
     )
     if not any(phrase in text for phrase in cta_phrases):
         return False
     if link_count + button_count < 1:
         return False
+    if "login" in text and any(phrase in text for phrase in ("act now", "sign up", "register now", "start free")):
+        return True
+    if "webinar" in text and ("register" in text or "login" in text):
+        return True
+    if "blog-next" in marker_text or "what's next" in text or "next step" in text:
+        return True
     if any(marker in marker_text for marker in ("cta", "banner", "promo", "callout")):
         return True
     if "intro" in marker_text:
         return False
-    return heading_count <= 2 and paragraph_count <= 3
+    return heading_count <= 2 and paragraph_count <= 3 and len(text.split()) <= 40
 
 
 def _looks_like_navigation_block(node: Tag) -> bool:

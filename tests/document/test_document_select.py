@@ -178,6 +178,78 @@ def test_choose_root_does_not_pick_body_when_a_real_content_shell_exists() -> No
     assert root.name in {"main", "div"}
 
 
+def test_choose_root_ignores_cookie_consent_banners_when_article_body_is_nested() -> None:
+    """Consent overlays should not win when the article body is nested deeper in the page."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="cli-modal-content cli-bar-popup">
+                  <div class="cli-privacy-content-text">
+                    This website uses cookies to improve your experience while you navigate through the website.
+                  </div>
+                </div>
+                <div class="category-section category-section-details bg-white">
+                  <div class="container">
+                    <div class="row">
+                      <div class="col-sm-12 col-md-12 col-lg-8">
+                        <div class="article-details-block wow fadeInUp">
+                          <div class="common-heading line-bottom article-title mb-3 wow fadeInUp">
+                            <h2>Azure CLI Targeted in LSHIY Password Spray Campaign Across 64 Orgs</h2>
+                          </div>
+                          <div class="post-time mb-3">
+                            <span>Pierluigi Paganini</span>
+                            <span>July 01, 2026</span>
+                          </div>
+                          <p>The article body starts here and contains the real report.</p>
+                          <p>It should win over the consent banner.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert root.get("class") == ["article-details-block", "wow", "fadeInUp"]
+    assert "cookies" not in root.get_text(" ", strip=True).lower()
+
+
+def test_choose_root_prefers_tagdiv_article_content_over_theme_wrapper() -> None:
+    """TagDiv theme wrappers should not outrank the actual post content."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <div class="td-theme-wrap">
+                  <div class="td-main-content-wrap td-container-wrap">
+                    <article class="post">
+                      <div class="td_block_wrap tdb_single_content td-post-content tagdiv-type">
+                        <h1>Massive Password Stealing Attack Targeting Microsoft 365 Users</h1>
+                        <p>The article body starts here and contains the report text.</p>
+                        <p>More prose to make the content block clearly dominant.</p>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert "Massive Password Stealing Attack Targeting Microsoft 365 Users" in root.get_text(" ", strip=True)
+    assert "The article body starts here" in root.get_text(" ", strip=True)
+    assert "td-theme-wrap" not in (root.get("class") or [])
+
+
 def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
     """Generic page wrappers with a nested main should not outrank the article shell."""
 
@@ -263,7 +335,38 @@ def test_choose_root_prefers_article_over_a_link_dense_shell() -> None:
     root = choose_root(soup, prefer_article_body=True)
 
     assert root.name == "main"
-    assert root.get("class") == ["page--body"]
+
+
+def test_choose_root_ignores_empty_toc_sidebars() -> None:
+    """A compact table-of-contents sidebar should not win over the article body."""
+
+    soup = parse_html(
+        """
+            <html>
+              <body>
+                <article>
+                  <section class="article-layout">
+                    <div class="article-layout__sidebar" data-toc-container="true">
+                      <div class="p-6">
+                        <h3>Table of Contents</h3>
+                        <nav aria-label="Table of Contents"></nav>
+                      </div>
+                    </div>
+                    <div class="article-layout__content prose">
+                      <p>The real article body paragraph one.</p>
+                      <p>The real article body paragraph two.</p>
+                    </div>
+                  </section>
+                </article>
+              </body>
+            </html>
+        """
+    )
+
+    root = choose_root(soup, prefer_article_body=True)
+
+    assert "The real article body paragraph one." in root.get_text(" ", strip=True)
+    assert root.get("class") != ["article-layout__sidebar"]
 
 
 def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:

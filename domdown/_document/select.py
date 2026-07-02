@@ -32,6 +32,7 @@ def _best_content_subtree(root: Tag) -> Tag:
     candidates = _collect_candidates(root, CONTENT_SELECTORS_EXACT, container_names, tier=2)
     candidates.extend(_collect_direct_candidates(root, container_names, tier=1))
     candidates.extend(_collect_candidates(root, CONTENT_SELECTORS_FALLBACK, container_names, tier=0))
+    candidates.extend(_collect_dense_descendants(root, container_names, max_depth=5))
     if candidates:
         candidate = _pick_best_candidate(root, candidates)
         if candidate is not None:
@@ -151,6 +152,33 @@ def _collect_direct_candidates(root: Tag, container_names: set[str], tier: int) 
     return candidates
 
 
+def _collect_dense_descendants(
+    root: Tag, container_names: set[str], max_depth: int, tier: int = 0
+) -> list[tuple[Tag, int, int]]:
+    """Collect deeper content-like descendants when selector matching misses the article body."""
+
+    candidates: list[tuple[Tag, int, int]] = []
+    seen: set[int] = set()
+
+    def visit(node: Tag, depth: int) -> None:
+        if depth > max_depth:
+            return
+        for index, child in enumerate(node.find_all(recursive=False)):
+            if not isinstance(child, Tag):
+                continue
+            if _looks_like_chrome(child):
+                continue
+            if child.name in container_names and _is_dense_content(child):
+                child_id = id(child)
+                if child_id not in seen:
+                    candidates.append((child, tier, depth * 10 + index))
+                    seen.add(child_id)
+            visit(child, depth + 1)
+
+    visit(root, 0)
+    return candidates
+
+
 def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag | None:
     """Return the best root candidate across all shell matches."""
 
@@ -174,6 +202,8 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     """Penalize generic layout wrappers when selecting the top-level shell."""
 
     penalty = 0.0
+    if _looks_like_toc_sidebar(candidate):
+        penalty -= 250.0
     if _looks_like_page_shell(candidate):
         penalty -= 120.0
     if _contains_page_shell_child(candidate):
@@ -214,6 +244,30 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     return penalty
 
 
+def _looks_like_toc_sidebar(candidate: Tag) -> bool:
+    """Detect compact table-of-contents sidebars that should not win root selection."""
+
+    text = candidate.get_text(" ", strip=True).lower()
+    if not text:
+        return False
+    marker_text = " ".join(
+        [str(token).lower() for token in (candidate.get("class") or ())]
+        + ([str(candidate.get("id", "")).lower()] if candidate.get("id") else [])
+    )
+    has_toc_markers = any(token in marker_text for token in ("toc", "table-of-contents", "table_of_contents")) or (
+        "table of contents" in text
+    )
+    if not has_toc_markers:
+        return False
+    if candidate.has_attr("data-toc-container") or str(candidate.get("aria-label", "")).lower() == "table of contents":
+        return True
+    if len(candidate.find_all("a")) > 0:
+        return False
+    if len(candidate.find_all(["p", "ul", "ol", "blockquote"])) > 0:
+        return False
+    return len(text.split()) <= 24 and len(candidate.find_all("button")) == 0
+
+
 def _looks_like_layout_shell(tag: Tag) -> bool:
     """Detect generic layout wrappers that should not become the final content root."""
 
@@ -239,10 +293,14 @@ def _link_density_penalty(candidate: Tag) -> float:
 def _pick_best_candidate(root: Tag, candidates: list[tuple[Tag, int, int]]) -> Tag | None:
     """Return the most plausible non-chrome candidate from a tier."""
 
+    has_non_body_candidate = any(candidate.name != "body" for candidate, _, _ in candidates)
     ranked = sorted(
         candidates,
         key=lambda item: (
-            _score_content(item[0]) + (item[1] * 0.75) + (_root_penalty(root, item[0], len(candidates))),
+            _score_content(item[0])
+            + (item[1] * 0.75)
+            + (_root_penalty(root, item[0], len(candidates)))
+            + (-1000.0 if has_non_body_candidate and item[0].name == "body" else 0.0),
             _subtree_depth(root, item[0]),
             len(item[0].get_text(" ", strip=True)),
             -item[2],
@@ -305,6 +363,8 @@ def _is_dense_content(node: Tag) -> bool:
     id_text = str(node.get("id", "")).lower()
     class_tokens = {token for token in class_text.split() if token}
     marker_tokens = class_tokens | ({id_text} if id_text else set())
+    if any(token.startswith("sidebar") or token.startswith("widget") for token in marker_tokens):
+        return False
     if marker_tokens & {"wrapper", "row", "sidebar", "footer", "nav", "promo"}:
         return False
     text_words = len(node.get_text(" ", strip=True).split())
@@ -475,6 +535,8 @@ def _looks_like_chrome(tag: Tag) -> bool:
     marker_text = f"{class_text} {id_text}".strip()
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
     exact_layout_markers = {"sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
+    if any(token.startswith("sidebar") or token.startswith("widget") for token in marker_tokens):
+        return True
     if marker_tokens & exact_layout_markers:
         return True
     if _looks_like_tabbed_widget(tag):

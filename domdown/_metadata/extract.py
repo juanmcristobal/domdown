@@ -81,7 +81,10 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
         canonical_url = source
     if not title:
         title = derive_title_from_url(canonical_url or source or options.base_url)
-    image = first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup))
+    image = normalize_source(
+        first_text(*(meta_content(soup, selector) for selector in IMAGE_SELECTORS), first_image_src(soup)),
+        options.base_url,
+    )
     return HtmlMetadata(
         title=title or None,
         site_name=site_name or None,

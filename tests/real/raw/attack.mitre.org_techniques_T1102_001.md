@@ -4,7 +4,7 @@ source: "https://attack.mitre.org/techniques/T1102/001/"
 canonical_url: "https://attack.mitre.org/techniques/T1102/001/"
 language: en
 domdown_version: 0.3.2
-image: /theme/images/mitre_attack_logo.png
+image: "https://attack.mitre.org/theme/images/mitre_attack_logo.png"
 ---
 # Web Service: Dead Drop Resolver
 

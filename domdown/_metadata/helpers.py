@@ -128,6 +128,10 @@ def normalize_source(value: str | None, base_url: str | None = None) -> str:
         return ""
     if base_url and source.startswith("/"):
         return urljoin(base_url, source)
+    if base_url and source.startswith("//"):
+        return urljoin(base_url, source)
+    if source.startswith("//"):
+        return f"https:{source}"
     return source
 
 

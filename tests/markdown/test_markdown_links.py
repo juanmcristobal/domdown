@@ -47,3 +47,23 @@ def test_render_link_and_popup_detection_cover_edge_cases() -> None:
     assert (
         render_link(soup.a, DomdownOptions()) == "[![](https://example.com/gallery.png)](https://example.com/gallery)"
     )
+
+
+def test_render_link_handles_unlinked_text_and_inline_image_markdown() -> None:
+    """Unlinked content should be preserved even without a destination URL."""
+
+    soup = BeautifulSoup("<div><a>Visible</a><a>![Alt](image)</a></div>", "lxml")
+
+    assert render_link(soup.find_all("a")[0], DomdownOptions()) == "Visible"
+    assert render_link(soup.find_all("a")[1], DomdownOptions()) == "![Alt](image)"
+
+
+def test_render_link_uses_popup_alt_text_when_present() -> None:
+    """Image popups with alt text should resolve directly to the image URL."""
+
+    soup = BeautifulSoup(
+        "<a class='popup' href='https://example.com/gallery'><img alt='Zoomed' src='/zoom.png' /></a>",
+        "lxml",
+    )
+
+    assert render_link(soup.a, DomdownOptions(base_url="https://example.com")) == "https://example.com/zoom.png"
