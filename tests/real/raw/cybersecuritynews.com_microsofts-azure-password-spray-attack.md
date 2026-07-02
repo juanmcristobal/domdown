@@ -4,7 +4,7 @@ source: "https://cybersecuritynews.com/microsofts-azure-password-spray-attack/"
 site_name: Cyber Security News
 canonical_url: "https://cybersecuritynews.com/microsofts-azure-password-spray-attack/"
 language: en-US
-domdown_version: 0.3.2
+domdown_version: 0.3.3
 image: "http://cybersecuritynews.com/wp-content/uploads/2026/07/Azure-Password-Spray-Attack.webp"
 author:
   - "Guru Baran"

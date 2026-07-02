@@ -4,7 +4,7 @@ source: "https://blog.gdatasoftware.com/2026/03/38399-analysis-kissloader"
 site_name: "G DATA | Trust in German Sicherheit"
 canonical_url: "https://blog.gdatasoftware.com/2026/03/38399-analysis-kissloader"
 language: en
-domdown_version: 0.3.2
+domdown_version: 0.3.3
 image: "https://blog.gdatasoftware.com/fileadmin/web/general/images/blog/2026/03/G_DATA_Blog_KissLoader_OGTag.jpg"
 author:
   - "G DATA Security Center"

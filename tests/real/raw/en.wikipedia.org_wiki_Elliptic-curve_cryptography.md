@@ -3,7 +3,7 @@ title: Elliptic-curve cryptography - Wikipedia
 source: "https://en.wikipedia.org/wiki/Elliptic-curve_cryptography"
 canonical_url: "https://en.wikipedia.org/wiki/Elliptic-curve_cryptography"
 language: en
-domdown_version: 0.3.2
+domdown_version: 0.3.3
 image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Wiki_letter_w_cropped.svg/20px-Wiki_letter_w_cropped.svg.png"
 ---
 **Elliptic-curve cryptography** (**ECC**) is an approach to [public-key cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography) based on the [algebraic structure](https://en.wikipedia.org/wiki/Algebraic_structure) of [elliptic curves](https://en.wikipedia.org/wiki/Elliptic_curve) over [finite fields](https://en.wikipedia.org/wiki/Finite_field). ECC allows smaller keys to provide equivalent security, compared to cryptosystems based on modular exponentiation in [finite fields](https://en.wikipedia.org/wiki/Finite_field), such as the [RSA cryptosystem](https://en.wikipedia.org/wiki/RSA_cryptosystem) and [ElGamal cryptosystem](https://en.wikipedia.org/wiki/ElGamal_encryption).[[ 1 ]](#cite_note-:0-1)

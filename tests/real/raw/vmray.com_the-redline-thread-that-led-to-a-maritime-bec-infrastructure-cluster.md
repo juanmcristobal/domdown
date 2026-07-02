@@ -4,7 +4,7 @@ source: "https://www.vmray.com/the-redline-thread-that-led-to-a-maritime-bec-inf
 site_name: VMRay
 canonical_url: "https://www.vmray.com/the-redline-thread-that-led-to-a-maritime-bec-infrastructure-cluster/"
 language: en
-domdown_version: 0.3.2
+domdown_version: 0.3.3
 image: "https://www.vmray.com/wp-content/uploads/2026/06/att_5_for_287998281.png"
 published: "2026-06-30T10:26:49+00:00"
 description: A pivot chain from a RedLine C2 to a maritime phishing campaign and attacker-owned infrastructure.

@@ -168,8 +168,8 @@ def test_frontmatter_stage_combines_metadata_and_body() -> None:
 
     context = FrontmatterStage().run(context)
 
-    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.2\n---"
-    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.2\n---\nBody"
+    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.3\n---"
+    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.3\n---\nBody"
 
 
 def test_clean_stage_keeps_full_page_when_the_selected_root_is_only_a_javascript_shell() -> None:
