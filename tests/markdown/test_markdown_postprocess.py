@@ -16,3 +16,11 @@ def test_postprocess_keeps_regular_content_when_branding_is_absent() -> None:
     """Postprocessing should leave normal markdown intact."""
 
     assert postprocess_markdown("# Heading\n\nBody", None) == "# Heading\n\nBody"
+
+
+def test_postprocess_ignores_blank_site_names() -> None:
+    """Blank site names should not trim the body."""
+
+    metadata = HtmlMetadata(site_name="   ")
+
+    assert postprocess_markdown("Body\n\n\nNext", metadata) == "Body\n\nNext"

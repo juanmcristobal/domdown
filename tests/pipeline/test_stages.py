@@ -108,6 +108,23 @@ def test_preserve_stage_keeps_absolute_links_when_base_url_is_inferred() -> None
     assert context.document.a["href"] == "https://example.com/story"
 
 
+def test_preserve_stage_handles_missing_document_and_lazy_image_sources() -> None:
+    """The preserve stage should no-op without a document and resolve lazy image sources."""
+
+    empty_context = PipelineContext(html="", options=DomdownOptions())
+    assert PreserveStage().run(empty_context) is empty_context
+
+    soup = BeautifulSoup(
+        "<div><img data-lazy-src='/lazy.png' /></div>",
+        "lxml",
+    )
+    context = PipelineContext(html="", options=DomdownOptions(base_url="https://example.com"), document=soup.div)
+
+    context = PreserveStage().run(context)
+
+    assert context.document.img["src"] == "https://example.com/lazy.png"
+
+
 def test_markdown_stage_renders_markdown_text() -> None:
     """The markdown stage should render the document subtree."""
 

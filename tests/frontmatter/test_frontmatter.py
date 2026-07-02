@@ -71,6 +71,28 @@ def test_render_frontmatter_uses_fallback_fields_for_missing_metadata() -> None:
     )
 
 
+def test_render_frontmatter_accepts_list_and_string_fallbacks() -> None:
+    """Fallback lists and strings should be normalized consistently."""
+
+    metadata = HtmlMetadata()
+
+    assert render_frontmatter(
+        metadata,
+        {
+            "author": ["Fallback Author", " ", 123],
+            "tags": "Threat Intelligence",
+        },
+    ) == (
+        "---\n"
+        "domdown_version: 0.3.2\n"
+        "author:\n"
+        '  - "Fallback Author"\n'
+        "tags:\n"
+        "  - Threat Intelligence\n"
+        "---"
+    )
+
+
 def test_compose_document_combines_frontmatter_and_body() -> None:
     """Document composition should prepend frontmatter only when present."""
 
