@@ -14,6 +14,13 @@
       "description": "Concise newsroom-style article with inline links and author metadata."
     },
     {
+      "id": "cybersecuritynews_azure_password_spray_attack",
+      "html": "html/cybersecuritynews.com_microsofts-azure-password-spray-attack.html",
+      "markdown": "raw/cybersecuritynews.com_microsofts-azure-password-spray-attack.md",
+      "base_url": "https://cybersecuritynews.com/microsofts-azure-password-spray-attack/",
+      "description": "News article with a strong hero image and trailing promo chrome that should be preserved only when relevant."
+    },
+    {
       "id": "arstechnica_airsnitch_article_chrome",
       "html": "html/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.html",
       "markdown": "raw/arstechnica.com_security_2026_02_new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises.md",
@@ -50,6 +57,22 @@
       "html": "html/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.html",
       "markdown": "raw/github.com_PaloAltoNetworks_Unit42-timely-threat-intel_blob_main_2025-12-03-recent-surge-in-ClickFix-activity.txt.md",
       "description": "GitHub blob page with plain-text release note content.",
+      "layer": "adapter"
+    },
+    {
+      "id": "arxiv_2603_28627",
+      "html": "html/arxiv.org_abs_2603.28627.html",
+      "markdown": "raw/arxiv.org_abs_2603.28627.md",
+      "base_url": "https://arxiv.org/abs/2603.28627",
+      "description": "arXiv abstract page with page chrome that should collapse to the paper summary.",
+      "layer": "adapter"
+    },
+    {
+      "id": "wikipedia_elliptic_curve_cryptography",
+      "html": "html/en.wikipedia.org_wiki_Elliptic-curve_cryptography.html",
+      "markdown": "raw/en.wikipedia.org_wiki_Elliptic-curve_cryptography.md",
+      "base_url": "https://en.wikipedia.org/wiki/Elliptic-curve_cryptography",
+      "description": "Wikipedia article with infobox and reference chrome that should stay focused on the article body.",
       "layer": "adapter"
     },
     {
@@ -150,6 +173,13 @@
       "markdown": "raw/encryptionconsulting.com_enterprise-guide-to-pqc-migration.md",
       "base_url": "https://www.encryptionconsulting.com/enterprise-guide-to-pqc-migration/",
       "description": "PQC migration article with compact CTA cards that should be removed."
+    },
+    {
+      "id": "vmray_redline_maritime_bec_infrastructure_cluster",
+      "html": "html/vmray.com_the-redline-thread-that-led-to-a-maritime-bec-infrastructure-cluster.html",
+      "markdown": "raw/vmray.com_the-redline-thread-that-led-to-a-maritime-bec-infrastructure-cluster.md",
+      "base_url": "https://www.vmray.com/the-redline-thread-that-led-to-a-maritime-bec-infrastructure-cluster/",
+      "description": "VMRay threat intel article with a table-of-contents sidebar that should not be selected over the main report."
     },
     {
       "id": "adnanthekhan_clinejection",

@@ -9,6 +9,7 @@ from domdown._metadata.helpers import (
     first_text,
     looks_like_date,
     meta_content,
+    normalize_source,
     select_texts,
     split_tags,
     tag_text,
@@ -45,6 +46,14 @@ def test_metadata_helper_functions_cover_common_patterns() -> None:
     assert split_tags(("Threat Intelligence / Cloud Security",)) == ("Threat Intelligence", "Cloud Security")
     assert looks_like_date("Dec 29, 2025")
     assert first_image_src(soup) == "/image.png"
+    assert (
+        normalize_source("//upload.wikimedia.org/wikipedia/commons/image.png")
+        == "https://upload.wikimedia.org/wikipedia/commons/image.png"
+    )
+    assert (
+        normalize_source("//upload.wikimedia.org/wikipedia/commons/image.png", "http://example.com/story")
+        == "http://upload.wikimedia.org/wikipedia/commons/image.png"
+    )
 
 
 def test_split_tags_deduplicates_repeated_tag_tokens() -> None:

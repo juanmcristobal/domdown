@@ -4,7 +4,7 @@ source: "https://github.com/nodejs/node/releases/tag/v25.3.0"
 site_name: GitHub
 canonical_url: "https://github.com/nodejs/node/releases/tag/v25.3.0"
 language: en
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://opengraph.githubassets.com/efa7f03b81513177fe5d385f4de109fc9211c7055f248ab871081ae941f8eb73/nodejs/node/releases/tag/v25.3.0"
 author:
   - "nodejs"

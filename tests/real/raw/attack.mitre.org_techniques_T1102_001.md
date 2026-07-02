@@ -3,8 +3,8 @@ title: "Web Service: Dead Drop Resolver, Sub-technique T1102.001 - Enterprise | 
 source: "https://attack.mitre.org/techniques/T1102/001/"
 canonical_url: "https://attack.mitre.org/techniques/T1102/001/"
 language: en
-domdown_version: 0.3.1
-image: /theme/images/mitre_attack_logo.png
+domdown_version: 0.3.2
+image: "https://attack.mitre.org/theme/images/mitre_attack_logo.png"
 ---
 # Web Service: Dead Drop Resolver
 

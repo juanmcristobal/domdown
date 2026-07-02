@@ -4,7 +4,7 @@ source: "https://arstechnica.com/security/2026/02/new-airsnitch-attack-breaks-wi
 site_name: Ars Technica
 canonical_url: "https://arstechnica.com/security/2026/02/new-airsnitch-attack-breaks-wi-fi-encryption-in-homes-offices-and-enterprises/"
 language: en
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://cdn.arstechnica.net/wp-content/uploads/2025/06/wi-fi-1152x648-1751309982.jpg"
 published: "2026-02-26T15:45:18+00:00"
 description: That guest network you set up for your neighbors may not be as secure as you think.

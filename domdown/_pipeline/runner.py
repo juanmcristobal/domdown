@@ -7,11 +7,13 @@ from .._core import DomdownOptions, HtmlToMarkdownResult, PipelineContext
 from ..adapters import (
     AdapterRegistry,
     ArticleAdapter,
+    ArXivAdapter,
     BleepingComputerAdapter,
     CyberSecurityNewsAdapter,
     GitHubAdapter,
     MediumAdapter,
     TheHackerNewsAdapter,
+    WikipediaAdapter,
     build_default_registry,
 )
 from ..stages.base import PipelineStage
@@ -43,6 +45,8 @@ class HtmlToMarkdownPipeline:
                 BleepingComputerAdapter(),
                 CyberSecurityNewsAdapter(),
                 TheHackerNewsAdapter(),
+                ArXivAdapter(),
+                WikipediaAdapter(),
             )
         self.adapter_registry = build_default_registry(self.adapters)
         if not self.stages:

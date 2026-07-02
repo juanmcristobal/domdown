@@ -3,7 +3,7 @@ title: "axios compromised on npm: maintainer account hijacked, RAT deployed"
 source: "https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat"
 canonical_url: "https://www.aikido.dev/blog/axios-npm-compromised-maintainer-hijacked-rat"
 language: en
-domdown_version: 0.3.1
+domdown_version: 0.3.2
 image: "https://cdn.prod.website-files.com/642adcaf364024654c71df23/69cb517f68773d10396bd924_Group%202147256681.png"
 description: Malicious axios versions 1.14.1 and 0.30.4 were published via a hijacked maintainer account. A hidden dependency deploys a cross-platform RAT. Check if you are affected and remediate now.
 ---
