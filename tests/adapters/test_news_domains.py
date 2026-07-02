@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from domdown._pipeline import HtmlToMarkdownPipeline
-from domdown.adapters import BleepingComputerAdapter, CyberSecurityNewsAdapter, TheHackerNewsAdapter
+from domdown.adapters import BleepingComputerAdapter, CyberSecurityNewsAdapter, GBHackersAdapter, TheHackerNewsAdapter
 
 
 def test_bleepingcomputer_adapter_removes_sidebar_comments_and_promos() -> None:
@@ -48,6 +48,72 @@ def test_cybersecuritynews_adapter_removes_social_header_and_related_modules() -
           <p>Body paragraph.</p>
           <p>********************************************************************************************************************************Follow us on Google News</p>
           <div class="td_module_wrap"><h3>Related Story</h3></div>
+        </article>
+      </body>
+    </html>
+    """
+
+    result = pipeline.run(html)
+
+    assert result.markdown == "# Title\n\nBody paragraph."
+
+
+def test_gbhackers_adapter_removes_tagdiv_chrome_and_keeps_the_article_body() -> None:
+    pipeline = HtmlToMarkdownPipeline(adapters=(GBHackersAdapter(),))
+    html = """
+    <html>
+      <head>
+        <meta property="og:site_name" content="GBHackers Security | #1 Globally Trusted Cyber Security News Platform" />
+        <meta property="og:url" content="https://gbhackers.com/progress-kemp-loadmaster-vulnerability/" />
+      </head>
+      <body>
+        <article>
+          <div class="tdb_single_categories">
+            <a href="/tag/cyber-security/">cyber security</a>
+            <a href="/tag/vulnerability/">Vulnerability</a>
+          </div>
+          <div class="tdb-post-meta">2 min. Read</div>
+          <div class="td-post-sharing">Share Facebook Twitter Pinterest WhatsApp</div>
+          <div class="tdb-author-box">By Mayura Kathir</div>
+          <h1>Critical Progress Kemp LoadMaster Vulnerability Enables Pre-Auth Remote Code Execution</h1>
+          <div class="td-post-content">
+            <p>Progress’s Kemp LoadMaster is at the center of a critical pre-authentication RCE vulnerability.</p>
+            <p>The flaw allows unauthenticated attackers to run arbitrary shell commands.</p>
+          </div>
+          <div class="td_module_wrap">
+            <h3>Related story</h3>
+            <p>Another link card.</p>
+          </div>
+          <div class="td-related-title">Related Posts</div>
+          <div class="td-next-prev-wrap">Previous Next</div>
+        </article>
+      </body>
+    </html>
+    """
+
+    result = pipeline.run(html)
+
+    assert result.markdown == (
+        "Progress’s Kemp LoadMaster is at the center of a critical pre-authentication RCE vulnerability.\n\n"
+        "The flaw allows unauthenticated attackers to run arbitrary shell commands."
+    )
+
+
+def test_gbhackers_adapter_drops_follow_us_footer_copy() -> None:
+    pipeline = HtmlToMarkdownPipeline(adapters=(GBHackersAdapter(),))
+    html = """
+    <html>
+      <head>
+        <meta property="og:site_name" content="GBHackers Security | #1 Globally Trusted Cyber Security News Platform" />
+        <meta property="og:url" content="https://gbhackers.com/example/" />
+      </head>
+      <body>
+        <article>
+          <h1>Title</h1>
+          <p>Body paragraph.</p>
+          <p class="has-text-align-center has-background wp-block-paragraph">
+            <strong>Follow us on Google News, LinkedIn, and X to Get Instant Updates and Set GBH as a Preferred Source in Google.</strong>
+          </p>
         </article>
       </body>
     </html>

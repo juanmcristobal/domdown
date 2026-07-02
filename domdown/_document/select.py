@@ -446,6 +446,7 @@ def _score_content(tag: Tag) -> float:
             "articlebody",
             "post-body",
             "entry-content",
+            "blog-content",
             "post-content",
             "story-body",
             "content-body",
@@ -538,9 +539,49 @@ def _looks_like_chrome(tag: Tag) -> bool:
         return True
     if marker_tokens & exact_layout_markers:
         return True
+    if _looks_like_tabbed_widget(tag):
+        return True
     if _looks_like_tag_cloud(tag, marker_text):
         return True
     return any(marker in marker_text for marker in NOISE_MARKERS if marker not in exact_layout_markers)
+
+
+def _looks_like_tabbed_widget(tag: Tag) -> bool:
+    """Detect tabbed marketing widgets that often masquerade as content."""
+
+    if not isinstance(tag, Tag):
+        return False
+
+    tab_markers = (
+        "tabs",
+        "tabs-content",
+        "tabs-nav",
+        "tab-content",
+        "tab-content-inner",
+        "tab-content-row",
+        "tab-content-col",
+        "tab-main",
+        "tab-section",
+        "tab-wrap",
+    )
+
+    def _marker_text(node: Tag) -> str:
+        classes = node.get("class", []) if isinstance(node.get("class"), list) else [str(node.get("class", ""))]
+        class_text = " ".join(str(value).lower() for value in classes)
+        id_text = str(node.get("id", "")).lower()
+        return f"{class_text} {id_text}".strip()
+
+    node_text = _marker_text(tag)
+    if any(marker in node_text for marker in tab_markers):
+        return True
+
+    for child in tag.find_all(recursive=False):
+        if not isinstance(child, Tag):
+            continue
+        child_text = _marker_text(child)
+        if any(marker in child_text for marker in tab_markers):
+            return True
+    return False
 
 
 def _looks_like_tag_cloud(tag: Tag, marker_text: str) -> bool:
