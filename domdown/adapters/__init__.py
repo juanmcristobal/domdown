@@ -4,6 +4,7 @@ from .arxiv import ArXivAdapter
 from .base import ArticleAdapter
 from .bleepingcomputer import BleepingComputerAdapter
 from .cybersecuritynews import CyberSecurityNewsAdapter
+from .dailysecu import DailySecuAdapter
 from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
 from .gbhackers import GBHackersAdapter
 from .github import GitHubAdapter
@@ -18,6 +19,7 @@ __all__ = [
     "ArXivAdapter",
     "BleepingComputerAdapter",
     "CyberSecurityNewsAdapter",
+    "DailySecuAdapter",
     "DeclarativeDomainAdapter",
     "DomainAdapterSpec",
     "GBHackersAdapter",

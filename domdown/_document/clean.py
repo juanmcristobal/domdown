@@ -102,6 +102,8 @@ def _looks_like_noise(node: Tag) -> bool:
 def _remove_structural_chrome(root: Tag) -> None:
     """Remove small header and related-link chrome blocks from the chosen root."""
 
+    _remove_article_header_cluster(root)
+
     for node in reversed(list(root.find_all(True))):
         if not isinstance(node, Tag) or node is root:
             continue
@@ -125,6 +127,27 @@ def _remove_structural_chrome(root: Tag) -> None:
             if _has_substantive_body_content(node):
                 continue
             node.decompose()
+
+
+def _remove_article_header_cluster(root: Tag) -> None:
+    """Remove blog header controls when their labels occur as one cluster."""
+
+    headings = [node for node in root.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]) if isinstance(node, Tag)]
+    labels = {node.get_text(" ", strip=True).lower().rstrip(":") for node in headings}
+    if not ({"topics", "share"} <= labels):
+        return
+
+    removable = {"topics", "table of contents", "share"}
+    for heading in headings:
+        label = heading.get_text(" ", strip=True).lower().rstrip(":")
+        if label not in removable:
+            continue
+        for sibling in list(heading.next_siblings):
+            if isinstance(sibling, Tag) and sibling.name.lower() in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                break
+            if isinstance(sibling, Tag):
+                sibling.decompose()
+        heading.decompose()
 
 
 def _looks_like_header_block(node: Tag) -> bool:
@@ -153,11 +176,17 @@ def _looks_like_metadata_bar(node: Tag) -> bool:
         return False
     if "published on" in text and ("written by" in text or "author" in text or "share:" in text):
         return True
+    if text.startswith("contributor:"):
+        return True
+    if "time to read:" in text and len(text_words := text.split()) <= 16:
+        return True
+    marker_text = _marker_text(node)
+    if any(marker in marker_text for marker in ("published", "publish-date", "read-time", "reading-time")):
+        return True
     if "last updated on" in text or "updated on" in text:
         return True
     if text.startswith("written by ") and ("published on" in text or "share:" in text):
         return True
-    marker_text = _marker_text(node)
     if not any(token in marker_text for token in ("byline", "author", "date", "meta")):
         return False
     return bool(node.find("time")) and ("published" in text or "updated" in text)
