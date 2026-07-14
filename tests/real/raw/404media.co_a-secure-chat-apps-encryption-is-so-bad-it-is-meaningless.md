@@ -4,7 +4,7 @@ source: "https://www.404media.co/a-secure-chat-apps-encryption-is-so-bad-it-is-m
 site_name: 404 Media
 canonical_url: "https://www.404media.co/a-secure-chat-apps-encryption-is-so-bad-it-is-meaningless/"
 language: en
-domdown_version: 0.3.3
+domdown_version: 0.3.4
 image: "https://storage.ghost.io/c/0f/76/0f76b548-bc58-4f25-abc3-3f5ebca07da4/content/images/size/w1200/2026/04/teleguard.png"
 author:
   - "Joseph Cox"

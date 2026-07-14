@@ -4,7 +4,7 @@ source: "https://arxiv.org/abs/2603.28627"
 site_name: arXiv.org
 canonical_url: "https://arxiv.org/abs/2603.28627"
 language: en
-domdown_version: 0.3.3
+domdown_version: 0.3.4
 image: "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png"
 description: "Abstract page for arXiv paper 2603.28627: Shor's algorithm is possible with as few as 10,000 reconfigurable atomic qubits"
 ---

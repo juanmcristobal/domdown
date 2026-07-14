@@ -3,7 +3,7 @@ title: "Phantom in the vault: Obsidian abused to deliver PhantomPulse RAT — El
 source: "https://www.elastic.co/security-labs/phantom-in-the-vault"
 canonical_url: "https://www.elastic.co/security-labs/phantom-in-the-vault"
 language: en
-domdown_version: 0.3.3
+domdown_version: 0.3.4
 image: "https://www.elastic.co/security-labs/assets/images/phantom-in-the-vault/phantom-in-the-vault.webp?cc183553ecabfb8be6d03f3d994b32bf"
 published: "2026-04-14T00:00:00.000Z"
 description: "Elastic Security Labs uncovers a novel social engineering campaign that abuses the popular note-taking application, Obsidian's legitimate community plugin ecosystem. The campaign, which we track as REF6598, targets individuals in the financial and cryptocurrency sectors through elaborate social engineering on LinkedIn and Telegram."
