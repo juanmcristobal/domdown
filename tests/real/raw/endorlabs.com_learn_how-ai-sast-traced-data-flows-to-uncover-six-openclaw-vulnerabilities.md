@@ -3,7 +3,7 @@ title: "How AI SAST Traced Data Flows to Uncover Six OpenClaw Vulnerabilities | 
 source: "https://www.endorlabs.com/learn/how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities"
 canonical_url: "https://www.endorlabs.com/learn/how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities"
 language: en
-domdown_version: 0.3.3
+domdown_version: 0.3.4
 image: "https://cdn.prod.website-files.com/6574c9e538a34feac8cec013/69950613b3fe01c993eb1ca5_AI%20SAST%20Traced%20Data%20Flows%20to%20Uncover%20Six%20OpenClaw%20Vulnerabilities.png"
 description: We discovered six vulnerabilities in OpenClaw using Endor Labs’ AI SAST data flow analysis and validated working exploits.
 ---

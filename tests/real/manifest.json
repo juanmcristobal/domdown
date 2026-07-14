@@ -2,6 +2,27 @@
   "version": 1,
   "cases": [
     {
+      "id": "okta_vishing_entra_passkey_enrollment",
+      "html": "html/okta.com_blog_threat-intelligence_vishing-actors-target-microsoft-entra-passkey-enrollment.html",
+      "markdown": "raw/okta.com_blog_threat-intelligence_vishing-actors-target-microsoft-entra-passkey-enrollment.md",
+      "base_url": "https://www.okta.com/blog/threat-intelligence/vishing-actors-target-microsoft-entra-passkey-enrollment-/",
+      "description": "Okta threat intelligence article with contributor, topics, table of contents, sharing controls, CTA, lists, and a table."
+    },
+    {
+      "id": "socket_jscrambler_supply_chain_attack",
+      "html": "html/socket.dev_blog_jscrambler-supply-chain-attack.html",
+      "markdown": "raw/socket.dev_blog_jscrambler-supply-chain-attack.md",
+      "base_url": "https://socket.dev/blog/jscrambler-supply-chain-attack",
+      "description": "Socket security article with duplicate TOCs, sidebar CTA, metadata, code, lists, and trailing related modules."
+    },
+    {
+      "id": "dailysecu_sparrow_enterprise_procurement",
+      "html": "html/dailysecu.com_news_articleView.html_idxno_207575.html",
+      "markdown": "raw/dailysecu.com_news_articleView.html_idxno_207575.md",
+      "base_url": "https://www.dailysecu.com/news/articleView.html?idxno=207575",
+      "description": "DailySecu article with inline ads, author chrome, and related-news modules."
+    },
+    {
       "id": "zimperium_android_malware_bypass_detection",
       "html": "html/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.html",
       "markdown": "raw/zimperium.com_blog_over-3000-android-malware-samples-using-multiple-techniques-to-bypass-detection.md",

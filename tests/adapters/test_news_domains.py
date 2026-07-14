@@ -1,7 +1,39 @@
 from __future__ import annotations
 
 from domdown._pipeline import HtmlToMarkdownPipeline
-from domdown.adapters import BleepingComputerAdapter, CyberSecurityNewsAdapter, GBHackersAdapter, TheHackerNewsAdapter
+from domdown.adapters import (
+    BleepingComputerAdapter,
+    CyberSecurityNewsAdapter,
+    DailySecuAdapter,
+    GBHackersAdapter,
+    TheHackerNewsAdapter,
+)
+
+
+def test_dailysecu_adapter_removes_article_chrome_and_keeps_body() -> None:
+    pipeline = HtmlToMarkdownPipeline(adapters=(DailySecuAdapter(),))
+    html = """
+    <html>
+      <head>
+        <meta property="og:site_name" content="데일리시큐" />
+        <meta property="og:url" content="https://www.dailysecu.com/news/articleView.html?idxno=1" />
+      </head>
+      <body>
+        <div id="article-view">
+          <div class="article-view-header"><div class="section-name">산업</div></div>
+          <h1>Title</h1>
+          <div class="helper-tool-group">Share and font controls</div>
+          <article id="article-view-content-div"><p>Body paragraph.</p><div class="ad-template"></div></article>
+          <article class="article-writer">By Reporter</article>
+          <article class="box-skin">Related stories</article>
+        </div>
+      </body>
+    </html>
+    """
+
+    result = pipeline.run(html)
+
+    assert result.markdown == "Body paragraph."
 
 
 def test_bleepingcomputer_adapter_removes_sidebar_comments_and_promos() -> None:

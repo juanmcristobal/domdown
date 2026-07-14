@@ -4,7 +4,7 @@ source: "https://blog.alyac.co.kr/5035"
 site_name: 이스트시큐리티 알약 블로그
 canonical_url: "https://blog.alyac.co.kr/5035"
 language: ko
-domdown_version: 0.3.3
+domdown_version: 0.3.4
 image: "https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fed4u2S%2FbtrVgjpMIRx%2FAAAAAAAAAAAAAAAAAAAAAFBNJzjrderK_VJr7In2g7OdOqSTLZ-llO_XA6_kypgE%2Fimg.jpg%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1780239599%26allow_ip%3D%26allow_referer%3D%26signature%3DeI%252FtrvBkUncle1TLzGDVNcvzV28%253D"
 published: "2023-01-03T11:20:10+09:00"
 description: "안녕하세요? 이스트시큐리티 시큐리티대응센터(이하 ESRC)입니다. 악성 인터넷 주소가 포함된 문자메시지를 보내 개인정보를 빼내는 ‘스미싱’ 수법! 이 스미싱 수법에 활용되는 악성 앱이 갈수록 정교해지고 있습니다. 예전부터 택배사를 사칭한 내용은 지속해서 발견되었는데 최근 크리스마스와 연말 파티로 인해 택배 주문량이 많이 증가함에 따라 택배 스미싱 또한, 많이 발견되고 있는 추세입니다. No 보이스피싱 1 [로젠]송장번호(5891***********90) 주소불일치로물 품보관 중입니다: hxxps[:]//xxx.kr/18yv9 2 [로젠]송장번호(5912**************926)\"주\"소불일치로 물품보관중입니다 hxxps[:]//xxx.kr/18zh1 3 [로젠택.배]고객 당신의 물품 배송 실패 주소.."

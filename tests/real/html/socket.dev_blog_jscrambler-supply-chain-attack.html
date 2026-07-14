@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta property="og:title" content="jscrambler npm Package Compromised in Supply Chain Attack" />
+    <meta property="og:description" content="A compromised jscrambler npm release added a malicious preinstall hook that runs hidden native binaries on Linux, macOS, and Windows." />
+    <meta property="og:site_name" content="Socket" />
+    <meta property="og:url" content="https://socket.dev/blog/jscrambler-supply-chain-attack" />
+    <meta property="article:published_time" content="2026-07-11" />
+  </head>
+  <body>
+    <article>
+      <h1>jscrambler npm Package Compromised in Supply Chain Attack</h1>
+      <p class="dek">A compromised jscrambler npm release added a malicious preinstall hook that runs hidden native binaries on Linux, macOS, and Windows.</p>
+      <div class="author"><p>Socket Research Team</p></div>
+      <p class="published">July 11, 2026</p>
+      <p class="read-time">7 min read</p>
+
+      <nav class="table-of-contents"><h3>Table of Contents</h3><ol><li><a href="#impact">Impact</a></li><li><a href="#analysis">Technical Analysis</a></li></ol></nav>
+      <aside class="sidebar"><h4>Secure your dependencies with us</h4><p>Socket proactively blocks malicious open source packages in your code.</p><a href="/install">Install</a></aside>
+      <div class="table-of-contents"><h3>Table of Contents</h3><ol><li><a href="#impact">Impact</a></li><li><a href="#analysis">Technical Analysis</a></li></ol></div>
+
+      <div class="article-body">
+        <p>A compromised release of the popular <a href="https://www.npmjs.com/package/jscrambler">jscrambler npm package</a> introduced hidden native binaries that execute automatically during <code>npm install</code>.</p>
+        <p>The malicious 8.14.0 release adds an undocumented <code>preinstall</code> hook that invokes <code>dist/setup.js</code>. It also introduces platform-specific binaries embedded in an obfuscated CSI container.</p>
+        <h2 id="impact">Impact</h2>
+        <p>Simply installing <code>jscrambler@8.14.0</code> is enough to trigger the bundled platform-specific binary. Users do not need to import the package or run the CLI.</p>
+        <h2 id="analysis">Technical Analysis</h2>
+        <p>The compromised version ships two malicious files under <code>dist/</code>.</p>
+        <ol><li>Reads the container.</li><li>Selects the blob matching <code>process.platform</code>.</li><li>Launches the native executable in the background.</li></ol>
+        <h2>Indicators of Compromise</h2>
+        <ul><li><code>jscrambler@8.14.0</code></li><li><code>jscrambler@8.16.0</code></li></ul>
+      </div>
+
+      <section class="newsletter"><h3>Subscribe to our newsletter</h3><p>Get notified when we publish new security blog posts!</p></section>
+      <section class="related-posts"><h2>Related posts</h2><p>More security research from Socket.</p></section>
+    </article>
+  </body>
+</html>

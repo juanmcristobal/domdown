@@ -217,3 +217,25 @@ class TestNoiseMarkers:
         assert "Social media" not in result
         assert "Subscribe" not in result
         assert "Footer content" not in result
+
+    def test_article_header_cluster_is_removed_without_losing_body(self):
+        """Blog metadata controls should not survive as standalone headings."""
+        html = """
+        <html><body><article>
+          <h1>Article title</h1>
+          <div class="contributor"><strong>Contributor:</strong><p>Reporter</p></div>
+          <h3>Topics</h3><p>Threat Intelligence, IAM</p>
+          <h3>Table of Contents</h3><ul><li><a href="#body">Body</a></li></ul>
+          <h3>Share</h3><div class="share"><a href="#share">Share</a></div>
+          <h2 id="body">Executive Summary</h2><p>Article body.</p>
+        </article></body></html>
+        """
+
+        result = html_to_markdown(html)
+
+        assert "Article title" in result
+        assert "Executive Summary" in result
+        assert "Article body" in result
+        assert "Contributor" not in result
+        assert "Table of Contents" not in result
+        assert "Threat Intelligence, IAM" not in result
