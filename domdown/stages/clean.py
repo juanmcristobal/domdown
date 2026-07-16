@@ -22,7 +22,12 @@ class CleanStage:
             return context
         root = choose_root(context.document, context.options.prefer_article_body)
         preserve_chrome = False
-        if _looks_like_js_shell(root) and _body_has_more_content(context.document, root):
+        if _root_is_empty(root) and _body_has_content(context.document, root):
+            body = context.document.body
+            if body is not None and body is not root:
+                root.decompose()
+                root = body
+        elif _looks_like_js_shell(root) and _body_has_more_content(context.document, root):
             body = context.document.body
             if body is not None:
                 root.decompose()
@@ -37,6 +42,23 @@ class CleanStage:
         context.document = root
         context.cleaned_html = str(root)
         return context
+
+
+def _root_is_empty(root) -> bool:
+    """Detect a selected shell that contains no visible text to render."""
+
+    return not root.get_text(" ", strip=True)
+
+
+def _body_has_content(document, root) -> bool:
+    """Use the full body only when it contains meaningful text beyond the shell."""
+
+    body = document.body
+    if body is None:
+        return False
+    body_words = len(body.get_text(" ", strip=True).split())
+    root_words = len(root.get_text(" ", strip=True).split())
+    return body_words > root_words
 
 
 def _looks_like_js_shell(root) -> bool:
