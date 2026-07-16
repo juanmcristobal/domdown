@@ -3,7 +3,7 @@ title: jscrambler npm Package Compromised in Supply Chain Attack
 source: "https://socket.dev/blog/jscrambler-supply-chain-attack"
 site_name: Socket
 canonical_url: "https://socket.dev/blog/jscrambler-supply-chain-attack"
-domdown_version: 0.3.4
+domdown_version: 0.3.5
 published: 2026-07-11
 description: "A compromised jscrambler npm release added a malicious preinstall hook that runs hidden native binaries on Linux, macOS, and Windows."
 ---

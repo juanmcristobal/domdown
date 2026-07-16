@@ -4,7 +4,7 @@ source: "https://www.dailysecu.com/news/articleView.html?idxno=207575"
 site_name: 데일리시큐
 canonical_url: "https://www.dailysecu.com/news/articleView.html?idxno=207575"
 language: ko
-domdown_version: 0.3.4
+domdown_version: 0.3.5
 image: "https://cdn.dailysecu.com/news/photo/202607/207575_208476_2636.jpg"
 author:
   - "길민권 기자"

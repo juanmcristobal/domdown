@@ -4,7 +4,7 @@ source: "https://nisos.com/blog/dprk-remote-worker-fraud-interview/"
 site_name: Nisos
 canonical_url: "https://nisos.com/blog/dprk-remote-worker-fraud-interview/"
 language: en-US
-domdown_version: 0.3.4
+domdown_version: 0.3.5
 image: "https://nisos.com/wp-content/uploads/2026/03/blogdprk-remote-worker-fraud-interview-rectangle.png"
 author:
   - "Magen Gicinto, Chief People Officer"
