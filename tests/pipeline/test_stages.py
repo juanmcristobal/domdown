@@ -168,8 +168,8 @@ def test_frontmatter_stage_combines_metadata_and_body() -> None:
 
     context = FrontmatterStage().run(context)
 
-    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.4\n---"
-    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.4\n---\nBody"
+    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.5\n---"
+    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.5\n---\nBody"
 
 
 def test_clean_stage_keeps_full_page_when_the_selected_root_is_only_a_javascript_shell() -> None:
@@ -210,3 +210,27 @@ def test_clean_stage_keeps_full_page_when_the_selected_root_is_only_a_javascript
     assert "This app needs JavaScript to run" not in context.cleaned_html
     assert "Utilities Subscriptions Downloads" in context.cleaned_html
     assert "Security Advisories" in context.cleaned_html
+
+
+def test_clean_stage_falls_back_to_body_when_the_selected_root_is_empty() -> None:
+    """Pages with an empty matched shell should still render body content."""
+
+    soup = BeautifulSoup(
+        """
+        <html>
+          <body>
+            <main class="empty-shell"></main>
+            <header>Site navigation</header>
+            <h1>Security bulletin</h1>
+            <p>Improper privilege management in the desktop application.</p>
+          </body>
+        </html>
+        """,
+        "lxml",
+    )
+
+    context = CleanStage().run(PipelineContext(html="", options=DomdownOptions(), document=soup))
+
+    assert context.cleaned_html is not None
+    assert "Security bulletin" in context.cleaned_html
+    assert "Improper privilege management" in context.cleaned_html

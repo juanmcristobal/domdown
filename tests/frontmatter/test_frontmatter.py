@@ -28,7 +28,7 @@ def test_render_frontmatter_serializes_metadata_in_document_order() -> None:
         "site_name: Example Platform\n"
         'canonical_url: "https://example.com/posts/example-article"\n'
         "language: en\n"
-        "domdown_version: 0.3.4\n"
+        "domdown_version: 0.3.5\n"
         'image: "https://example.com/image.png"\n'
         "author:\n"
         '  - "The Hacker News"\n'
@@ -61,7 +61,7 @@ def test_render_frontmatter_uses_fallback_fields_for_missing_metadata() -> None:
         "title: Fallback Title\n"
         'source: "https://example.com/posts/fallback-title"\n'
         'canonical_url: "https://example.com/posts/fallback-title"\n'
-        "domdown_version: 0.3.4\n"
+        "domdown_version: 0.3.5\n"
         "author:\n"
         '  - "Fallback Author"\n'
         "tags:\n"
@@ -84,7 +84,7 @@ def test_render_frontmatter_accepts_list_and_string_fallbacks() -> None:
         },
     ) == (
         "---\n"
-        "domdown_version: 0.3.4\n"
+        "domdown_version: 0.3.5\n"
         "author:\n"
         '  - "Fallback Author"\n'
         "tags:\n"
