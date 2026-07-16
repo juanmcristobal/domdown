@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-DOMDOWN_VERSION = "0.3.5"
+DOMDOWN_VERSION = "0.3.6"

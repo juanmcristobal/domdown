@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from bs4 import Tag
+
 from .._constants import DEFAULT_REMOVE_SELECTORS, JS_SHELL_PHRASES, SKIP_TAGS
 from .._core import PipelineContext
 from .._document import choose_root, clean_root
@@ -22,11 +24,11 @@ class CleanStage:
             return context
         root = choose_root(context.document, context.options.prefer_article_body)
         preserve_chrome = False
-        if _root_is_empty(root) and _body_has_content(context.document, root):
-            body = context.document.body
-            if body is not None and body is not root:
+        if _root_is_empty(root):
+            fallback = _fallback_root(context.document, root)
+            if fallback is not None:
                 root.decompose()
-                root = body
+                root = fallback
         elif _looks_like_js_shell(root) and _body_has_more_content(context.document, root):
             body = context.document.body
             if body is not None:
@@ -50,15 +52,14 @@ def _root_is_empty(root) -> bool:
     return not root.get_text(" ", strip=True)
 
 
-def _body_has_content(document, root) -> bool:
-    """Use the full body only when it contains meaningful text beyond the shell."""
+def _fallback_root(document, current: Tag) -> Tag | None:
+    """Return the first non-empty document-level fallback root."""
 
-    body = document.body
-    if body is None:
-        return False
-    body_words = len(body.get_text(" ", strip=True).split())
-    root_words = len(root.get_text(" ", strip=True).split())
-    return body_words > root_words
+    candidates = (document.body, document.select_one("main"), document.html)
+    for candidate in candidates:
+        if isinstance(candidate, Tag) and candidate is not current and candidate.get_text(" ", strip=True):
+            return candidate
+    return None
 
 
 def _looks_like_js_shell(root) -> bool:

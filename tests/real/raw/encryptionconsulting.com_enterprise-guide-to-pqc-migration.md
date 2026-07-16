@@ -4,7 +4,7 @@ source: "https://www.encryptionconsulting.com/enterprise-guide-to-pqc-migration/
 site_name: Encryption Consulting LLC
 canonical_url: "https://www.encryptionconsulting.com/enterprise-guide-to-pqc-migration/"
 language: en-US
-domdown_version: 0.3.5
+domdown_version: 0.3.6
 image: "https://ecwebsitedata.blob.core.windows.net/encryption-consulting-website-data/2025/08/Enterprise-Guide-to-PQC-Migration.jpg"
 published: "2025-08-06T21:31:12+00:00"
 description: "Learn how enterprises can prepare for the quantum future with this step-by-step guide to PQC migration, covering the key phases for a secure transition."

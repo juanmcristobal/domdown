@@ -14,6 +14,7 @@ from domdown.stages import (
     PostProcessStage,
     PreserveStage,
 )
+from domdown.stages.clean import _fallback_root
 
 
 def test_parse_stage_builds_the_document_tree() -> None:
@@ -168,8 +169,8 @@ def test_frontmatter_stage_combines_metadata_and_body() -> None:
 
     context = FrontmatterStage().run(context)
 
-    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.5\n---"
-    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.5\n---\nBody"
+    assert context.frontmatter == "---\ntitle: Title\ndomdown_version: 0.3.6\n---"
+    assert context.rendered_document == "---\ntitle: Title\ndomdown_version: 0.3.6\n---\nBody"
 
 
 def test_clean_stage_keeps_full_page_when_the_selected_root_is_only_a_javascript_shell() -> None:
@@ -234,3 +235,20 @@ def test_clean_stage_falls_back_to_body_when_the_selected_root_is_empty() -> Non
     assert context.cleaned_html is not None
     assert "Security bulletin" in context.cleaned_html
     assert "Improper privilege management" in context.cleaned_html
+
+
+def test_fallback_root_tries_main_then_html() -> None:
+    """Document fallbacks should continue when body is unavailable or empty."""
+
+    soup = BeautifulSoup("<html><head></head><body></body></html>", "lxml")
+    main = soup.new_tag("main")
+    main.string = "Main content"
+    soup.html.append(main)
+    current = soup.new_tag("div")
+
+    assert _fallback_root(soup, current) is main
+
+    main.decompose()
+    soup.head.string = "HTML fallback content"
+
+    assert _fallback_root(soup, current) is soup.html

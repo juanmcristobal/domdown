@@ -3,7 +3,7 @@ title: Vishing actors target Entra passkey enrollment
 source: "https://www.okta.com/blog/threat-intelligence/vishing-actors-target-microsoft-entra-passkey-enrollment-/"
 site_name: Okta
 canonical_url: "https://www.okta.com/blog/threat-intelligence/vishing-actors-target-microsoft-entra-passkey-enrollment-/"
-domdown_version: 0.3.5
+domdown_version: 0.3.6
 published: 2026-07-05
 description: Okta Threat Intelligence analysis of a phishing kit targeting Microsoft Entra passkey enrollment.
 ---

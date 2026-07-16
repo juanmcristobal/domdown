@@ -54,6 +54,6 @@ setup(
     name="domdown",
     packages=find_packages(include=["domdown", "domdown.*"]),
     url="https://github.com/juanmcristobal/domdown",
-    version='0.3.5',
+    version='0.3.6',
     zip_safe=False,
 )
