@@ -3,7 +3,7 @@ title: Bypassing WAFs for Fun and JS Injection with Parameter Pollution
 source: "https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"
 canonical_url: "https://blog.ethiack.com/blog/bypassing-wafs-for-fun-and-js-injection-with-parameter-pollution"
 language: en
-domdown_version: 0.3.6
+domdown_version: 0.3.7
 image: "https://blog.ethiack.com/hubfs/Blog%20Post%20Covers%20(300%20x%20175%20px)-1.png"
 author:
   - "Bruno Mendes"
@@ -34,11 +34,11 @@ Since our use case was very specific, we filtered all the frameworks that did no
 
 | **Framework** | **Input** | **Output** |
 | --- | --- | --- |
-| **ASP.NET** | param=val1¶m=val2 | param=val1,val2 |
-| **ASP** | param=val1¶m=val2 | param=val1,val2 |
-| **Golang net/http - r.URL.Query()[“param”]** | param=val1¶m=val2 | param=['val1','val2'] |
-| **Python - Zope** | param=val1¶m=val2 | param=['val1','val2'] |
-| **Node.js** | param=val1¶m=val2 | param=val1,val2 |
+| **ASP.NET** | param=val1&param=val2 | param=val1,val2 |
+| **ASP** | param=val1&param=val2 | param=val1,val2 |
+| **Golang net/http - r.URL.Query()[“param”]** | param=val1&param=val2 | param=['val1','val2'] |
+| **Python - Zope** | param=val1&param=val2 | param=['val1','val2'] |
+| **Node.js** | param=val1&param=val2 | param=val1,val2 |
 
 Fortunately, ASP.NET’s behavior is particularly interesting and fits our use case. When ASP.NET encounters multiple parameters with the same name, it concatenates their values with commas using the HttpUtility.ParseQueryString() method. This behavior is documented in [Microsoft's official documentation](https://learn.microsoft.com/en-us/dotnet/api/system.web.httputility.parsequerystring?view=net-9.0), which states that “multiple occurrences of the same query string parameter are listed as a single entry with a comma separating each value”.
 

@@ -6,7 +6,7 @@ import re
 from bs4 import NavigableString, Tag
 
 from .._core import DomdownOptions
-from .._text import normalize_inline_text
+from .._text import escape_html_text
 
 
 def render_inline_children(node: Tag, options: DomdownOptions) -> str:
@@ -24,7 +24,8 @@ def render_inline(node: object, options: DomdownOptions) -> str:
     """Render an inline HTML node into Markdown-compatible text."""
 
     if isinstance(node, NavigableString):
-        return re.sub(r"\s+", " ", html_lib.unescape(str(node)))
+        # bs4 already decoded entities; escape tag-like text so it cannot become raw HTML.
+        return escape_html_text(re.sub(r"\s+", " ", str(node)))
     if not isinstance(node, Tag):
         return ""
     name = node.name.lower()
@@ -41,7 +42,8 @@ def render_inline(node: object, options: DomdownOptions) -> str:
 
         return render_link(node, options)
     if name in {"code", "kbd", "samp"}:
-        content = render_inline_children(node, options)
+        # Code spans render literally, so undo the text escaping applied to their children.
+        content = html_lib.unescape(render_inline_children(node, options))
         return f"`{content}`" if content else ""
     if name in {"strong", "b"}:
         content = render_inline_children(node, options)
@@ -62,7 +64,6 @@ def render_inline(node: object, options: DomdownOptions) -> str:
 def _normalize_inline_children(text: str) -> str:
     """Normalize inline content while preserving hard line breaks from <br>."""
 
-    text = html_lib.unescape(text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", "\n\n", text)
     text = re.sub(r"\n{3,}", "\n\n", text)

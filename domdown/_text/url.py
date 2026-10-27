@@ -1,11 +1,30 @@
 from __future__ import annotations
 
+import re
 from urllib.parse import urljoin, urlparse
+
+# Schemes that cannot execute script when a rendered Markdown link or image is followed.
+SAFE_URL_SCHEMES = frozenset({"", "http", "https", "mailto", "tel", "ftp"})
+
+
+def safe_url(url: str | None) -> str:
+    """Return the URL unless its scheme could run script (javascript:, vbscript:, data:, ...)."""
+
+    if not url:
+        return ""
+    # Browsers ignore ASCII whitespace/control characters when parsing the scheme.
+    probe = re.sub(r"[\x00-\x20\x7f]", "", str(url))
+    match = re.match(r"([A-Za-z][A-Za-z0-9+.-]*):", probe)
+    scheme = match.group(1).lower() if match else ""
+    if scheme in SAFE_URL_SCHEMES or (scheme == "data" and probe[5:].lower().startswith("image/")):
+        return str(url)
+    return ""
 
 
 def resolve_url(url: str | None, base_url: str | None) -> str:
-    """Resolve a possibly relative URL against an optional base URL."""
+    """Resolve a possibly relative URL against an optional base URL, dropping unsafe schemes."""
 
+    url = safe_url(url)
     if not url:
         return ""
     if base_url:

@@ -7,7 +7,13 @@ from bs4 import NavigableString, Tag
 
 from .._constants import SKIP_TAGS
 from .._core import DomdownOptions
-from .._text import normalize_inline_text, normalize_markdown_text
+from .._text import (
+    collapse_inline_text,
+    escape_html_text,
+    normalize_inline_text,
+    normalize_markdown_text,
+    safe_url,
+)
 from .code import render_code_block
 from .images import render_image
 from .inline import render_inline, render_inline_children
@@ -20,7 +26,7 @@ def render_block(node: object, options: DomdownOptions) -> str:
     """Render a single block-level HTML node to Markdown."""
 
     if isinstance(node, NavigableString):
-        return normalize_inline_text(str(node))
+        return escape_html_text(collapse_inline_text(str(node)))
     if not isinstance(node, Tag):
         return ""
     name = node.name.lower()
@@ -150,7 +156,7 @@ def render_explicit_definition_list(node: Tag, options: DomdownOptions) -> str:
             continue
         if name != "dd" or not current_term:
             continue
-        value = normalize_inline_text(render_container(child, options).replace("\n", " "))
+        value = collapse_inline_text(render_container(child, options).replace("\n", " "))
         if value:
             lines.append(f"- **{current_term}:** {value}")
         else:
@@ -258,7 +264,7 @@ def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str
         anchor = anchors[0]
         term = normalize_inline_text(anchor.get_text(" ", strip=True))
         if term and normalize_inline_text(node.get_text(" ", strip=True)) == term:
-            return term, _render_definition_anchor(anchor, term, options)
+            return escape_html_text(term), _render_definition_anchor(anchor, term, options)
 
     return None
 
@@ -266,7 +272,7 @@ def _parse_definition_item(node: Tag, options: DomdownOptions) -> tuple[str, str
 def _render_definition_anchor(anchor: Tag, text: str, options: DomdownOptions) -> str:
     """Render a definition-list anchor without leaking nested UI markup."""
 
-    href = str(anchor.get("href") or "").strip()
+    href = safe_url(str(anchor.get("href") or "").strip())
     title = str(anchor.get("title") or "").strip()
     try:
         if urlsplit(href).fragment:
@@ -343,9 +349,9 @@ def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
             if stripped.startswith("[[") and stripped.endswith("]]") and len(stripped) > 4:
                 rendered = stripped[2:-2].strip()
                 if rendered:
-                    parts.append(rendered)
+                    parts.append(escape_html_text(rendered))
                 continue
         rendered = render_inline(child, options)
         if rendered:
             parts.append(rendered)
-    return normalize_inline_text("".join(parts))
+    return collapse_inline_text("".join(parts))

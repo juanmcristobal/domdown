@@ -226,10 +226,23 @@ def _strip_markdown(
             lowered = stripped.lower()
             if lowered in normalized_leading_noise or lowered in normalized_noise_lines:
                 continue
-            if any(pattern.search(stripped) for pattern in compiled_noise_patterns):
+            if _search_any(compiled_noise_patterns, stripped):
                 continue
         cleaned.append(line)
     return _collapse_blank_lines(cleaned).strip()
+
+
+# Noise/boilerplate lines are short; longer lines are article content and are never
+# matched, which also bounds regex backtracking on attacker-controlled text.
+MAX_PATTERN_LINE_LENGTH = 1000
+
+
+def _search_any(patterns: tuple[re.Pattern[str], ...], line: str) -> bool:
+    """Return True when any configured noise pattern matches a reasonably short line."""
+
+    if len(line) > MAX_PATTERN_LINE_LENGTH:
+        return False
+    return any(pattern.search(line) for pattern in patterns)
 
 
 def _collapse_blank_lines(lines: list[str]) -> str:
@@ -308,7 +321,7 @@ def _trim_leading_blocks(lines: list[str], leading_block_patterns: tuple[str, ..
         if not stripped:
             index += 1
             continue
-        if any(pattern.search(stripped) for pattern in patterns):
+        if _search_any(patterns, stripped):
             index += 1
             continue
         break
@@ -389,7 +402,7 @@ def _is_noise_line(
         return True
     if lowered in trailing_noise_lines:
         return True
-    if any(pattern.search(line) for pattern in trailing_noise_patterns):
+    if _search_any(trailing_noise_patterns, line):
         return True
     return any(lowered.startswith(prefix.lower()) for prefix in trailing_noise_prefixes)
 
@@ -408,7 +421,7 @@ def _is_trailing_noise_line(
     return (
         lowered in trailing_noise_lines
         or any(lowered.startswith(prefix) for prefix in trailing_noise_prefixes)
-        or any(pattern.search(line) for pattern in trailing_noise_patterns)
+        or _search_any(trailing_noise_patterns, line)
     )
 
 
@@ -425,7 +438,7 @@ def _is_leading_noise_line(
         return True
     if any(lowered.startswith(prefix) for prefix in leading_noise_prefixes):
         return True
-    if any(pattern.search(line) for pattern in leading_noise_patterns):
+    if _search_any(leading_noise_patterns, line):
         return True
     return False
 

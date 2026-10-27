@@ -3,7 +3,7 @@ from __future__ import annotations
 from bs4 import Tag
 
 from .._core import DomdownOptions
-from .._text import normalize_inline_text
+from .._text import collapse_inline_text
 from .inline import render_inline
 
 
@@ -34,7 +34,7 @@ def render_list_item(
             rendered = render_inline(child, options)
             if rendered:
                 inline_parts.append(rendered)
-    head = normalize_inline_text("".join(inline_parts))
+    head = collapse_inline_text("".join(inline_parts))
     if not head and not nested_parts:
         return ""
     blocks = [f"{indent}{prefix} {head}".rstrip() if head else f"{indent}{prefix}"]

@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import json
+import re
+import time
 from dataclasses import dataclass, replace
-from urllib.parse import urljoin
-from urllib.request import Request, urlopen
+from urllib.parse import urljoin, urlsplit, urlunsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from bs4 import BeautifulSoup, Tag
 
 from .._core import PipelineContext
 
 GITHUB_SITE_NAME = "GitHub"
+GITHUB_HOST = "github.com"
 GITHUB_BASE_URL = "https://github.com"
+GITHUB_RELEASE_ASSETS_PATH = re.compile(r"^/[^/]+/[^/]+/releases/expanded_assets/[^?#]+$")
+GITHUB_FETCH_TIMEOUT = 10
+GITHUB_FETCH_MAX_BYTES = 2 * 1024 * 1024
 
 # Common GitHub chrome that should not survive into article-like output.
 GITHUB_REMOVE_SELECTORS = (
@@ -182,6 +188,49 @@ def _raw_blob_text(document: Tag | None) -> str:
     return ""
 
 
+def _release_assets_url(base_url: str | None, src: str) -> str | None:
+    """Return the fragment URL only when it is a GitHub release-assets endpoint.
+
+    The include-fragment src comes from untrusted HTML, so anything other than
+    https://github.com/<owner>/<repo>/releases/expanded_assets/<tag> is refused (SSRF guard).
+    """
+
+    try:
+        parts = urlsplit(urljoin(base_url or GITHUB_BASE_URL, src))
+        port = parts.port
+    except ValueError:
+        return None
+    if parts.scheme != "https" or parts.hostname != GITHUB_HOST or port is not None or parts.username is not None:
+        return None
+    if not GITHUB_RELEASE_ASSETS_PATH.match(parts.path):
+        return None
+    return urlunsplit(("https", GITHUB_HOST, parts.path, parts.query, ""))
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    """Refuse redirects so a validated GitHub URL cannot bounce to another host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, ANN201
+        return None
+
+
+def _fetch_release_assets(url: str) -> str:
+    """Fetch a release-assets fragment with a byte cap and a total deadline."""
+
+    opener = build_opener(_NoRedirectHandler)
+    request = Request(url, headers={"User-Agent": "domdown/1.0"})
+    deadline = time.monotonic() + GITHUB_FETCH_TIMEOUT
+    chunks: list[bytes] = []
+    size = 0
+    with opener.open(request, timeout=GITHUB_FETCH_TIMEOUT) as response:
+        while chunk := response.read(64 * 1024):
+            size += len(chunk)
+            if size > GITHUB_FETCH_MAX_BYTES or time.monotonic() > deadline:
+                raise OSError("release assets fragment exceeded size or time limit")
+            chunks.append(chunk)
+    return b"".join(chunks).decode("utf-8", errors="replace")
+
+
 def _expand_release_assets(document: Tag | None, base_url: str) -> None:
     """Inline GitHub's lazy-loaded release assets fragment into the release body."""
 
@@ -193,11 +242,11 @@ def _expand_release_assets(document: Tag | None, base_url: str) -> None:
     src = str(include_fragment.get("src", "")).strip()
     if not src:
         return
-    fragment_url = urljoin(base_url or GITHUB_BASE_URL, src)
+    fragment_url = _release_assets_url(base_url, src)
+    if fragment_url is None:
+        return
     try:
-        request = Request(fragment_url, headers={"User-Agent": "domdown/1.0"})
-        with urlopen(request, timeout=10) as response:
-            fragment_html = response.read().decode("utf-8", errors="replace")
+        fragment_html = _fetch_release_assets(fragment_url)
     except OSError:
         return
     fragment_document = BeautifulSoup(fragment_html, "html.parser")
