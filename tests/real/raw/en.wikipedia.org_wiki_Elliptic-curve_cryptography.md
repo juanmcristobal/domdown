@@ -12,7 +12,7 @@ Elliptic curves are applicable for [key agreement](https://en.wikipedia.org/wiki
 
 ## History
 
-| [![[icon]](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Wiki_letter_w_cropped.svg/40px-Wiki_letter_w_cropped.svg.png)](https://en.wikipedia.org/wiki/File:Wiki_letter_w_cropped.svg) | This section **needs expansion** with: a global view that expands coverage to include non-U.S. standards and standards bodies. You can help by [adding missing information](https://en.wikipedia.org/w/index.php?title=Elliptic-curve_cryptography&action=edit§ion=). |
+| [![[icon]](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Wiki_letter_w_cropped.svg/40px-Wiki_letter_w_cropped.svg.png)](https://en.wikipedia.org/wiki/File:Wiki_letter_w_cropped.svg) | This section **needs expansion** with: a global view that expands coverage to include non-U.S. standards and standards bodies. You can help by [adding missing information](https://en.wikipedia.org/w/index.php?title=Elliptic-curve_cryptography&action=edit&section=). |
 | --- | --- |
 
 The use of elliptic curves in cryptography was suggested independently by [Neal Koblitz](https://en.wikipedia.org/wiki/Neal_Koblitz)[[ 2 ]](#cite_note-2) and [Victor S. Miller](https://en.wikipedia.org/wiki/Victor_S._Miller)[[ 3 ]](#cite_note-3) in 1985. Elliptic curve cryptography algorithms entered wide use starting in 2004.

@@ -313,32 +313,38 @@ def _looks_like_author_card_block(node: Tag) -> bool:
     return len(node.find_all("button")) >= 1 or len(node.find_all("a")) >= 1
 
 
+def _count_card_like_children(node: Tag, headings: list[Tag], limit: int = 2) -> int:
+    """Count card-marked descendants of node that contain a heading, stopping at limit.
+
+    Walks upward from each heading once (visited ancestors are skipped), so the cost is
+    linear in the subtree instead of re-scanning every card's subtree.
+    """
+
+    seen: set[int] = set()
+    count = 0
+    for heading in headings:
+        parent = heading.parent
+        while isinstance(parent, Tag) and parent is not node and id(parent) not in seen:
+            seen.add(id(parent))
+            if any(token in _marker_text(parent) for token in ("card", "dyn-item")):
+                count += 1
+                if count >= limit:
+                    return count
+            parent = parent.parent
+    return count
+
+
 def _looks_like_article_feed_block(node: Tag) -> bool:
     """Detect compact blog-feed or related-article strips rendered as cards."""
 
     text = node.get_text(" ", strip=True).lower()
     if not text:
         return False
-    heading_count = len(node.find_all(["h1", "h2", "h3"]))
+    heading_count = len(headings := node.find_all(["h1", "h2", "h3"]))
     image_count = len(node.find_all("img"))
     text_words = len(text.split())
     marker_text = _marker_text(node)
-    card_like_children = sum(
-        1
-        for child in node.find_all(True)
-        if isinstance(child, Tag)
-        and child is not node
-        and (
-            any(
-                token in _marker_text(child)
-                for token in (
-                    "card",
-                    "dyn-item",
-                )
-            )
-        )
-        and len(child.find_all(["h1", "h2", "h3"])) >= 1
-    )
+    card_like_children = _count_card_like_children(node, headings)
     if "similar posts" in text and heading_count >= 2 and image_count >= 2 and text_words <= 260:
         return True
     if card_like_children >= 2 and heading_count >= 2 and image_count >= 2 and text_words <= 260:

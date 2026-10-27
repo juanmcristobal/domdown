@@ -3,7 +3,7 @@ from __future__ import annotations
 from bs4 import Tag
 
 from .._core import DomdownOptions
-from .._text import normalize_inline_text
+from .._text import collapse_inline_text
 from .inline import render_inline_children
 
 
@@ -54,7 +54,7 @@ def _iter_rows(node: Tag, options: DomdownOptions) -> list[tuple[list[str], bool
                 take_pending()
                 if cell.name == "th":
                     has_header_cells = True
-                value = _escape_table_cell(normalize_inline_text(render_inline_children(cell, options)))
+                value = _escape_table_cell(collapse_inline_text(render_inline_children(cell, options)))
                 colspan = _positive_span(cell.get("colspan"))
                 rowspan = _positive_span(cell.get("rowspan"))
                 cells.append(value)

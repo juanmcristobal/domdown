@@ -113,7 +113,7 @@ The next function shows the stealer‘s capability to execute multiple secondary
 
 Figure 10: Switch case function for secondary payloads
 
-Rather than invoking rundll32.exe through its legitimate DLL export interface (rundll32.exe <dll>, <export>), the malware employs process hollowing. It first spawns rundll32.exe in a suspended state using the **CREATE_SUSPENDED** flag, injects the malicious payload, overwrites its primary thread’s instruction pointer and resumes the thread to effectively bypass the process’s original entry point.
+Rather than invoking rundll32.exe through its legitimate DLL export interface (rundll32.exe &lt;dll>, &lt;export>), the malware employs process hollowing. It first spawns rundll32.exe in a suspended state using the **CREATE_SUSPENDED** flag, injects the malicious payload, overwrites its primary thread’s instruction pointer and resumes the thread to effectively bypass the process’s original entry point.
 
 [![](https://blog.gdatasoftware.com/fileadmin/web/general/images/blog/2026/03/Figure_11_Process_Hollowing_function.png)](https://blog.gdatasoftware.com/fileadmin/web/general/images/blog/2026/03/Figure_11_Process_Hollowing_function.png)
 

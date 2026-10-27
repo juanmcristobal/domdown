@@ -27,6 +27,6 @@ def test_format_scalar_and_tag_handle_empty_and_multiline_values() -> None:
     """Empty and multiline values should be quoted explicitly."""
 
     assert format_scalar("") == '""'
-    assert format_scalar(" line break\nvalue ") == '" line break\nvalue "'
+    assert format_scalar(" line break\nvalue ") == '" line break\\nvalue "'
     assert format_tag("") == '""'
-    assert format_tag("two\nlines") == '"two\nlines"'
+    assert format_tag("two\nlines") == '"two\\nlines"'

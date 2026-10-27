@@ -3,14 +3,14 @@ from __future__ import annotations
 from bs4 import Tag
 
 from .._core import DomdownOptions
-from .._text import resolve_url
+from .._text import escape_html_text, resolve_url
 
 
 def render_link(node: Tag, options: DomdownOptions) -> str:
     """Render an anchor tag while preserving linked images when present."""
 
     href = resolve_url(node.get("href"), options.base_url)
-    content = node.get_text(" ", strip=True)
+    content = escape_html_text(node.get_text(" ", strip=True))
     if not content:
         image = node.find("img")
         if image is not None:

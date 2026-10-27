@@ -45,9 +45,9 @@ def _resolve_url(url: str | None, base_url: str | None, explicit_base_url: bool)
     if not url:
         return ""
     if not base_url:
-        return url
+        return resolve_url(url, None)
     if not explicit_base_url and not str(url).startswith("/"):
-        return url
+        return resolve_url(url, None)
     return resolve_url(url, base_url)
 
 
