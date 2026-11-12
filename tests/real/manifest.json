@@ -213,6 +213,13 @@
       "html": "html/dragos_threat_voltzite.html",
       "markdown": "raw/dragos_threat_voltzite.md",
       "description": "Threat profile page with heading-led sections and nested lists."
+    },
+    {
+      "id": "bleepingcomputer_november_2026_patch_tuesday",
+      "html": "html/bleepingcomputer.com_microsoft_november_2026_patch_tuesday.html",
+      "markdown": "raw/bleepingcomputer.com_microsoft_november_2026_patch_tuesday.md",
+      "base_url": "https://www.bleepingcomputer.com/news/microsoft/microsoft-november-2026-patch-tuesday-fixes-1-235-flaws-outlook-zero-day/",
+      "description": "BleepingComputer Patch Tuesday article with a 1,343-row vulnerability table and a trailing comments section."
     }
   ]
 }

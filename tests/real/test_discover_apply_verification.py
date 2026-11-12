@@ -100,6 +100,22 @@ def test_raw_discover_json_replay_is_exact(case_id: str, monkeypatch: pytest.Mon
     assert len(json.dumps(first.trace.to_dict())) < len(raw)
 
 
+def test_bleepingcomputer_patch_tuesday_keeps_vulnerability_catalog() -> None:
+    """A large link-dense CVE table must not make the comments win root selection."""
+    case = CASES["bleepingcomputer_november_2026_patch_tuesday"]
+    pipeline = _pipeline(case.id)
+    result = pipeline.run(case.html_text())
+
+    cleaned = BeautifulSoup(result.cleaned_html, "lxml")
+    assert result.criteria.include == ("div.articleBody",)
+    assert cleaned.select_one(".articleBody") is not None
+    assert len(cleaned.select(".articleBody tr")) >= 1300
+    assert "1,235 flaws" in result.document
+    assert "CVE-2026-124194" in result.document
+    assert "jmwoods" not in result.document
+    assert "ZeroYourHero" not in result.document
+
+
 def test_real_socket_criteria_edits_remove_restore_change_root_unwrap_and_replace() -> None:
     case = CASES["socket_jscrambler_supply_chain_attack"]
     html = case.html_text()
@@ -165,7 +181,7 @@ def test_github_release_is_marked_non_replayable_without_frozen_external_resourc
 
 def test_real_corpus_feature_coverage_and_securelist_absence() -> None:
     raw_paths = list((Path(__file__).parent / "html").glob("*.html"))
-    assert len(raw_paths) == len(CASES) == 33
+    assert len(raw_paths) == len(CASES) == 34
     corpus = "\n".join(path.read_text(encoding="utf-8") for path in raw_paths)
     soup = BeautifulSoup(corpus, "lxml")
     assert soup.find("table") is not None

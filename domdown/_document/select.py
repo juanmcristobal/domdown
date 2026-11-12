@@ -435,6 +435,11 @@ def _score_content(tag: Tag) -> float:
     positive += len(tag.find_all("li")) * 2.5
     positive += len(tag.find_all("blockquote")) * 3.0
     positive += len(tag.find_all("table")) * 6.0
+    # Long data tables are substantive article content even when most cells
+    # link to primary references (e.g. vulnerability catalogs). Count rows so
+    # their markup/link volume does not make the surrounding article lose to
+    # a short comments or navigation block.
+    positive += min(len(tag.find_all("tr")), 1500) * 1.0
     positive += len(tag.find_all("img")) * 3.0
     positive += len(tag.find_all(["pre", "code"])) * 2.0
     positive += min(len(text) / 400.0, 12.0)
