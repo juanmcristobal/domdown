@@ -227,6 +227,13 @@
       "markdown": "raw/chainstack.com_security_incident_nov_2026.md",
       "base_url": "https://chainstack.com/security-incident-nov-2026/",
       "description": "Chainstack incident post with a header promo menu and related-article modules around the editorial body."
+    },
+    {
+      "id": "oracle_cpu_october_2026",
+      "html": "html/oracle.com_cpu_october_2026.html",
+      "markdown": "raw/oracle.com_cpu_october_2026.md",
+      "base_url": "https://www.oracle.com/security-alerts/cpuoct2026.html",
+      "description": "Oracle Critical Patch Update with many risk-matrix tables and a product availability table nested in layout wrappers."
     }
   ]
 }

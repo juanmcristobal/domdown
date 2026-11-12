@@ -392,6 +392,33 @@ def test_definition_list_helpers_fall_back_for_small_or_nested_blocks() -> None:
     assert render_definition_list(soup.div, DomdownOptions()) == "Only one:\n\nItem\n\nTwo:\n\nItem"
 
 
+def test_definition_list_heuristic_does_not_flatten_wrapped_tables() -> None:
+    """Tables inside layout wrappers should retain their rows, columns, and Markdown links."""
+
+    rows = "".join(
+        f'<tr><td>Product {index}</td><td><a href="https://example.com/{index}">Patch {index}</a></td></tr>'
+        for index in range(1, 52)
+    )
+    soup = BeautifulSoup(
+        f"""
+        <div class="otable-w1">
+          <table>
+            <thead><tr><th>Product</th><th>Patch availability</th></tr></thead>
+            <tbody>{rows}</tbody>
+          </table>
+        </div>
+        """,
+        "lxml",
+    )
+
+    rendered = render_block(soup.div, DomdownOptions())
+
+    assert rendered.startswith("| Product | Patch availability |\n| --- | --- |")
+    assert "| Product 1 | [Patch 1](https://example.com/1) |" in rendered
+    assert "| Product 51 | [Patch 51](https://example.com/51) |" in rendered
+    assert "<a href=" not in rendered
+
+
 def test_definition_list_anchor_with_malformed_url_falls_back_to_text() -> None:
     """Malformed URLs in metadata anchors should not crash markdown rendering."""
 

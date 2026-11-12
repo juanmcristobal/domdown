@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import replace
 from pathlib import Path
+import re
 
 import pytest
 from bs4 import BeautifulSoup
@@ -129,6 +130,22 @@ def test_chainstack_incident_post_ignores_header_menu_and_related_articles() -> 
     assert "UniWhales" not in result.document
 
 
+def test_oracle_cpun_table_keeps_product_columns_and_cves() -> None:
+    """Wrapped Oracle tables must stay tables instead of becoming definition lists."""
+    case = CASES["oracle_cpu_october_2026"]
+    raw = case.html_text()
+    result = _pipeline(case.id).run(raw)
+    cleaned = BeautifulSoup(result.cleaned_html, "lxml")
+
+    assert len(cleaned.find_all("table")) == 35
+    assert len(cleaned.find_all("tr")) == 1495
+    assert sum(line.startswith("|") for line in result.markdown.splitlines()) == 1530
+    assert "| Affected Products and Versions | Patch Availability Document |" in result.markdown
+    assert "[Helidon](https://support.oracle.com/support/?documentId=CPU375)" in result.markdown
+    assert '<a href="https://support.oracle.com/support/?documentId=CPU375">' not in result.markdown
+    assert len(re.findall(r"CVE-\d{4}-\d+", result.markdown)) == len(re.findall(r"CVE-\d{4}-\d+", raw))
+
+
 def test_real_socket_criteria_edits_remove_restore_change_root_unwrap_and_replace() -> None:
     case = CASES["socket_jscrambler_supply_chain_attack"]
     html = case.html_text()
@@ -194,7 +211,7 @@ def test_github_release_is_marked_non_replayable_without_frozen_external_resourc
 
 def test_real_corpus_feature_coverage_and_securelist_absence() -> None:
     raw_paths = list((Path(__file__).parent / "html").glob("*.html"))
-    assert len(raw_paths) == len(CASES) == 35
+    assert len(raw_paths) == len(CASES) == 36
     corpus = "\n".join(path.read_text(encoding="utf-8") for path in raw_paths)
     soup = BeautifulSoup(corpus, "lxml")
     assert soup.find("table") is not None

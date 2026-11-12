@@ -171,6 +171,8 @@ def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
 
     if _contains_email_protection(node):
         return False
+    if any(len(table.find_all("tr")) > 50 for table in node.find_all("table")):
+        return False
     if any(
         isinstance(child, Tag)
         and child.name.lower() in {"p", "ul", "figure", "blockquote", "pre", "h1", "h2", "h3", "h4", "h5", "h6"}
