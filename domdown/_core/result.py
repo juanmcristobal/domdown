@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .metadata import HtmlMetadata
+from .criteria import ExtractionCriteria, ExtractionTrace
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,3 +16,5 @@ class HtmlToMarkdownResult:
     frontmatter: str | None = None
     document: str | None = None
     warnings: tuple[str, ...] = ()
+    criteria: ExtractionCriteria | None = None
+    trace: ExtractionTrace | None = None

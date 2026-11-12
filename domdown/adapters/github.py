@@ -65,6 +65,15 @@ class GitHubAdapter:
 
         return _site_name(context.document) == GITHUB_SITE_NAME
 
+    def criteria_limitations(self, context: PipelineContext) -> tuple[str, ...]:
+        if (
+            _page_kind(context.document) == "release"
+            and context.document is not None
+            and context.document.select_one("include-fragment[src*='/releases/expanded_assets/']") is not None
+        ):
+            return ("GitHub release assets are fetched externally; exact replay requires the same frozen fragment resource.",)
+        return ()
+
     def preprocess(self, context: PipelineContext) -> PipelineContext:
         """Normalize GitHub-specific source resolution and remove common chrome."""
 
@@ -75,10 +84,36 @@ class GitHubAdapter:
         _remove_selectors(context.document, GITHUB_REMOVE_SELECTORS + GITHUB_REPOSITORY_REMOVE_SELECTORS)
         return context
 
+    def preprocess_for_criteria(self, context: PipelineContext) -> PipelineContext:
+        context.options = replace(
+            context.options,
+            base_url=context.options.base_url or GITHUB_BASE_URL,
+        )
+        return context
+
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:
         """Refine metadata and, for blob pages, narrow the document to file contents."""
 
         kind = _page_kind(context.document)
+        explicit = context.extraction_criteria is not None and not context.extraction_criteria.has_recorded_replay
+        if explicit:
+            if kind == "blob":
+                raw_text = _raw_blob_text(context.document)
+                if raw_text:
+                    blob_soup = BeautifulSoup("", "html.parser")
+                    pre = blob_soup.new_tag("pre", attrs={"class": "domdown-blob-code"})
+                    code = blob_soup.new_tag("code")
+                    code.string = raw_text
+                    pre.append(code)
+                    blob_soup.append(pre)
+                    context.document = blob_soup
+            elif kind == "release":
+                _expand_release_assets(context.document, context.options.base_url or GITHUB_BASE_URL)
+            if kind == "issue":
+                issue_author = _meta_content(context.document, "meta[property='og:author:username']")
+                if issue_author and context.metadata is not None:
+                    context.metadata = replace(context.metadata, author=(issue_author,))
+            return context
         if kind == "blob":
             raw_text = _raw_blob_text(context.document)
             if raw_text:
@@ -103,6 +138,8 @@ class GitHubAdapter:
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Normalize GitHub-specific rendered output after the core pipeline."""
 
+        if context.extraction_criteria is not None and not context.extraction_criteria.has_recorded_replay:
+            return context
         if _page_kind(context.document) == "blob":
             raw_text = _raw_blob_text(context.document)
             if raw_text:

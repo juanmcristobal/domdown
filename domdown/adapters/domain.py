@@ -64,6 +64,10 @@ class DeclarativeDomainAdapter:
         _remove_selectors(context.document, self.spec.remove_selectors)
         return context
 
+    def preprocess_for_criteria(self, context: PipelineContext) -> PipelineContext:
+        """Do not apply adapter extraction filters when explicit criteria owns selection."""
+        return context
+
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:
         """Keep the generic metadata path unless a domain needs custom handling."""
 
@@ -71,6 +75,9 @@ class DeclarativeDomainAdapter:
 
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Apply generic Markdown cleanup rules configured for the domain."""
+
+        if context.extraction_criteria is not None and not context.extraction_criteria.has_recorded_replay:
+            return context
 
         context.markdown = _strip_markdown(
             context.markdown,

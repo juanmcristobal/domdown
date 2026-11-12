@@ -20,5 +20,6 @@ def test_html_to_markdown_signature_is_html_first() -> None:
 
     signature = inspect.signature(domdown.html_to_markdown)
 
-    assert list(signature.parameters) == ["html", "options"]
+    assert list(signature.parameters) == ["html", "options", "criteria"]
+    assert signature.parameters["criteria"].kind is inspect.Parameter.KEYWORD_ONLY
     assert signature.parameters["html"].annotation is str

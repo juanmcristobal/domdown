@@ -7,13 +7,21 @@ from bs4 import Comment, NavigableString, Tag
 from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
 
 
-def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str], preserve_chrome: bool = False) -> Tag:
+def clean_root(
+    root: Tag,
+    remove_selectors: tuple[str, ...],
+    skip_tags: set[str],
+    preserve_chrome: bool = False,
+    *,
+    apply_extraction_heuristics: bool = True,
+) -> Tag:
     """Remove obvious noise and normalize lazy-loaded images in place."""
 
-    for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
-        comment.extract()
+    if apply_extraction_heuristics:
+        for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
+            comment.extract()
 
-    for text_node in list(root.find_all(string=True)):
+    for text_node in list(root.find_all(string=True)) if apply_extraction_heuristics else ():
         if (
             isinstance(text_node, NavigableString)
             and _looks_like_template_placeholder(str(text_node))
@@ -25,7 +33,7 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         for node in root.select(selector):
             node.decompose()
 
-    if not preserve_chrome:
+    if not preserve_chrome and apply_extraction_heuristics:
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
                 continue
