@@ -116,6 +116,19 @@ def test_bleepingcomputer_patch_tuesday_keeps_vulnerability_catalog() -> None:
     assert "ZeroYourHero" not in result.document
 
 
+def test_chainstack_incident_post_ignores_header_menu_and_related_articles() -> None:
+    """A large header menu must not outscore the editorial article body."""
+    case = CASES["chainstack_security_incident_nov_2026"]
+    result = _pipeline(case.id).run(case.html_text())
+
+    assert "Chainstack is committed to the security of our platform" in result.markdown
+    assert "An external attacker gained unauthorized access" in result.markdown
+    assert "Rotate the node credentials" in result.markdown
+    assert "Log in" not in result.document
+    assert "Smart contract Frameworks – Foundry vs Hardhat" not in result.document
+    assert "UniWhales" not in result.document
+
+
 def test_real_socket_criteria_edits_remove_restore_change_root_unwrap_and_replace() -> None:
     case = CASES["socket_jscrambler_supply_chain_attack"]
     html = case.html_text()
@@ -181,7 +194,7 @@ def test_github_release_is_marked_non_replayable_without_frozen_external_resourc
 
 def test_real_corpus_feature_coverage_and_securelist_absence() -> None:
     raw_paths = list((Path(__file__).parent / "html").glob("*.html"))
-    assert len(raw_paths) == len(CASES) == 34
+    assert len(raw_paths) == len(CASES) == 35
     corpus = "\n".join(path.read_text(encoding="utf-8") for path in raw_paths)
     soup = BeautifulSoup(corpus, "lxml")
     assert soup.find("table") is not None

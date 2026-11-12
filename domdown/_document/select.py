@@ -202,6 +202,14 @@ def _root_candidate_penalty(candidate: Tag) -> float:
     """Penalize generic layout wrappers when selecting the top-level shell."""
 
     penalty = 0.0
+    if candidate.name == "main":
+        main_text_length = len(candidate.get_text(" ", strip=True))
+        largest_article_length = max(
+            (len(article.get_text(" ", strip=True)) for article in candidate.find_all("article")),
+            default=0,
+        )
+        if main_text_length and largest_article_length / main_text_length >= 0.65:
+            penalty -= 60.0
     if _looks_like_toc_sidebar(candidate):
         penalty -= 250.0
     if _looks_like_page_shell(candidate):
@@ -539,8 +547,12 @@ def _looks_like_chrome(tag: Tag) -> bool:
     id_text = str(tag.get("id", "")).lower()
     marker_text = f"{class_text} {id_text}".strip()
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
-    exact_layout_markers = {"sidebar", "footer", "nav", "promo", "has-sidebar", "wp-block-list"}
+    exact_layout_markers = {"sidebar", "footer", "header", "nav", "promo", "has-sidebar", "wp-block-list"}
+    if tag.name in {"header", "nav"}:
+        return True
     if any(token.startswith("sidebar") or token.startswith("widget") for token in marker_tokens):
+        return True
+    if any(token == "menu" or token.endswith("-menu") or token.startswith("menu-") for token in marker_tokens):
         return True
     if marker_tokens & exact_layout_markers:
         return True
