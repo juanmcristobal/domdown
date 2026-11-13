@@ -7,6 +7,7 @@ from domdown._pipeline import HtmlToMarkdownPipeline
 from domdown.adapters import (
     CensysAdapter,
     CyberScoopEditorialAdapter,
+    DarkReadingAdapter,
     RailwayAdapter,
     SecurityAffairsAdapter,
     SecurityWeekAdapter,
@@ -97,6 +98,10 @@ def test_the_register_toplists_are_removed_after_root_selection() -> None:
         <div class="toplist"><h2>TOP STORIES</h2>
           <p>Unrelated recommended story.</p>
         </div>
+        <section class="related"><h2>Related stories</h2>
+          <article><h3>Another unrelated story</h3></article>
+        </section>
+        <div class="google-ad">REG AD</div>
       </main>
     </body></html>
     """
@@ -111,8 +116,76 @@ def test_the_register_toplists_are_removed_after_root_selection() -> None:
     context = adapter.post_clean(context)
 
     assert context.document.select_one(".toplist") is None
+    assert context.document.select_one("section.related") is None
+    assert context.document.select_one(".google-ad") is None
     assert "Editorial article title" in context.document.get_text(" ", strip=True)
     assert "References and findings belonging to the article remain intact." in context.document.get_text(" ", strip=True)
+
+
+def test_dark_reading_removes_author_bio_and_topic_tags() -> None:
+    html = """
+    <html><head><meta property="og:url" content="https://www.darkreading.com/example" /></head>
+    <body><div class="TwoColumnLayout-Content"><div class="ArticleBase-Body">
+      <h1>Article title</h1><p>Editorial body remains with its technical details.</p>
+      <div class="ArticleBase-ContributorsWrapper">
+        <h2 class="ArticleBase-ContributorsTitle">About the Author</h2>
+        <div class="ContributorSummary-InfoWrapper">
+          <p class="ContributorSummary-Title">Elizabeth Montalbano</p>
+          <p class="ContributorSummary-SubTitle">Contributing Writer</p>
+          <div class="ContributorSummary-ContentWrapper"><p>Long author biography text to remove.</p></div>
+          <div class="ContributorSummary-SeeMore"><a>See more from Elizabeth</a></div>
+        </div>
+      </div>
+      <div class="ArticleBase-More">Read more about: DR Global Europe</div>
+    </div></div></body></html>
+    """
+
+    result = HtmlToMarkdownPipeline(adapters=(DarkReadingAdapter(),)).run(html)
+
+    assert "Editorial body remains" in result.markdown
+    assert "About the Author" not in result.markdown
+    assert "Elizabeth Montalbano" not in result.markdown
+    assert "Long author biography text" not in result.markdown
+    assert "See more from Elizabeth" not in result.markdown
+    assert "Read more about" not in result.markdown
+
+
+def test_security_affairs_removes_social_footer_and_keeps_author_attribution() -> None:
+    html = """
+    <html><head><meta property="og:url" content="https://securityaffairs.com/example" /></head>
+    <body><div class="article-details-block">
+      <h1>Article title</h1><p>Editorial article body remains.</p>
+      <p><strong>Follow me on Twitter:</strong> <a href="https://twitter.com/securityaffairs">@securityaffairs</a>
+        and <a href="https://www.facebook.com/sec.affairs">Facebook</a></p>
+      <p><a href="https://www.linkedin.com/pub/example">Author attribution</a></p>
+    </div></body></html>
+    """
+
+    result = HtmlToMarkdownPipeline(adapters=(SecurityAffairsAdapter(),)).run(html)
+
+    assert "Editorial article body remains." in result.markdown
+    assert "Follow me on Twitter" not in result.markdown
+    assert "@securityaffairs" not in result.markdown
+    assert "Author attribution" in result.markdown
+
+
+def test_securityweek_removes_embedded_ad_after_root_selection() -> None:
+    html = """
+    <html><head><meta property="og:url" content="https://www.securityweek.com/example" /></head>
+    <body><main id="zox-site"><article><h1>Article title</h1>
+      <p>Editorial article body remains.</p>
+      <div class="zox-post-ad-wrap"><span>Advertisement. Scroll to continue reading.</span>
+        <div class="zox-post-ad"><script>ad code</script></div>
+      </div>
+    </article></main></body></html>
+    """
+
+    result = HtmlToMarkdownPipeline(adapters=(SecurityWeekAdapter(),)).run(html)
+
+    assert "Article title" in result.markdown
+    assert "Editorial article body remains." in result.markdown
+    assert "Advertisement. Scroll to continue reading." not in result.cleaned_html
+    assert "Advertisement. Scroll to continue reading." not in result.markdown
 
 
 def test_cyberscoop_removes_advertisement_and_google_stickybar() -> None:

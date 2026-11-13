@@ -9,6 +9,7 @@ from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_ada
 from .editorial import (
     CensysAdapter,
     CyberScoopEditorialAdapter,
+    DarkReadingAdapter,
     RailwayAdapter,
     SecurityAffairsAdapter,
     SecurityWeekAdapter,
@@ -30,6 +31,7 @@ __all__ = [
     "CyberSecurityNewsAdapter",
     "CyberScoopEditorialAdapter",
     "CensysAdapter",
+    "DarkReadingAdapter",
     "DailySecuAdapter",
     "DeclarativeDomainAdapter",
     "DomainAdapterSpec",

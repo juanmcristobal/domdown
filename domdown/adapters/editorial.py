@@ -1,14 +1,24 @@
 from __future__ import annotations
 
-from .domain import DomainAdapterSpec, make_domain_adapter
+from bs4 import Tag
+
+from .._core import PipelineContext
+from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
 
 
 THE_REGISTER_SPEC = DomainAdapterSpec(
     name="the-register",
     host_exact=("theregister.com",),
-    post_clean_selectors=(".toplist",),
+    post_clean_selectors=(".toplist", "section.related", ".google-ad"),
 )
 TheRegisterAdapter = make_domain_adapter(THE_REGISTER_SPEC)
+
+DARK_READING_SPEC = DomainAdapterSpec(
+    name="dark-reading",
+    host_exact=("darkreading.com",),
+    post_clean_selectors=(".ArticleBase-ContributorsWrapper", ".ArticleBase-More"),
+)
+DarkReadingAdapter = make_domain_adapter(DARK_READING_SPEC)
 
 SECURITYWEEK_SPEC = DomainAdapterSpec(
     name="securityweek",
@@ -19,6 +29,7 @@ SECURITYWEEK_SPEC = DomainAdapterSpec(
         ".zox-post-cat-link",
         ".zox-search-cont",
     ),
+    post_clean_selectors=(".zox-post-ad-wrap",),
 )
 SecurityWeekAdapter = make_domain_adapter(SECURITYWEEK_SPEC)
 
@@ -27,7 +38,29 @@ SECURITY_AFFAIRS_SPEC = DomainAdapterSpec(
     host_exact=("securityaffairs.com",),
     remove_selectors=(".right-sidebar",),
 )
-SecurityAffairsAdapter = make_domain_adapter(SECURITY_AFFAIRS_SPEC)
+
+
+class SecurityAffairsAdapter(DeclarativeDomainAdapter):
+    """Remove the source's social follow footer while retaining author details."""
+
+    def __init__(self) -> None:
+        super().__init__(spec=SECURITY_AFFAIRS_SPEC)
+
+    def post_clean(self, context: PipelineContext) -> PipelineContext:
+        """Drop only the paragraph that promotes the Security Affairs social accounts."""
+
+        context = super().post_clean(context)
+        document = context.document
+        if document is None:
+            return context
+        for paragraph in list(document.find_all("p")):
+            text = " ".join(paragraph.stripped_strings).casefold()
+            if text.startswith("follow me on twitter:"):
+                paragraph.decompose()
+        if context.document is not None:
+            context.cleaned_html = str(context.document)
+        return context
+
 
 CYBERSCOOP_SPEC = DomainAdapterSpec(
     name="cyberscoop",
