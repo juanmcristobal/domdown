@@ -410,7 +410,7 @@ def _looks_like_toc_sidebar(candidate: Tag) -> bool:
     marker_text = " ".join(
         [str(token).lower() for token in (candidate.get("class") or ())]
         + ([str(candidate.get("id", "")).lower()] if candidate.get("id") else [])
-    )
+    ).replace("toc-visible", "tocvisible")
     has_toc_markers = any(token in marker_text for token in ("toc", "table-of-contents", "table_of_contents")) or (
         "table of contents" in text
     )
@@ -728,7 +728,7 @@ def _looks_like_chrome(tag: Tag) -> bool:
     classes = tag.get("class", []) if isinstance(tag.get("class"), list) else [str(tag.get("class", ""))]
     class_text = " ".join(classes).lower()
     id_text = str(tag.get("id", "")).lower()
-    marker_text = f"{class_text} {id_text}".strip()
+    marker_text = f"{class_text} {id_text}".strip().replace("toc-visible", "tocvisible")
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
     exact_layout_markers = {"sidebar", "footer", "header", "nav", "promo", "has-sidebar", "wp-block-list"}
     if tag.name in {"header", "nav"}:

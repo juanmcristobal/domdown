@@ -661,7 +661,7 @@ def _looks_like_promo_banner_block(node: Tag, text_getter: Callable[[], str] | N
 def _looks_like_navigation_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact navigation, breadcrumb, and language-picker blocks."""
 
-    marker_text = _marker_text(node)
+    marker_text = _marker_text(node).replace("toc-visible", "tocvisible")
     if any(
         marker in marker_text
         for marker in ("breadcrumb", "breadcrumbs", "translation", "translations", "menu", "nav", "toc", "socials")
@@ -843,10 +843,13 @@ def _noise_tokens(classes: tuple[str, ...] | list[str] | tuple[object, ...], ide
         if not token:
             continue
         tokens.add(token)
-        tokens.update(part for part in re.split(r"[^a-z0-9]+", token) if part)
+        split_token = token.replace("toc-visible", "tocvisible")
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", split_token) if part)
     if identifier:
+        identifier = identifier.lower()
         tokens.add(identifier)
-        tokens.update(part for part in re.split(r"[^a-z0-9]+", identifier) if part)
+        split_identifier = identifier.replace("toc-visible", "tocvisible")
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", split_identifier) if part)
     return tokens
 
 
