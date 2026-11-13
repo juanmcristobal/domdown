@@ -7,13 +7,7 @@ from bs4 import NavigableString, Tag
 
 from .._constants import SKIP_TAGS
 from .._core import DomdownOptions
-from .._text import (
-    collapse_inline_text,
-    escape_html_text,
-    normalize_inline_text,
-    normalize_markdown_text,
-    safe_url,
-)
+from .._text import collapse_inline_text, escape_html_text, normalize_inline_text, normalize_markdown_text, safe_url
 from .code import render_code_block
 from .images import render_image
 from .inline import render_inline, render_inline_children
@@ -83,12 +77,13 @@ def _join_block_parts(parts: list[tuple[str, bool]]) -> str:
 
     if not parts:
         return ""
-    rendered, previous_is_list = parts[0]
+    rendered_parts = [parts[0][0]]
+    previous_is_list = parts[0][1]
     for part, current_is_list in parts[1:]:
         separator = "\n" if previous_is_list and current_is_list else "\n\n"
-        rendered = f"{rendered}{separator}{part}"
+        rendered_parts.extend((separator, part))
         previous_is_list = current_is_list
-    return rendered
+    return "".join(rendered_parts)
 
 
 def _is_list_block_node(node: object, options: DomdownOptions) -> bool:

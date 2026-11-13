@@ -53,7 +53,7 @@ lint: ## check style with flake8 and fix with Black
 	python -m flake8 domdown tests
 
 test: ## run tests quickly with the default Python
-	python -m pytest tests/
+	python scripts/run_tests_parallel.py tests/
 
 test-all: ## run tests on every Python version with tox in docker
 	docker run -v .:/app domdown-test:latest

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import soupsieve
 from bs4 import BeautifulSoup, Tag
 
 from .._constants import (
@@ -9,6 +10,10 @@ from .._constants import (
     REFINABLE_CHILD_TAGS,
     ROOT_SELECTORS,
 )
+
+_SCORE_HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
+_SCORE_PRE_CODE_TAGS = frozenset({"pre", "code"})
+_SCORE_INTERACTIVE_TAGS = frozenset({"a", "button", "form", "iframe", "input", "select", "textarea"})
 
 
 def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
@@ -100,24 +105,32 @@ def _collect_root_candidates(soup: BeautifulSoup, selectors: tuple[str, ...]) ->
     """Collect the best candidate subtree for each matching shell."""
 
     candidates: dict[int, tuple[Tag, float, int]] = {}
-    for selector_index, selector in enumerate(selectors):
-        for root in soup.select(selector):
-            if not isinstance(root, Tag) or _looks_like_chrome(root):
-                continue
-            selector_weight = _root_selector_weight(selector)
-            root_entry = (root, selector_weight * 0.9, selector_index)
-            previous = candidates.get(id(root))
-            if previous is None or (root_entry[1], -root_entry[2]) > (previous[1], -previous[2]):
-                candidates[id(root)] = root_entry
+    best_content_by_root: dict[int, Tag] = {}
+    chrome_by_node: dict[int, bool] = {}
+    for selector_index, root in _select_in_selector_order(soup, selectors):
+        root_id = id(root)
+        if root_id not in chrome_by_node:
+            chrome_by_node[root_id] = _looks_like_chrome(root)
+        if chrome_by_node[root_id]:
+            continue
+        selector_weight = _root_selector_weight(selectors[selector_index])
+        root_entry = (root, selector_weight * 0.9, selector_index)
+        previous = candidates.get(root_id)
+        if previous is None or (root_entry[1], -root_entry[2]) > (previous[1], -previous[2]):
+            candidates[root_id] = root_entry
 
-            candidate = _best_content_subtree(root)
-            if not isinstance(candidate, Tag) or _looks_like_chrome(candidate):
-                continue
-            candidate_id = id(candidate)
-            subtree_entry = (candidate, selector_weight, selector_index)
-            previous = candidates.get(candidate_id)
-            if previous is None or (subtree_entry[1], -subtree_entry[2]) > (previous[1], -previous[2]):
-                candidates[candidate_id] = subtree_entry
+        if root_id not in best_content_by_root:
+            best_content_by_root[root_id] = _best_content_subtree(root)
+        candidate = best_content_by_root[root_id]
+        candidate_id = id(candidate)
+        if candidate_id not in chrome_by_node:
+            chrome_by_node[candidate_id] = _looks_like_chrome(candidate)
+        if chrome_by_node[candidate_id]:
+            continue
+        subtree_entry = (candidate, selector_weight, selector_index)
+        previous = candidates.get(candidate_id)
+        if previous is None or (subtree_entry[1], -subtree_entry[2]) > (previous[1], -previous[2]):
+            candidates[candidate_id] = subtree_entry
     return list(candidates.values())
 
 
@@ -131,12 +144,80 @@ def _collect_candidates(
     if root.name in container_names:
         candidates.append((root, tier - 1, -1))
         seen.add(id(root))
-    for selector_index, selector in enumerate(selectors):
-        for node in root.select(selector):
-            if isinstance(node, Tag) and node.name in container_names and id(node) not in seen:
-                candidates.append((node, tier, selector_index))
-                seen.add(id(node))
+    for selector_index, node in _select_in_selector_order(root, selectors):
+        if node.name in container_names and id(node) not in seen:
+            candidates.append((node, tier, selector_index))
+            seen.add(id(node))
     return candidates
+
+
+def _select_in_selector_order(root: Tag, selectors: tuple[str, ...]) -> list[tuple[int, Tag]]:
+    """Select matching tags in the selector and document order used by repeated select calls."""
+
+    if not selectors:
+        return []
+    matches_by_selector: list[list[Tag]] = [[] for _ in selectors]
+    class_selectors: dict[str, list[int]] = {}
+    id_selectors: dict[str, list[int]] = {}
+    tag_selectors: dict[str, list[int]] = {}
+    role_selectors: dict[str, list[int]] = {}
+    tag_class_selectors: dict[str, list[tuple[int, str]]] = {}
+    class_substrings: list[tuple[int, str]] = []
+    id_substrings: list[tuple[int, str]] = []
+    fallback_selectors: list[tuple[int, str]] = []
+    for selector_index, selector in enumerate(selectors):
+        if selector.startswith("[class*='") and selector.endswith("']"):
+            class_substrings.append((selector_index, selector[len("[class*='") : -2]))
+        elif selector.startswith("[id*='") and selector.endswith("']"):
+            id_substrings.append((selector_index, selector[len("[id*='") : -2]))
+        elif selector.startswith("[role='") and selector.endswith("']"):
+            role_selectors.setdefault(selector[len("[role='") : -2], []).append(selector_index)
+        elif selector.startswith("#"):
+            id_selectors.setdefault(selector[1:], []).append(selector_index)
+        elif selector.startswith("."):
+            class_selectors.setdefault(selector[1:], []).append(selector_index)
+        elif "." in selector:
+            tag_name, class_name = selector.split(".", 1)
+            tag_class_selectors.setdefault(tag_name, []).append((selector_index, class_name))
+        elif selector.isalpha():
+            tag_selectors.setdefault(selector.lower(), []).append(selector_index)
+        else:
+            fallback_selectors.append((selector_index, selector))
+
+    for node in root.descendants:
+        if not isinstance(node, Tag):
+            continue
+        tag_name = node.name
+        for selector_index in tag_selectors.get(tag_name, ()):
+            matches_by_selector[selector_index].append(node)
+        raw_classes = node.get("class") or ()
+        classes = raw_classes if isinstance(raw_classes, (list, tuple)) else str(raw_classes).split()
+        for class_name in set(classes):
+            for selector_index in class_selectors.get(str(class_name), ()):
+                matches_by_selector[selector_index].append(node)
+        identifier = str(node.get("id") or "")
+        for selector_index in id_selectors.get(identifier, ()):
+            matches_by_selector[selector_index].append(node)
+        role = node.get("role")
+        if isinstance(role, str):
+            for selector_index in role_selectors.get(role, ()):
+                matches_by_selector[selector_index].append(node)
+        for selector_index, class_name in tag_class_selectors.get(tag_name, ()):
+            if class_name in classes:
+                matches_by_selector[selector_index].append(node)
+        if class_substrings:
+            class_value = " ".join(str(value) for value in classes)
+            for selector_index, value in class_substrings:
+                if value in class_value:
+                    matches_by_selector[selector_index].append(node)
+        if id_substrings:
+            for selector_index, value in id_substrings:
+                if value in identifier:
+                    matches_by_selector[selector_index].append(node)
+        for selector_index, selector in fallback_selectors:
+            if soupsieve.match(selector, node):
+                matches_by_selector[selector_index].append(node)
+    return [(selector_index, node) for selector_index, matches in enumerate(matches_by_selector) for node in matches]
 
 
 def _collect_direct_candidates(root: Tag, container_names: set[str], tier: int) -> list[tuple[Tag, int, int]]:
@@ -505,19 +586,53 @@ def _score_content(tag: Tag) -> float:
     marker_text = f"{class_text} {id_text}"
     marker_tokens = {token for token in class_text.split() if token} | ({id_text} if id_text else set())
 
+    paragraph_count = 0
+    heading_count = 0
+    list_item_count = 0
+    blockquote_count = 0
+    table_count = 0
+    row_count = 0
+    image_count = 0
+    pre_code_count = 0
+    interactive_count = 0
+    descendant_count = 0
+    for descendant in tag.descendants:
+        if not isinstance(descendant, Tag):
+            continue
+        descendant_count += 1
+        name = descendant.name
+        if name == "p":
+            paragraph_count += 1
+        elif name in _SCORE_HEADING_TAGS:
+            heading_count += 1
+        elif name == "li":
+            list_item_count += 1
+        elif name == "blockquote":
+            blockquote_count += 1
+        elif name == "table":
+            table_count += 1
+        elif name == "tr":
+            row_count = min(row_count + 1, 1500)
+        elif name == "img":
+            image_count += 1
+        elif name in _SCORE_PRE_CODE_TAGS:
+            pre_code_count += 1
+        if name in _SCORE_INTERACTIVE_TAGS:
+            interactive_count += 1
+
     positive = 0.0
-    positive += len(tag.find_all("p")) * 4.0
-    positive += len(tag.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])) * 5.0
-    positive += len(tag.find_all("li")) * 2.5
-    positive += len(tag.find_all("blockquote")) * 3.0
-    positive += len(tag.find_all("table")) * 6.0
+    positive += paragraph_count * 4.0
+    positive += heading_count * 5.0
+    positive += list_item_count * 2.5
+    positive += blockquote_count * 3.0
+    positive += table_count * 6.0
     # Long data tables are substantive article content even when most cells
     # link to primary references (e.g. vulnerability catalogs). Count rows so
     # their markup/link volume does not make the surrounding article lose to
     # a short comments or navigation block.
-    positive += min(len(tag.find_all("tr")), 1500) * 1.0
-    positive += len(tag.find_all("img")) * 3.0
-    positive += len(tag.find_all(["pre", "code"])) * 2.0
+    positive += row_count * 1.0
+    positive += image_count * 3.0
+    positive += pre_code_count * 2.0
     positive += min(len(text) / 400.0, 12.0)
 
     if any(
@@ -550,7 +665,7 @@ def _score_content(tag: Tag) -> float:
         positive += 4.0
 
     noise = 0.0
-    noise += len(tag.find_all(["a", "button", "form", "iframe", "input", "select", "textarea"])) * 0.3
+    noise += interactive_count * 0.3
     if "row" in marker_tokens:
         noise += 8.0
     if any(
@@ -588,7 +703,7 @@ def _score_content(tag: Tag) -> float:
         )
     ):
         noise += 10.0
-    noise += len(tag.find_all(True)) * 0.08
+    noise += descendant_count * 0.08
 
     return positive - noise
 
@@ -628,9 +743,7 @@ def _looks_like_chrome(tag: Tag) -> bool:
         return True
     if _looks_like_tag_cloud(tag, marker_text):
         return True
-    is_semantic_notice = tag.name in {"article", "main"} and any(
-        token.startswith("notice-") for token in marker_tokens
-    )
+    is_semantic_notice = tag.name in {"article", "main"} and any(token.startswith("notice-") for token in marker_tokens)
     return any(
         marker in marker_text
         for marker in NOISE_MARKERS
