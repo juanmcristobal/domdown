@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Cloud Incident Investigation</title>
+    <meta property="og:url" content="https://example.test/blog/cloud-incident" />
+  </head>
+  <body>
+    <nav class="site-navigation">
+      <a href="/">Home</a><a href="/products">Products</a>
+      <a href="/blog">Blog</a><a href="/company">Company</a>
+    </nav>
+    <section class="hero-cta">
+      <h2>Get a demo</h2>
+      <p>See how the platform protects your organization.</p>
+      <a href="/demo">Contact us</a>
+    </section>
+    <div class="article-page">
+      <header>
+        <a href="/blog">Blog</a>
+        <h1>Cloud Incident Investigation</h1>
+        <p>Published October 2026</p>
+      </header>
+      <main>
+        <article>
+          <p>Investigators identified unauthorized access after reviewing cloud audit records. The activity began with a compromised service credential and expanded through an over-permissioned role. Analysts confirmed the sequence across independent accounts and preserved the original timestamps for later validation.</p>
+          <p>The first affected system exposed configuration data but did not contain customer secrets. Responders rotated the credential, disabled the unused trust relationship, and reviewed every role assumption made during the investigation window. External reporting from <a href="https://security.example.org/report">the incident response team</a> corroborated the observed timeline and remains a primary reference for the event.</p>
+          <h1>Indicators and response</h1>
+          <p>Detection rules should flag the unusual principal, source network, and sequence of API calls together. A single event can be legitimate during maintenance, so analysts should compare the caller identity with approved change records before escalating an alert.</p>
+          <p>During containment, responders preserved snapshots of relevant audit events and compared them with deployment records. This helped separate approved automation from the unauthorized sequence and made it possible to scope the investigation without disabling unrelated production services.</p>
+          <p>Follow-up review found that two legacy integrations still trusted a broad account principal. The team replaced those policies with named role identifiers, added an approval requirement for new trust relationships, and scheduled periodic reviews of unused permissions.</p>
+          <ul><li>Rotate credentials associated with the affected integration.</li><li>Restrict cross-account trust to named principals.</li><li>Review object access logs for the same time window.</li></ul>
+          <figure>
+            <img src="https://images.example.test/cloud-access-flow.png" alt="Diagram showing the vendor role and affected cloud account" />
+            <figcaption>The observed access path between the vendor and customer account.</figcaption>
+          </figure>
+          <figure>
+            <img src="data:image/png;base64,BBBB" alt="Credential validation flow" />
+            <noscript><img src="https://images.example.test/credential-validation.png" alt="Credential validation flow" /></noscript>
+            <figcaption>Credential validation performed after access was confirmed.</figcaption>
+          </figure>
+          <img src="data:image/png;base64,AAAA" alt="" />
+          <table>
+            <thead><tr><th>Indicator</th><th>Observed value</th><th>Action</th></tr></thead>
+            <tbody><tr><td>Role assumption</td><td>VendorIntegrationRole</td><td>Validate the principal</td></tr><tr><td>Source address</td><td>198.51.100.42</td><td>Compare with allowlists</td></tr></tbody>
+          </table>
+          <pre><code>aws sts get-caller-identity</code></pre>
+        </article>
+        <div class="author-profile">
+          <h2>About the author</h2>
+          <p>Jordan Example is a security researcher who writes about cloud investigations and incident response.</p>
+          <a href="/authors/jordan">Author profile</a><a href="https://social.example.test/jordan">Follow Jordan</a>
+        </div>
+      </main>
+      <section class="recommendations">
+        <h2>Continue reading</h2>
+        <article><h3>Unrelated story one</h3><p>More details about another topic.</p></article>
+        <article><h3>Unrelated story two</h3><p>Additional information about another topic.</p></article>
+      </section>
+      <section class="customer-testimonials">
+        <h2>What customers say</h2><blockquote>Our team loves this product.</blockquote>
+      </section>
+      <section class="newsletter-form"><h2>Stay informed</h2><form><input name="email" /></form></section>
+      <footer><p>Copyright 2026 Example. All rights reserved.</p><a href="/privacy">Privacy</a></footer>
+    </div>
+  </body>
+</html>

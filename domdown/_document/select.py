@@ -19,6 +19,9 @@ def choose_root(soup: BeautifulSoup, prefer_article_body: bool = True) -> Tag:
     if candidates:
         candidate = _pick_best_root_candidate(candidates)
         if candidate is not None:
+            title_context = _detached_title_context(candidate)
+            if title_context is not None:
+                return title_context
             return _refine_content_root(candidate)
     if isinstance(soup.body, Tag):
         return _refine_content_root(_best_content_subtree(soup.body))
@@ -65,6 +68,8 @@ def _refine_content_root(root: Tag, max_depth: int = 4) -> Tag:
                     if deeper_words >= 20 and deeper_words >= candidate_words * 0.6:
                         candidate = deeper_candidate
         if candidate is current:
+            break
+        if _has_detached_title(current, candidate):
             break
         if candidate.name in {"p", "li", "span"}:
             break
@@ -182,10 +187,20 @@ def _collect_dense_descendants(
 def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag | None:
     """Return the best root candidate across all shell matches."""
 
+    articles = {
+        id(candidate): candidate
+        for candidate, _, _ in candidates
+        if candidate.name == "article" and _is_substantive_article(candidate)
+    }
+    unique_article_id = next(iter(articles)) if len(articles) == 1 else None
+
     ranked = sorted(
         candidates,
         key=lambda item: (
-            _score_content(item[0]) + item[1] + _root_candidate_penalty(item[0]),
+            _score_content(item[0])
+            + item[1]
+            + _root_candidate_penalty(item[0])
+            + (350.0 if id(item[0]) == unique_article_id else 0.0),
             len(item[0].get_text(" ", strip=True)),
             -item[2],
         ),
@@ -196,6 +211,59 @@ def _pick_best_root_candidate(candidates: list[tuple[Tag, float, int]]) -> Tag |
         if not _looks_like_chrome(candidate):
             return candidate
     return None
+
+
+def _is_substantive_article(candidate: Tag) -> bool:
+    """Recognize a semantic article with enough editorial structure to be decisive."""
+
+    word_count = len(candidate.get_text(" ", strip=True).split())
+    paragraph_count = len(candidate.find_all("p"))
+    structured_blocks = len(candidate.find_all(["table", "pre", "blockquote", "ul", "ol"]))
+    return word_count >= 250 and (paragraph_count >= 4 or structured_blocks >= 2)
+
+
+def _has_detached_title(root: Tag, content: Tag) -> bool:
+    """Keep a short H1 sibling when refinement would otherwise discard the page title."""
+
+    headings = root.find_all("h1")
+    if len(headings) != 1 or headings[0] in content.descendants:
+        return False
+    heading = headings[0]
+    title_branch = heading
+    while isinstance(title_branch.parent, Tag) and title_branch.parent is not root:
+        title_branch = title_branch.parent
+    if title_branch.parent is not root or len(title_branch.get_text(" ", strip=True).split()) > 160:
+        return False
+    return _is_substantive_article(content)
+
+
+def _detached_title_context(candidate: Tag) -> Tag | None:
+    """Include a compact preceding H1 when the site stores it beside the article body."""
+
+    has_internal_heading = candidate.find("h1") is not None
+    heading = candidate.find_previous("h1") or candidate.find_next("h1")
+    if not isinstance(heading, Tag) or candidate in heading.parents:
+        return None
+    if has_internal_heading and not any(
+        isinstance(parent, Tag) and parent.name == "header" for parent in heading.parents
+    ):
+        return None
+    candidate_ancestors = {id(node): node for node in candidate.parents if isinstance(node, Tag)}
+    common: Tag | None = heading
+    while common is not None and id(common) not in candidate_ancestors:
+        common = common.parent if isinstance(common.parent, Tag) else None
+    if common is None or common.name in {"body", "html", "[document]"}:
+        return None
+    title_branch = heading
+    while isinstance(title_branch.parent, Tag) and title_branch.parent is not common:
+        title_branch = title_branch.parent
+    if title_branch.parent is not common or len(title_branch.get_text(" ", strip=True).split()) > 160:
+        return None
+    candidate_words = len(candidate.get_text(" ", strip=True).split())
+    common_words = len(common.get_text(" ", strip=True).split())
+    if candidate_words < 150 or common_words > candidate_words * 1.5 + 100:
+        return None
+    return common
 
 
 def _root_candidate_penalty(candidate: Tag) -> float:

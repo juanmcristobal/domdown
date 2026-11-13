@@ -11,6 +11,8 @@ author:
 published: "2026-11-03T09:17:33+00:00"
 description: "Incident report: what happened, what was exposed, and why we ask customers to change passwords and rotate node credentials"
 ---
+# Incident report: what happened and what customers need to do
+
 __Chainstack is committed to the security of our platform and the protection of our customers’ data. In keeping with that commitment to transparency, we are sharing the details of a recent security incident.__
 
 ### **What happened**
@@ -47,3 +49,11 @@ We are notifying all customers by email and asking them to:
 This page is the single source of truth for the incident. We will update it if new information becomes available.
 
 If you have any further questions, [contact us](https://chainstack.com/cdn-cgi/l/email-protection#41323431312e333501222920282f323520222a6f222e2c).
+
+SHARE THIS ARTICLE
+
+[![Blog Twitter logo](https://chainstack.com/wp-content/themes/chainstack/img/blog-twitter.svg)](https://twitter.com/intent/tweet?text=Incident report: what happened and what customers need to do-&url=https%3A%2F%2Fchainstack.com%2Fsecurity-incident-nov-2026%2F&via=Chainstack)
+
+[![Blog Linkedin logo](https://chainstack.com/wp-content/themes/chainstack/img/blog-linkedin.svg)](https://www.linkedin.com/sharing/share-offsite/?mini=true&url=https%3A%2F%2Fchainstack.com%2Fsecurity-incident-nov-2026%2F)
+
+[![Blog Facebook logo](https://chainstack.com/wp-content/themes/chainstack/img/blog-facebook.svg)](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fchainstack.com%2Fsecurity-incident-nov-2026%2F)

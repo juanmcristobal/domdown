@@ -108,7 +108,7 @@ def test_bleepingcomputer_patch_tuesday_keeps_vulnerability_catalog() -> None:
     result = pipeline.run(case.html_text())
 
     cleaned = BeautifulSoup(result.cleaned_html, "lxml")
-    assert result.criteria.include == ("div.articleBody",)
+    assert result.criteria.include == ("div.article_section",)
     assert cleaned.select_one(".articleBody") is not None
     assert len(cleaned.select(".articleBody tr")) >= 1300
     assert "1,235 flaws" in result.document

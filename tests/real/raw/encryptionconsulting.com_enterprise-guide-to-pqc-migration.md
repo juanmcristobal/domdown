@@ -217,7 +217,3 @@ Transitioning to [post-quantum cryptography](https://www.youtube.com/watch?v=_xz
 Whether you’re still figuring out where to start or you’re ready to dive into implementation, the most important thing is to take that first step and keep the momentum going. And if you are looking for a partner to walk that path with you, we are here.
 
 At Encryption Consulting, we are ready to help you move forward with clarity, confidence, and a plan that fits your goals. Let us get started and make sure your organization is secure, not just for today, but for what is next.
-
-## Explore
-
-## More Topics

@@ -10,6 +10,24 @@ author:
   - "isfinne"
 description: The Trivy supply-chain compromise has been contained 🎉 . All affected packages have been deleted and current releases are free of the compromised code/component. Please refer to our Security Townhall for a deeper understanding of the pro...
 ---
+# [Security]: litellm PyPI package (v1.82.7 + v1.82.8) compromised — full timeline and status #24518
+
+Open
+
+Open
+
+[[Security]: litellm PyPI package (v1.82.7 + v1.82.8) compromised — full timeline and status](https://github.com#top)
+
+#24518
+
+Labels
+
+[llm translation](https://github.com/BerriAI/litellm/issues?q=state%3Aopen%20label%3A%22llm%20translation%22)
+
+[![@isfinne](https://avatars.githubusercontent.com/u/56512981?u=c00ca0d1e354f5252951968ccacacd93efe1d565&v=4&size=80)](https://github.com/isfinne)
+
+## Description
+
 ## The Trivy supply-chain compromise has been contained 🎉 . All affected packages have been deleted and current releases are free of the compromised code/component. Please refer to our [Security Townhall](https://docs.litellm.ai/blog/security-townhall-updates) for a deeper understanding of the problem, and [CI/CD v2](https://docs.litellm.ai/blog/ci-cd-v2-improvements) for how we're improving moving forward.
 
 [LITELLM TEAM UPDATES]
@@ -78,3 +96,5 @@ The exfiltration domain `litellm.cloud` (NOT the official `litellm.ai`) was regi
 - Hacker News: [https://news.ycombinator.com/item?id=47501729](https://news.ycombinator.com/item?id=47501729)
 - Attacker's exfil domain WHOIS: registered 2026-03-23, Spaceship Inc., privacy-protected
 - `litellm_init.pth` SHA256: `ceNa7wMJnNHy1kRnNCcwJaFjWX3pORLfMh7xGL8TUjg`
+
+Reactions are currently unavailable

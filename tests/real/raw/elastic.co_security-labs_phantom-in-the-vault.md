@@ -8,6 +8,18 @@ image: "https://www.elastic.co/security-labs/assets/images/phantom-in-the-vault/
 published: "2026-04-14T00:00:00.000Z"
 description: "Elastic Security Labs uncovers a novel social engineering campaign that abuses the popular note-taking application, Obsidian's legitimate community plugin ecosystem. The campaign, which we track as REF6598, targets individuals in the financial and cryptocurrency sectors through elaborate social engineering on LinkedIn and Telegram."
 ---
+# Phantom in the vault: Obsidian abused to deliver PhantomPulse RAT
+
+Elastic Security Labs uncovers a novel social engineering campaign that abuses the popular note-taking application, Obsidian's legitimate community plugin ecosystem. The campaign, which we track as REF6598, targets individuals in the financial and cryptocurrency sectors through elaborate social engineering on LinkedIn and Telegram.
+
+14 min read
+
+[Malware Analysis](https://www.elastic.co/security-labs/category/malware-analysis)
+
+,
+
+[Threat Intelligence](https://www.elastic.co/security-labs/category/threat-intelligence)
+
 > A follow-up publication will provide a deeper technical analysis of PHANTOMPULSE itself, covering its injection engines, persistence internals, and C2 protocol in greater detail.
 
 ## Preamble
@@ -475,3 +487,13 @@ The following observables were discussed in this research.
 | `0xc117688c530b660e15085bF3A2B664117d8672aA` | crypto-wallet |  | Ethereum wallet for blockchain C2 resolution |
 | `0x38796B8479fDAE0A72e5E7e326c87a637D0Cbc0E` | crypto-wallet |  | Funding wallet for C2 resolution wallet |
 | `thoroughly-publisher-troy-clara[.]trycloudflare[.]com` | domain-name |  | Prior PhantomPulse C2 (Cloudflare Tunnel) |
+
+#### Share this article
+
+[X](https://twitter.com/intent/tweet?text=Phantom in the vault: Obsidian abused to deliver PhantomPulse RAT&url=https://www.elastic.co/security-labs/phantom-in-the-vault)
+
+[Facebook](https://www.facebook.com/sharer/sharer.php?u=https://www.elastic.co/security-labs/phantom-in-the-vault)
+
+[LinkedIn](https://www.linkedin.com/shareArticle?mini=true&url=https://www.elastic.co/security-labs/phantom-in-the-vault&title=Phantom in the vault: Obsidian abused to deliver PhantomPulse RAT)
+
+[Reddit](https://reddit.com/submit?url=https://www.elastic.co/security-labs/phantom-in-the-vault&title=Phantom in the vault: Obsidian abused to deliver PhantomPulse RAT)

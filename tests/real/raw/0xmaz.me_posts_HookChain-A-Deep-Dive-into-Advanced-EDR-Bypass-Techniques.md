@@ -11,6 +11,8 @@ description: "HookChain is a novel technique aimed at bypassing Endpoint Detecti
 tags:
   - Evasion
 ---
+# HookChain: A Deep Dive into Advanced EDR Bypass Techniques
+
 **HookChain** is a novel technique aimed at bypassing Endpoint Detection and Response (EDR) solutions by leveraging low-level Windows APIs and manipulating how system calls interact with user-mode hooks. To better understand how HookChain operates, let’s dive deeper into the technical aspects with real-world examples.
 
 ## The Mechanics of Function Hooking and EDR Monitoring
@@ -156,3 +158,9 @@ In the end, cybersecurity is a game of cat-and-mouse, and as defenders adapt to 
 > - **Extended Injection Techniques**: Beyond IAT hooking, this work explores methods like process hollowing, DLL hollowing, and Reflective DLL Injection, extending the original research to encompass a broader range of evasion techniques.
 
 > These extensions demonstrate a commitment to pushing past the limitations of the initial approach, making the technique even more robust and resilient against evolving endpoint detection strategies.
+
+This post is licensed under
+
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+
+by the author.

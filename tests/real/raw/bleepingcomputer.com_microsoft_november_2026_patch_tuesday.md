@@ -17,6 +17,12 @@ tags:
   - Windows
   - Zero-Day
 ---
+# Microsoft November 2026 Patch Tuesday fixes 1,235 flaws, Outlook zero-day
+
+By
+
+- [2](https://www.bleepingcomputer.com/news/microsoft/microsoft-november-2026-patch-tuesday-fixes-1-235-flaws-outlook-zero-day/#comments)
+
 ![Patch Tuesday](https://www.bleepstatic.com/content/hl-images/2024/10/08/patch_tuesday_microsoft.jpg)
 
 Today is Microsoft's November 2026 Patch Tuesday, with security updates addressing a record-breaking 1,235 flaws, including one actively exploited Microsoft Outlook zero-day vulnerability.
@@ -24,8 +30,6 @@ Today is Microsoft's November 2026 Patch Tuesday, with security updates addressi
 This Patch Tuesday addresses 66 "Critical" vulnerabilities, 48 of which are Remote Code Execution (RCE), 15 are Elevation of Privilege (EoP), and three are Use-After-Free in Microsoft Edge.
 
 The approximate number of bugs in each vulnerability category is listed below:
-
-[![image](https://www.bleepstatic.com/c/w/AITR-Playbook.jpg)](https://www.wiz.io/lp/ai-threat-readiness-playbook?utm_source=bleepingcomputer&utm_medium=display&utm_campaign=FY27Q2_INB_FORM_AI-Threat-Readiness-Playbook&sfcid=701Vh00000cnU0lIAE&utm_term=FY27Q4-bleepingcomputer-970x250-Nov&utm_content=AITR-Playbook)
 
 - 536 Elevation of Privilege Vulnerabilities
 - 27 Security Feature Bypass Vulnerabilities

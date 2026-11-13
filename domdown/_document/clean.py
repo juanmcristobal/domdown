@@ -33,11 +33,17 @@ def clean_root(
         for node in root.select(selector):
             node.decompose()
 
+    _promote_image_fallbacks(root)
     if not preserve_chrome and apply_extraction_heuristics:
+        _mark_detached_article_title(root)
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
                 continue
             if _is_within_preserved_block(node):
+                continue
+            if node.get("data-domdown-primary-title") == "true":
+                if node.parent is root:
+                    _remove_pre_title_navigation(node, root)
                 continue
             if _looks_like_hero_chrome(node):
                 node.decompose()
@@ -49,6 +55,15 @@ def clean_root(
                 node.decompose()
                 continue
             if _looks_like_cta_block(node):
+                node.decompose()
+                continue
+            if _looks_like_author_profile_block(node):
+                node.decompose()
+                continue
+            if _looks_like_testimonial_block(node):
+                node.decompose()
+                continue
+            if _looks_like_form_module(node):
                 node.decompose()
                 continue
             if _looks_like_author_card_block(node):
@@ -70,6 +85,9 @@ def clean_root(
                 node.decompose()
 
         _remove_structural_chrome(root)
+
+    for node in root.find_all(attrs={"data-domdown-primary-title": "true"}):
+        node.attrs.pop("data-domdown-primary-title", None)
 
     for node in list(root.find_all(skip_tags)):
         node.decompose()
@@ -161,6 +179,9 @@ def _remove_article_header_cluster(root: Tag) -> None:
 def _looks_like_header_block(node: Tag) -> bool:
     """Detect top-of-article blocks that repeat title, byline, or date metadata."""
 
+    if node.get("data-domdown-primary-title") == "true":
+        return False
+
     marker_text = _marker_text(node)
     if any(marker in marker_text for marker in HEADER_MARKERS):
         return True
@@ -171,6 +192,83 @@ def _looks_like_header_block(node: Tag) -> bool:
     text_words = len(node.get_text(" ", strip=True).split())
     paragraph_count = len(node.find_all("p"))
     return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
+
+
+def _mark_detached_article_title(root: Tag) -> None:
+    """Protect a compact detached H1 when its sibling carries the editorial body."""
+
+    headings = root.find_all("h1")
+    for heading in headings:
+        title_branch: Tag = heading
+        while isinstance(title_branch.parent, Tag) and title_branch.parent is not root:
+            title_branch = title_branch.parent
+        if title_branch.parent is not root or len(title_branch.get_text(" ", strip=True).split()) > 160:
+            continue
+
+        has_substantial_sibling = False
+        for sibling in root.find_all(recursive=False):
+            if not isinstance(sibling, Tag) or sibling is title_branch or heading in sibling.descendants:
+                continue
+            words = len(sibling.get_text(" ", strip=True).split())
+            structured_blocks = len(sibling.find_all(["table", "pre", "blockquote", "ul", "ol"]))
+            if words >= 250 and (len(sibling.find_all("p")) >= 4 or structured_blocks >= 2):
+                has_substantial_sibling = True
+                break
+        if not has_substantial_sibling:
+            continue
+
+        current: Tag | None = heading
+        while current is not None and current is not root:
+            current["data-domdown-primary-title"] = "true"
+            current = current.parent if isinstance(current.parent, Tag) else None
+        return
+
+
+def _remove_pre_title_navigation(header: Tag, root: Tag) -> None:
+    """Remove small link-only breadcrumbs before a preserved article title."""
+
+    heading = header.find("h1")
+    if not isinstance(heading, Tag):
+        return
+    current: Tag = heading
+    while current is not root:
+        for sibling in list(current.previous_siblings):
+            if not isinstance(sibling, Tag):
+                continue
+            links = len(sibling.find_all("a")) + int(sibling.name == "a")
+            words = len(sibling.get_text(" ", strip=True).split())
+            has_editorial_structure = sibling.find(["p", "h1", "h2", "h3", "table", "pre", "blockquote"]) is not None
+            if links and links <= 5 and words <= 35 and not has_editorial_structure:
+                sibling.decompose()
+        if not isinstance(current.parent, Tag):
+            break
+        current = current.parent
+
+
+def _promote_image_fallbacks(root: Tag) -> None:
+    """Use a non-inline image source from noscript fallbacks before removing them."""
+
+    for image in root.find_all("img"):
+        if image.find_parent("noscript") is not None:
+            continue
+        source = str(image.get("src") or "")
+        if source and not source.lower().startswith("data:image/"):
+            continue
+        figure = image.find_parent("figure")
+        if not isinstance(figure, Tag):
+            continue
+        fallback = next(
+            (
+                item
+                for item in figure.select("noscript img")
+                if (item.get("src") or "") and not str(item.get("src")).lower().startswith("data:image/")
+            ),
+            None,
+        )
+        if isinstance(fallback, Tag):
+            image["src"] = fallback["src"]
+            if not image.get("alt") and fallback.get("alt"):
+                image["alt"] = fallback["alt"]
 
 
 def _looks_like_metadata_bar(node: Tag) -> bool:
@@ -321,6 +419,45 @@ def _looks_like_author_card_block(node: Tag) -> bool:
     return len(node.find_all("button")) >= 1 or len(node.find_all("a")) >= 1
 
 
+def _looks_like_author_profile_block(node: Tag) -> bool:
+    """Remove author biographies and profile cards while preserving short bylines."""
+
+    marker_tokens = _noise_tokens(node.get("class") or (), str(node.get("id") or ""))
+    if not marker_tokens & {"author", "bio", "profile", "contributor"}:
+        return False
+    if node.find(["table", "pre", "code", "blockquote"]):
+        return False
+    text = node.get_text(" ", strip=True).lower()
+    if len(text.split()) > 350:
+        return False
+    has_profile_signals = (
+        node.find("img") is not None
+        or len(node.find_all("p")) >= 2
+        or any(phrase in text for phrase in ("about the author", "author bio", "biography", "follow "))
+        or (len(node.find_all("a")) >= 3 and len(text.split()) > 35)
+    )
+    return has_profile_signals and len(text.split()) > 16
+
+
+def _looks_like_testimonial_block(node: Tag) -> bool:
+    """Remove customer testimonial modules without treating editorial quotes as boilerplate."""
+
+    marker_text = _marker_text(node)
+    if not any(marker in marker_text for marker in ("testimonial", "customer-quote", "customer_quote")):
+        return False
+    return len(node.get_text(" ", strip=True).split()) <= 500 and node.find(["table", "pre", "code"]) is None
+
+
+def _looks_like_form_module(node: Tag) -> bool:
+    """Drop compact wrappers around interactive forms, keeping editorial prose intact."""
+
+    if node.name in {"article", "main"} or node.find("form") is None:
+        return False
+    if node.find(["table", "pre", "code", "blockquote"]) is not None:
+        return False
+    return len(node.get_text(" ", strip=True).split()) <= 180 and len(node.find_all("p")) <= 1
+
+
 def _count_card_like_children(node: Tag, headings: list[Tag], limit: int = 2) -> int:
     """Count card-marked descendants of node that contain a heading, stopping at limit.
 
@@ -365,6 +502,7 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
                 for phrase in (
                     "latest",
                     "related",
+                    "continue reading",
                     "similar posts",
                     "more from",
                     "you may also like",
@@ -384,6 +522,9 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
             "more from",
             "you may also like",
             "recommended",
+            "continue reading",
+            "more stories",
+            "read next",
         )
     ):
         return text_words <= 30
@@ -408,10 +549,16 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
     link_count = len(node.find_all("a"))
     button_count = len(node.find_all("button"))
     marker_text = _marker_text(node)
-    if len(text.split()) > 80:
-        return False
-    cta_phrases = (
+    specific_cta_phrases = (
         "book a demo",
+        "get a demo",
+        "request a demo",
+        "schedule a demo",
+        "contact us",
+        "talk to sales",
+        "ready to see",
+    )
+    cta_phrases = specific_cta_phrases + (
         "act now",
         "star on github",
         "start free",
@@ -426,7 +573,17 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
     )
     if not any(phrase in text for phrase in cta_phrases):
         return False
+    has_specific_cta = any(phrase in text for phrase in specific_cta_phrases)
+    max_words = 90 if has_specific_cta else 40
+    if len(text.split()) > max_words:
+        return False
     if link_count + button_count < 1:
+        return False
+    has_button_like_link = any(
+        any("button" in str(token).lower() or str(token).lower().endswith("btn") for token in (link.get("class") or ()))
+        for link in node.find_all("a")
+    )
+    if has_specific_cta and heading_count == 0 and button_count == 0 and not has_button_like_link:
         return False
     if "login" in text and any(phrase in text for phrase in ("act now", "sign up", "register now", "start free")):
         return True
@@ -438,7 +595,7 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
         return True
     if "intro" in marker_text:
         return False
-    return heading_count <= 2 and paragraph_count <= 3 and len(text.split()) <= 40
+    return heading_count <= 2 and paragraph_count <= 3 and len(text.split()) <= max_words
 
 
 def _looks_like_navigation_block(node: Tag) -> bool:
@@ -486,6 +643,8 @@ def _looks_like_date_kicker(node: Tag) -> bool:
 def _looks_like_footer_block(node: Tag) -> bool:
     """Detect compact footer/legal blocks that should not appear in article output."""
 
+    if node.name.lower() == "footer":
+        return True
     text = node.get_text(" ", strip=True).lower()
     if not text:
         return False

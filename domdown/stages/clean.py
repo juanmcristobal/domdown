@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup, Tag
 from .._constants import DEFAULT_REMOVE_SELECTORS, JS_SHELL_PHRASES, SKIP_TAGS
 from .._core import PipelineContext
 from .._document import choose_root, clean_root
+from .._document.clean import _promote_image_fallbacks
 from .._core import CriteriaError, ExtractionCriteria, ExtractionTrace
 
 
@@ -64,6 +65,7 @@ class CleanStage:
             root = _find_node_by_id(document, context.node_ids, criteria.root_node_id)
             if root is None:
                 raise CriteriaError(f"Criteria document root {criteria.root_node_id} does not exist in this HTML")
+            _promote_image_fallbacks(root)
             retained = set(criteria.retained_node_ids)
             for node in list(root.find_all(True)):
                 node_id = context.node_ids.get(id(node))

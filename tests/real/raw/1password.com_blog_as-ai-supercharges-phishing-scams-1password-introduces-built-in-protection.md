@@ -168,8 +168,6 @@ The goal of 1Password’s new anti-phishing feature is to give users – whether
 
 _1Password conducted this study using an online survey prepared by_[KW Research](https://www.kelseywhiteresearch.com/)_and distributed by_[PureSpectrum](https://www.purespectrum.com/)_, completed by n=2,000 American adults. Within employees, a range of role types, seniority, and industries are represented. Data was collected from September 29 to October 2, 2025._
 
-## Continue Reading
-
 [November 5, 2025 Survey: Holiday scammers are getting bolder with AI, and Americans are taking the bait](/blog/holiday-phishing-scams)
 
 [News](/blog/categories/news)
