@@ -4,7 +4,7 @@ source: "https://www.bleepingcomputer.com/news/microsoft/microsoft-november-2026
 site_name: BleepingComputer
 canonical_url: "https://www.bleepingcomputer.com/news/microsoft/microsoft-november-2026-patch-tuesday-fixes-1-235-flaws-outlook-zero-day/"
 language: en-us
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 image: "https://www.bleepstatic.com/content/hl-images/2024/10/08/patch_tuesday_microsoft.jpg"
 author:
   - "Lawrence Abrams"

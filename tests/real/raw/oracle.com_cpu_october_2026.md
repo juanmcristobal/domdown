@@ -3,7 +3,7 @@ title: Oracle Critical Patch Update Advisory - October 2026
 source: "https://www.oracle.com/security-alerts/cpuoct2026.html"
 canonical_url: "https://www.oracle.com/security-alerts/cpuoct2026.html"
 language: en-US
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 ---
 ## Oracle Critical Patch Update Advisory - October 2026
 
