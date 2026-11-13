@@ -23,6 +23,7 @@ class DomainAdapterSpec:
         "meta[property='twitter:url']",
     )
     remove_selectors: tuple[str, ...] = ()
+    post_clean_selectors: tuple[str, ...] = ()
     trim_before_first_heading: bool = False
     leading_noise_lines: tuple[str, ...] = ()
     leading_noise_prefixes: tuple[str, ...] = ()
@@ -66,6 +67,14 @@ class DeclarativeDomainAdapter:
 
     def preprocess_for_criteria(self, context: PipelineContext) -> PipelineContext:
         """Do not apply adapter extraction filters when explicit criteria owns selection."""
+        return context
+
+    def post_clean(self, context: PipelineContext) -> PipelineContext:
+        """Apply source filters after the automatic content root has been chosen."""
+
+        _remove_selectors(context.document, self.spec.post_clean_selectors)
+        if self.spec.post_clean_selectors and context.document is not None:
+            context.cleaned_html = str(context.document)
         return context
 
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:

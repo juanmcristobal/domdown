@@ -560,7 +560,14 @@ def _looks_like_chrome(tag: Tag) -> bool:
         return True
     if _looks_like_tag_cloud(tag, marker_text):
         return True
-    return any(marker in marker_text for marker in NOISE_MARKERS if marker not in exact_layout_markers)
+    is_semantic_notice = tag.name in {"article", "main"} and any(
+        token.startswith("notice-") for token in marker_tokens
+    )
+    return any(
+        marker in marker_text
+        for marker in NOISE_MARKERS
+        if marker not in exact_layout_markers and not (is_semantic_notice and marker == "notice")
+    )
 
 
 def _looks_like_tabbed_widget(tag: Tag) -> bool:

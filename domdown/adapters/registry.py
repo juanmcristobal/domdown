@@ -40,6 +40,21 @@ class AdapterRegistry:
                 context = hook(context)
         return context
 
+    def post_clean(self, context: PipelineContext) -> PipelineContext:
+        """Run deferred source filters after generic extraction has selected a root."""
+        for adapter in self.matching(context):
+            hook = getattr(adapter, "post_clean", None)
+            if hook is None:
+                continue
+            before = _present_node_ids(context)
+            context = hook(context)
+            removed = sorted(before - _present_node_ids(context))
+            if removed:
+                context.adapter_trace.append(
+                    {"name": adapter.name, "hook": "post_clean", "removed_node_ids": removed}
+                )
+        return context
+
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:
         """Run metadata refinement hooks for matching adapters."""
 

@@ -8,6 +8,7 @@ BLEEPINGCOMPUTER_SPEC = DomainAdapterSpec(
     host_exact=("bleepingcomputer.com",),
     host_suffixes=(".bleepingcomputer.com",),
     remove_selectors=(
+        ".bc_wrapper > header",
         ".bc_right_sidebar",
         "#pop_stories",
         "#nfeatured",

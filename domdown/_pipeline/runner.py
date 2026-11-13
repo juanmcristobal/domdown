@@ -11,13 +11,20 @@ from ..adapters import (
     ArticleAdapter,
     ArXivAdapter,
     BleepingComputerAdapter,
+    CensysAdapter,
     CyberSecurityNewsAdapter,
+    CyberScoopEditorialAdapter,
     DailySecuAdapter,
     GBHackersAdapter,
     GitHubAdapter,
     MediumAdapter,
+    RailwayAdapter,
+    SecurityAffairsAdapter,
+    SecurityWeekAdapter,
+    TheRegisterAdapter,
     TheHackerNewsAdapter,
     WikipediaAdapter,
+    WizAdapter,
     build_default_registry,
 )
 from ..stages.base import PipelineStage
@@ -48,6 +55,13 @@ class HtmlToMarkdownPipeline:
                 GitHubAdapter(),
                 MediumAdapter(),
                 BleepingComputerAdapter(),
+                TheRegisterAdapter(),
+                SecurityWeekAdapter(),
+                SecurityAffairsAdapter(),
+                CyberScoopEditorialAdapter(),
+                CensysAdapter(),
+                WizAdapter(),
+                RailwayAdapter(),
                 CyberSecurityNewsAdapter(),
                 DailySecuAdapter(),
                 GBHackersAdapter(),
@@ -98,7 +112,8 @@ class HtmlToMarkdownPipeline:
             )
         for stage in self.stages:
             context = stage.run(context)
-            if getattr(stage, "name", "") == "parse":
+            stage_name = getattr(stage, "name", "")
+            if stage_name == "parse":
                 context.node_refs = list(context.document.find_all(True))
                 context.node_ids = {id(node): index for index, node in enumerate(context.node_refs, start=1)}
                 context.node_descriptors = {
@@ -120,9 +135,11 @@ class HtmlToMarkdownPipeline:
                     context = self.adapter_registry.preprocess_for_criteria(context)
                     if extraction_criteria.has_recorded_replay:
                         _apply_recorded_adapter_removals(context, extraction_criteria.adapter_removed_node_ids)
-            elif getattr(stage, "name", "") == "metadata":
+            elif stage_name == "metadata":
                 context = self.adapter_registry.refine_metadata(context)
-            elif getattr(stage, "name", "") == "postprocess":
+            elif stage_name == "clean" and extraction_criteria is None:
+                context = self.adapter_registry.post_clean(context)
+            elif stage_name == "postprocess":
                 context = self.adapter_registry.postprocess(context)
         if extraction_criteria is None:
             selected_root = _node_selector(context.document)
