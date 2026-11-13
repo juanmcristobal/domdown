@@ -1,6 +1,15 @@
 # History
 
 
+## 0.3.8 (2026-11-13)
+
+
+* Improve generic editorial extraction and cleanup across news and security sites, including removal of campaign banners, comments, recommendations, and trailing editorial modules.
+* Preserve article text marked with `toc-visible` classes and retain CISA KEV vulnerability records while removing promotional cards.
+* Reduce repeated DOM and Markdown work in content selection, cleanup, metadata extraction, and rendering; streamline integration-test replay while retaining the real-document snapshots.
+* Add and refine real-world regression coverage for editorial extraction, promotional content, and security articles.
+
+
 ## 0.3.4 (2026-07-14)
 
 

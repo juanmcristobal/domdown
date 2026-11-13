@@ -72,7 +72,7 @@ Output:
 ---
 title: Credential theft campaign expands
 source: "https://example.com/research/campaign"
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 description: A concise security article.
 ---
 # Credential theft campaign expands
@@ -165,6 +165,59 @@ print(result.warnings)
 | `canonical_url` | `str \| None` |
 | `image` | `str \| None` |
 
+## Discover and apply extraction criteria
+
+`HtmlToMarkdownPipeline.run()` returns Markdown together with an extraction
+criterion and a trace of active adapter and cleanup decisions:
+
+```python
+from domdown import DomdownOptions, ExtractionCriteria, HtmlToMarkdownPipeline
+
+pipeline = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False))
+discovered = pipeline.run(html)
+
+print(discovered.markdown)
+print(discovered.criteria.to_json())
+print(discovered.trace.to_dict())
+
+criteria = ExtractionCriteria.from_json(discovered.criteria.to_json())
+replayed = pipeline.run(html, criteria=criteria)
+assert replayed.markdown == discovered.markdown
+```
+
+Criteria JSON uses schema version 1 and supports `include`, `exclude`, and
+`unwrap` CSS selector arrays. Generated criteria also carry document-specific
+node references so they can replay the exact nodes retained by the automatic
+pipeline, including adapter and heuristic removals. Those references apply to
+the same parsed HTML and DomDown version; they are not portable page selectors.
+Editing a selector invalidates the recorded replay and switches to explicit
+replace semantics.
+
+Manually authored criteria replace automatic extraction and adapter filtering:
+
+```python
+criteria = ExtractionCriteria(
+    include=("article.main-content",),
+    exclude=(".ads", ".newsletter"),
+    unwrap=(".content-wrapper",),
+)
+result = pipeline.run(html, criteria=criteria)
+```
+
+`include` must match at least one element. Invalid selectors and unmatched
+includes raise `CriteriaError`; unmatched exclusions are allowed. An exclusion
+matching an included root produces empty content. `unwrap` cannot target the
+included root. Parsing, URL preparation, semantic conversion, rendering, and
+frontmatter remain on the existing pipeline.
+
+GitHub release pages may fetch expanded assets from GitHub during conversion.
+Their trace marks replay as conditional on the same external fragment being
+available and unchanged.
+
+The convenience `html_to_markdown(html, options, *, criteria=...)` accepts the
+same override and continues to return a string. Use `HtmlToMarkdownPipeline`
+when Discover metadata and the trace are needed.
+
 ## Options
 
 `DomdownOptions` controls parsing, cleanup, metadata extraction, and output shaping.
@@ -179,13 +232,13 @@ print(result.warnings)
 | `prefer_article_body` | `True` | Prefers article-like containers during selection. |
 | `author_priority` | `"visible"` | Chooses visible author text before metadata unless set otherwise. |
 | `frontmatter_tags` | `()` | Extra tags to include in generated frontmatter. |
-| `preserve_images` | `True` | Keeps images for Markdown rendering. |
-| `preserve_tables` | `True` | Keeps tables for Markdown rendering. |
-| `preserve_code_blocks` | `True` | Keeps code/preformatted blocks. |
-| `strip_hidden` | `True` | Removes hidden or non-visible elements. |
+| `preserve_images` | `True` | Declared option; currently does not change rendering. |
+| `preserve_tables` | `True` | Declared option; currently does not change rendering. |
+| `preserve_code_blocks` | `True` | Declared option; currently does not change rendering. |
+| `strip_hidden` | `True` | Declared option; hidden-element filtering is not currently applied. |
 | `remove_selectors` | `()` | CSS selectors to remove. |
-| `keep_selectors` | `()` | CSS selectors to protect during cleaning. |
-| `unwrap_selectors` | `()` | CSS selectors whose wrapper is removed while children remain. |
+| `keep_selectors` | `()` | Declared option; currently does not protect nodes during cleaning. |
+| `unwrap_selectors` | `()` | Declared option; use `ExtractionCriteria.unwrap` for Apply. |
 
 Example:
 

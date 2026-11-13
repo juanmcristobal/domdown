@@ -6,6 +6,16 @@ from .bleepingcomputer import BleepingComputerAdapter
 from .cybersecuritynews import CyberSecurityNewsAdapter
 from .dailysecu import DailySecuAdapter
 from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
+from .editorial import (
+    CensysAdapter,
+    CyberScoopEditorialAdapter,
+    DarkReadingAdapter,
+    RailwayAdapter,
+    SecurityAffairsAdapter,
+    SecurityWeekAdapter,
+    TheRegisterAdapter,
+    WizAdapter,
+)
 from .gbhackers import GBHackersAdapter
 from .github import GitHubAdapter
 from .medium import MediumAdapter
@@ -19,14 +29,22 @@ __all__ = [
     "ArXivAdapter",
     "BleepingComputerAdapter",
     "CyberSecurityNewsAdapter",
+    "CyberScoopEditorialAdapter",
+    "CensysAdapter",
+    "DarkReadingAdapter",
     "DailySecuAdapter",
     "DeclarativeDomainAdapter",
     "DomainAdapterSpec",
     "GBHackersAdapter",
     "GitHubAdapter",
     "MediumAdapter",
+    "RailwayAdapter",
+    "SecurityAffairsAdapter",
+    "SecurityWeekAdapter",
+    "TheRegisterAdapter",
     "TheHackerNewsAdapter",
     "WikipediaAdapter",
+    "WizAdapter",
     "build_default_registry",
     "make_domain_adapter",
 ]

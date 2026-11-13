@@ -67,6 +67,16 @@ def collect_meta_contents(soup: BeautifulSoup, selectors: tuple[str, ...]) -> tu
     return tuple(values)
 
 
+def first_meta_content(soup: BeautifulSoup, selectors: tuple[str, ...]) -> str:
+    """Return the first non-empty metadata value, preserving selector priority."""
+
+    for selector in selectors:
+        value = meta_content(soup, selector)
+        if value and value.strip():
+            return value.strip()
+    return ""
+
+
 def first_text(*values: object) -> str:
     """Return the first non-empty string-like value from a sequence."""
 

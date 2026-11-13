@@ -4,11 +4,25 @@ source: "https://safedep.io/malicious-ixpresso-core-npm-rat"
 site_name: SafeDep - Real-time Open Source Software Supply Chain Security
 canonical_url: "https://safedep.io/malicious-ixpresso-core-npm-rat"
 language: en
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 image: "https://safedep.io/images/malicious-ixpresso-core-npm-rat.png"
 published: "Thu Apr 16 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
 description: "ixpresso-core poses as an AI WhatsApp agent on npm but installs Veltrix, a Windows RAT that steals browser credentials, Discord tokens, and keystrokes via a hardcoded Discord webhook."
 ---
+# ixpresso-core: Windows RAT Disguised as a WhatsApp Agent
+
+- [Malware](https://safedep.io/category/malware)
+
+SafeDep Team
+
+•
+
+Apr 16, 2026
+
+•
+
+10 min read
+
 ### Table of Contents
 
 ## TL;DR

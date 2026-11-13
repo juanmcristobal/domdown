@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from domdown import html_to_markdown
 from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
-from domdown.adapters import GitHubAdapter
+from domdown.adapters import GitHubAdapter, github
 
 REAL_TESTS_DIR = Path(__file__).resolve().parents[1] / "real"
 REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
@@ -62,9 +62,23 @@ def _case_param(case: RealExampleCase) -> pytest.ParameterSet:
     return pytest.param(case, id=case.id)
 
 
+def _stub_release_assets(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep release fixtures deterministic without contacting GitHub."""
+
+    fragment = (
+        '<ul><li><a href="/nodejs/node/archive/refs/tags/v25.3.0.zip">Source code (zip)</a> '
+        '2026-01-13T12:49:52Z</li><li><a href="/nodejs/node/archive/refs/tags/v25.3.0.tar.gz">'
+        "Source code (tar.gz)</a> 2026-01-13T12:49:52Z</li></ul>"
+    )
+    monkeypatch.setattr(github, "_fetch_release_assets", lambda url: fragment)
+
+
 @pytest.mark.parametrize("case", [_case_param(case) for case in _github_cases()])
-def test_github_adapter_matches_the_curated_snapshot(case: RealExampleCase) -> None:
+def test_github_adapter_matches_the_curated_snapshot(case: RealExampleCase, monkeypatch: pytest.MonkeyPatch) -> None:
     """GitHub pages should render to the curated Markdown snapshot."""
+
+    if case.id == "node_release_tag_v2530":
+        _stub_release_assets(monkeypatch)
 
     assert GitHubAdapter().name == "github"
     actual = html_to_markdown(case.html_text())
@@ -87,10 +101,11 @@ def test_github_blob_uses_embedded_raw_lines_without_line_numbers() -> None:
     assert '  -- Mimicking Google\'s "Aw Snap!" error' in body
 
 
-def test_github_release_expands_lazy_asset_fragment() -> None:
+def test_github_release_expands_lazy_asset_fragment(monkeypatch: pytest.MonkeyPatch) -> None:
     """GitHub release pages should include the expanded assets list."""
 
     case = next(case for case in load_real_cases(layer="adapter") if case.id == "node_release_tag_v2530")
+    _stub_release_assets(monkeypatch)
 
     actual = html_to_markdown(case.html_text())
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup
 
+from domdown import html_to_markdown
 from domdown._constants import DEFAULT_REMOVE_SELECTORS, SKIP_TAGS
 from domdown._document import choose_root, clean_root, parse_html
 from domdown._document.clean import (
@@ -41,6 +42,33 @@ def test_clean_root_removes_noise_and_promotes_lazy_loaded_images() -> None:
     assert cleaned.find("script") is None
     assert cleaned.select_one(".drop") is None
     assert cleaned.img["src"] == "/img.png"
+
+
+def test_toc_visible_class_preserves_long_editorial_body() -> None:
+    """A style class containing toc-visible must not make article text look like a TOC."""
+
+    body_text = "OPENING_SENTINEL " + ("The article describes the mitigation for affected production systems. " * 55)
+    body_text += " CLOSING_SENTINEL"
+    html = f"""
+    <html><body><main><article>
+      <h1>Security analysis</h1>
+      <nav class="table-of-contents"><a href="#analysis">Contents</a></nav>
+      <div class="toc-visible:section-9"><p>{body_text}</p></div>
+    </article></main></body></html>
+    """
+    soup = BeautifulSoup(html, "lxml")
+    visible_body = soup.select_one("div[class^='toc-visible']")
+    table_of_contents = soup.select_one("nav")
+
+    assert visible_body is not None
+    assert _noise_tokens(tuple(visible_body.get("class", ())), "").isdisjoint({"toc"})
+    assert _looks_like_noise(visible_body) is False
+    assert table_of_contents is not None
+    assert _looks_like_noise(table_of_contents) is True
+
+    markdown = html_to_markdown(html)
+    assert "OPENING_SENTINEL" in markdown
+    assert "CLOSING_SENTINEL" in markdown
 
 
 def test_clean_root_removes_generic_share_and_debug_chrome_from_article_shell() -> None:

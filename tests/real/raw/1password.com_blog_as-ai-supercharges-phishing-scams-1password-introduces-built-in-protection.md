@@ -3,7 +3,7 @@ title: "As AI Supercharges Phishing Scams, 1Password Introduces Built-In Protect
 source: /blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection
 canonical_url: /blog/as-ai-supercharges-phishing-scams-1password-introduces-built-in-protection
 language: en
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 image: "https://images.ctfassets.net/3091ajzcmzlr/4Ln6oiLGExYkimZbFhV7ys/606a1e61d5de43740fbb2a1df7e043f5/Blog-Header_Cyber_Attack_1920x1080.png"
 published: "2026-01-22T00:00:00.000Z"
 description: "AI is making phishing attacks tougher to spot, but 1Password’s new feature helps prevent people and businesses from being victimized."
@@ -167,8 +167,6 @@ These numbers highlight the need for better communication between IT and end use
 The goal of 1Password’s new anti-phishing feature is to give users – whether at work or home – a subtle reminder that helps their training kick in. We’re excited to continue developing it as part of our overall mission to secure the future of work.
 
 _1Password conducted this study using an online survey prepared by_[KW Research](https://www.kelseywhiteresearch.com/)_and distributed by_[PureSpectrum](https://www.purespectrum.com/)_, completed by n=2,000 American adults. Within employees, a range of role types, seniority, and industries are represented. Data was collected from September 29 to October 2, 2025._
-
-## Continue Reading
 
 [November 5, 2025 Survey: Holiday scammers are getting bolder with AI, and Americans are taking the bait](/blog/holiday-phishing-scams)
 

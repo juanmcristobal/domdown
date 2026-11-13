@@ -1,19 +1,43 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 
 from bs4 import Comment, NavigableString, Tag
 
-from .._constants import BOILERPLATE_PHRASES, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
+from .._constants import BOILERPLATE_PHRASES, DEFAULT_REMOVE_SELECTORS, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
+
+_DEFAULT_REMOVE_CLASSES = frozenset(selector[1:] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("."))
+_DEFAULT_REMOVE_IDS = frozenset(selector[1:] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("#"))
+_DEFAULT_REMOVE_CLASS_SUBSTRINGS = tuple(
+    selector[len("[class*='") : -2] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("[class*='")
+)
+_DEFAULT_REMOVE_ID_SUBSTRINGS = tuple(
+    selector[len("[id*='") : -2] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("[id*='")
+)
+_DEFAULT_REMOVE_REL_SUBSTRINGS = tuple(
+    selector[len("[rel*='") : -2] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("[rel*='")
+)
+_DEFAULT_REMOVE_LINK_HREFS = frozenset(
+    selector[len("a[href='") : -2] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("a[href='")
+)
 
 
-def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str], preserve_chrome: bool = False) -> Tag:
+def clean_root(
+    root: Tag,
+    remove_selectors: tuple[str, ...],
+    skip_tags: set[str],
+    preserve_chrome: bool = False,
+    *,
+    apply_extraction_heuristics: bool = True,
+) -> Tag:
     """Remove obvious noise and normalize lazy-loaded images in place."""
 
-    for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
-        comment.extract()
+    if apply_extraction_heuristics:
+        for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
+            comment.extract()
 
-    for text_node in list(root.find_all(string=True)):
+    for text_node in list(root.find_all(string=True)) if apply_extraction_heuristics else ():
         if (
             isinstance(text_node, NavigableString)
             and _looks_like_template_placeholder(str(text_node))
@@ -21,47 +45,73 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
         ):
             text_node.extract()
 
-    for selector in remove_selectors:
-        for node in root.select(selector):
+    if remove_selectors == DEFAULT_REMOVE_SELECTORS:
+        # These selectors only match tag names and attributes, so one DOM pass
+        # can find every match before removals without changing selector results.
+        matches = _default_remove_matches(root)
+        for node in reversed(matches):
             node.decompose()
+    else:
+        for selector in remove_selectors:
+            for node in root.select(selector):
+                node.decompose()
 
-    if not preserve_chrome:
+    _promote_image_fallbacks(root)
+    if not preserve_chrome and apply_extraction_heuristics:
+        _mark_detached_article_title(root)
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
                 continue
             if _is_within_preserved_block(node):
                 continue
-            if _looks_like_hero_chrome(node):
-                node.decompose()
-                continue
-            if _looks_like_metadata_bar(node):
-                node.decompose()
-                continue
-            if _looks_like_decorative_image_block(node):
-                node.decompose()
-                continue
-            if _looks_like_cta_block(node):
-                node.decompose()
-                continue
-            if _looks_like_author_card_block(node):
-                node.decompose()
-                continue
-            if _looks_like_article_feed_block(node):
-                node.decompose()
-                continue
-            if _looks_like_promo_banner_block(node):
-                node.decompose()
-                continue
-            if _looks_like_hidden_block(node):
-                node.decompose()
+            if node.get("data-domdown-primary-title") == "true":
+                if node.parent is root:
+                    _remove_pre_title_navigation(node, root)
                 continue
             if node.name in skip_tags:
                 node.decompose()
                 continue
-            if _looks_like_noise(node) and not _has_substantive_body_content(node):
+            text_getter = _cached_text_getter(node)
+            if _looks_like_hidden_block(node):
+                node.decompose()
+                continue
+            if _looks_like_cta_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_author_profile_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_testimonial_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_decorative_image_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_hero_chrome(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_metadata_bar(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_form_module(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_author_card_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_article_feed_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_promo_banner_block(node, text_getter):
+                node.decompose()
+                continue
+            if _looks_like_noise(node, text_getter) and not _has_substantive_body_content(node, text_getter):
                 node.decompose()
 
         _remove_structural_chrome(root)
+
+    for node in root.find_all(attrs={"data-domdown-primary-title": "true"}):
+        node.attrs.pop("data-domdown-primary-title", None)
 
     for node in list(root.find_all(skip_tags)):
         node.decompose()
@@ -72,7 +122,33 @@ def clean_root(root: Tag, remove_selectors: tuple[str, ...], skip_tags: set[str]
     return root
 
 
-def _looks_like_noise(node: Tag) -> bool:
+def _default_remove_matches(root: Tag) -> list[Tag]:
+    """Find nodes matching the fixed default selectors in one traversal."""
+
+    matches: list[Tag] = []
+    for node in root.descendants:
+        if not isinstance(node, Tag):
+            continue
+        raw_classes = node.get("class") or ()
+        classes = raw_classes if isinstance(raw_classes, (list, tuple)) else str(raw_classes).split()
+        class_value = " ".join(str(value) for value in classes)
+        identifier = str(node.get("id") or "")
+        rel = node.get("rel") or ()
+        rel_value = " ".join(str(value) for value in rel) if isinstance(rel, (list, tuple)) else str(rel)
+        href = node.get("href")
+        if (
+            _DEFAULT_REMOVE_CLASSES.intersection(classes)
+            or identifier in _DEFAULT_REMOVE_IDS
+            or any(value in class_value for value in _DEFAULT_REMOVE_CLASS_SUBSTRINGS)
+            or any(value in identifier for value in _DEFAULT_REMOVE_ID_SUBSTRINGS)
+            or any(value in rel_value for value in _DEFAULT_REMOVE_REL_SUBSTRINGS)
+            or (node.name == "a" and href in _DEFAULT_REMOVE_LINK_HREFS)
+        ):
+            matches.append(node)
+    return matches
+
+
+def _looks_like_noise(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Heuristically detect non-content wrappers by class or id tokens."""
 
     if getattr(node, "attrs", None) is None:
@@ -86,15 +162,14 @@ def _looks_like_noise(node: Tag) -> bool:
     tokens = _noise_tokens(classes, identifier)
     if tokens & set(NOISE_MARKERS):
         return True
-    text = node.get_text(" ", strip=True).lower()
-    link_count = len(node.find_all("a"))
+    text = _get_node_text(node, text_getter).lower()
     word_count = len(text.split())
     if "enter search term" in text and word_count <= 20:
         return True
     marker_text = _marker_text(node)
     if any(marker in marker_text for marker in ("sticky-nav", "page-section-blog-head", "search-overlay")):
         return True
-    if _looks_like_link_chrome(node):
+    if _looks_like_link_chrome(node, text_getter):
         return True
     return text == "more" and bool(tokens & {"more", "share"})
 
@@ -109,22 +184,23 @@ def _remove_structural_chrome(root: Tag) -> None:
             continue
         if _is_within_preserved_block(node):
             continue
-        if _looks_like_date_kicker(node):
+        text_getter = _cached_text_getter(node)
+        if _looks_like_date_kicker(node, text_getter):
             node.decompose()
             continue
-        if _looks_like_footer_block(node):
+        if _looks_like_footer_block(node, text_getter):
             node.decompose()
             continue
-        if _is_small_structural_block(node) and (
-            _looks_like_header_block(node)
-            or _looks_like_related_block(node)
-            or _looks_like_category_block(node)
-            or _looks_like_navigation_block(node)
-            or _looks_like_tag_block(node)
-            or _looks_like_boilerplate(node)
-            or _looks_like_about_block(node)
+        if _is_small_structural_block(node, text_getter) and (
+            _looks_like_header_block(node, text_getter)
+            or _looks_like_related_block(node, text_getter)
+            or _looks_like_category_block(node, text_getter)
+            or _looks_like_navigation_block(node, text_getter)
+            or _looks_like_tag_block(node, text_getter)
+            or _looks_like_boilerplate(node, text_getter)
+            or _looks_like_about_block(node, text_getter)
         ):
-            if _has_substantive_body_content(node):
+            if _has_substantive_body_content(node, text_getter):
                 continue
             node.decompose()
 
@@ -150,8 +226,11 @@ def _remove_article_header_cluster(root: Tag) -> None:
         heading.decompose()
 
 
-def _looks_like_header_block(node: Tag) -> bool:
+def _looks_like_header_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect top-of-article blocks that repeat title, byline, or date metadata."""
+
+    if node.get("data-domdown-primary-title") == "true":
+        return False
 
     marker_text = _marker_text(node)
     if any(marker in marker_text for marker in HEADER_MARKERS):
@@ -160,15 +239,95 @@ def _looks_like_header_block(node: Tag) -> bool:
     has_metadata = bool(node.find("time", recursive=False)) or any(
         token in marker_text for token in ("byline", "author", "date", "time", "meta")
     )
-    text_words = len(node.get_text(" ", strip=True).split())
-    paragraph_count = len(node.find_all("p"))
-    return has_title_like_heading and has_metadata and text_words <= 80 and paragraph_count <= 2
+    if not has_title_like_heading or not has_metadata:
+        return False
+    text_words = len(_get_node_text(node, text_getter).split())
+    if text_words > 80:
+        return False
+    return len(node.find_all("p", limit=3)) <= 2
 
 
-def _looks_like_metadata_bar(node: Tag) -> bool:
+def _mark_detached_article_title(root: Tag) -> None:
+    """Protect a compact detached H1 when its sibling carries the editorial body."""
+
+    headings = root.find_all("h1")
+    for heading in headings:
+        title_branch: Tag = heading
+        while isinstance(title_branch.parent, Tag) and title_branch.parent is not root:
+            title_branch = title_branch.parent
+        if title_branch.parent is not root or len(title_branch.get_text(" ", strip=True).split()) > 160:
+            continue
+
+        has_substantial_sibling = False
+        for sibling in root.find_all(recursive=False):
+            if not isinstance(sibling, Tag) or sibling is title_branch or heading in sibling.descendants:
+                continue
+            words = len(sibling.get_text(" ", strip=True).split())
+            structured_blocks = len(sibling.find_all(["table", "pre", "blockquote", "ul", "ol"]))
+            if words >= 250 and (len(sibling.find_all("p")) >= 4 or structured_blocks >= 2):
+                has_substantial_sibling = True
+                break
+        if not has_substantial_sibling:
+            continue
+
+        current: Tag | None = heading
+        while current is not None and current is not root:
+            current["data-domdown-primary-title"] = "true"
+            current = current.parent if isinstance(current.parent, Tag) else None
+        return
+
+
+def _remove_pre_title_navigation(header: Tag, root: Tag) -> None:
+    """Remove small link-only breadcrumbs before a preserved article title."""
+
+    heading = header.find("h1")
+    if not isinstance(heading, Tag):
+        return
+    current: Tag = heading
+    while current is not root:
+        for sibling in list(current.previous_siblings):
+            if not isinstance(sibling, Tag):
+                continue
+            links = len(sibling.find_all("a")) + int(sibling.name == "a")
+            words = len(sibling.get_text(" ", strip=True).split())
+            has_editorial_structure = sibling.find(["p", "h1", "h2", "h3", "table", "pre", "blockquote"]) is not None
+            if links and links <= 5 and words <= 35 and not has_editorial_structure:
+                sibling.decompose()
+        if not isinstance(current.parent, Tag):
+            break
+        current = current.parent
+
+
+def _promote_image_fallbacks(root: Tag) -> None:
+    """Use a non-inline image source from noscript fallbacks before removing them."""
+
+    for image in root.find_all("img"):
+        if image.find_parent("noscript") is not None:
+            continue
+        source = str(image.get("src") or "")
+        if source and not source.lower().startswith("data:image/"):
+            continue
+        figure = image.find_parent("figure")
+        if not isinstance(figure, Tag):
+            continue
+        fallback = next(
+            (
+                item
+                for item in figure.select("noscript img")
+                if (item.get("src") or "") and not str(item.get("src")).lower().startswith("data:image/")
+            ),
+            None,
+        )
+        if isinstance(fallback, Tag):
+            image["src"] = fallback["src"]
+            if not image.get("alt") and fallback.get("alt"):
+                image["alt"] = fallback["alt"]
+
+
+def _looks_like_metadata_bar(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact author/date/share bars near article headers."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     if not text:
         return False
     text_words = len(text.split())
@@ -192,10 +351,10 @@ def _looks_like_metadata_bar(node: Tag) -> bool:
     return bool(node.find("time")) and ("published" in text or "updated" in text)
 
 
-def _looks_like_hero_chrome(node: Tag) -> bool:
+def _looks_like_hero_chrome(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact article hero wrappers with a back link plus metadata."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     if not text or len(text.split()) > 60:
         return False
     if not any(marker in text for marker in ("back to ", "return to ", "go back to ")):
@@ -214,22 +373,23 @@ def _looks_like_hero_chrome(node: Tag) -> bool:
     return has_title and has_metadata and has_back_link
 
 
-def _looks_like_related_block(node: Tag) -> bool:
+def _looks_like_related_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect related-link sections that sit between the header and body."""
 
-    text = node.get_text(" ", strip=True).lower()
-    word_count = len(text.split())
-    link_count = len(node.find_all("a"))
-    if any(phrase in text for phrase in RELATED_PHRASES) and (word_count <= 18 or link_count >= 2):
-        return True
     marker_text = _marker_text(node)
-    return any(marker in marker_text for marker in ("related", "recommend"))
+    if any(marker in marker_text for marker in ("related", "recommend")):
+        return True
+    text = _get_node_text(node, text_getter).lower()
+    word_count = len(text.split())
+    if any(phrase in text for phrase in RELATED_PHRASES):
+        return word_count <= 18 or len(node.find_all("a", limit=2)) >= 2
+    return False
 
 
-def _looks_like_category_block(node: Tag) -> bool:
+def _looks_like_category_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact article category blocks that only label link lists."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     if "categories" not in text:
         return False
     link_count = len(node.find_all("a"))
@@ -239,14 +399,14 @@ def _looks_like_category_block(node: Tag) -> bool:
     return True
 
 
-def _looks_like_boilerplate(node: Tag) -> bool:
+def _looks_like_boilerplate(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact documentation or feedback boilerplate blocks."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     return any(phrase in text for phrase in BOILERPLATE_PHRASES)
 
 
-def _looks_like_about_block(node: Tag) -> bool:
+def _looks_like_about_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact company/about blocks with a heading and CTA links."""
 
     heading = node.find(["h1", "h2", "h3", "h4"], recursive=False)
@@ -255,23 +415,23 @@ def _looks_like_about_block(node: Tag) -> bool:
     heading_text = heading.get_text(" ", strip=True).lower()
     if not heading_text.startswith("about "):
         return False
-    link_count = len(node.find_all("a"))
-    button_count = len(node.find_all("button"))
-    text_words = len(node.get_text(" ", strip=True).split())
-    return text_words <= 120 and (link_count >= 1 or button_count >= 1)
+    has_link_or_button = node.find(["a", "button"]) is not None
+    text_words = len(_get_node_text(node, text_getter).split())
+    return text_words <= 120 and has_link_or_button
 
 
-def _looks_like_cta_block(node: Tag) -> bool:
+def _looks_like_cta_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact call-to-action cards that are not part of article prose."""
 
     marker_text = _marker_text(node)
     if not any(marker in marker_text for marker in ("cta", "banner", "promo", "callout")):
         return False
-    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
-    paragraph_count = len(node.find_all("p"))
-    link_count = len(node.find_all("a"))
-    button_count = len(node.find_all("button"))
-    text_words = len(node.get_text(" ", strip=True).split())
+    text_words = len(_get_node_text(node, text_getter).split())
+    if text_words > 60:
+        return False
+    paragraph_count = len(node.find_all("p", limit=3))
+    if paragraph_count > 2:
+        return False
     has_heading_like_descendant = bool(
         node.find(
             lambda child: isinstance(child, Tag)
@@ -291,26 +451,63 @@ def _looks_like_cta_block(node: Tag) -> bool:
             )
         )
     )
-    if not has_heading_like_descendant and heading_count < 1:
+    if not has_heading_like_descendant:
         return False
-    if text_words > 60:
+    if not has_button_like_descendant:
         return False
-    if paragraph_count > 2:
-        return False
-    return has_button_like_descendant
+    return True
 
 
-def _looks_like_author_card_block(node: Tag) -> bool:
+def _looks_like_author_card_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact author/share cards that belong to page chrome."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     if not text or "share" not in text:
         return False
     if not text.startswith("author "):
         return False
     if len(text.split()) > 10:
         return False
-    return len(node.find_all("button")) >= 1 or len(node.find_all("a")) >= 1
+    return node.find(["button", "a"]) is not None
+
+
+def _looks_like_author_profile_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
+    """Remove author biographies and profile cards while preserving short bylines."""
+
+    marker_tokens = _noise_tokens(node.get("class") or (), str(node.get("id") or ""))
+    if not marker_tokens & {"author", "bio", "profile", "contributor"}:
+        return False
+    if node.find(["table", "pre", "code", "blockquote"]):
+        return False
+    text = _get_node_text(node, text_getter).lower()
+    if len(text.split()) > 350:
+        return False
+    has_profile_signals = (
+        node.find("img") is not None
+        or len(node.find_all("p", limit=2)) >= 2
+        or any(phrase in text for phrase in ("about the author", "author bio", "biography", "follow "))
+        or (len(node.find_all("a", limit=3)) >= 3 and len(text.split()) > 35)
+    )
+    return has_profile_signals and len(text.split()) > 16
+
+
+def _looks_like_testimonial_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
+    """Remove customer testimonial modules without treating editorial quotes as boilerplate."""
+
+    marker_text = _marker_text(node)
+    if not any(marker in marker_text for marker in ("testimonial", "customer-quote", "customer_quote")):
+        return False
+    return len(_get_node_text(node, text_getter).split()) <= 500 and node.find(["table", "pre", "code"]) is None
+
+
+def _looks_like_form_module(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
+    """Drop compact wrappers around interactive forms, keeping editorial prose intact."""
+
+    if node.name in {"article", "main"} or node.find("form") is None:
+        return False
+    if node.find(["table", "pre", "code", "blockquote"]) is not None:
+        return False
+    return len(_get_node_text(node, text_getter).split()) <= 180 and len(node.find_all("p", limit=2)) <= 1
 
 
 def _count_card_like_children(node: Tag, headings: list[Tag], limit: int = 2) -> int:
@@ -334,22 +531,24 @@ def _count_card_like_children(node: Tag, headings: list[Tag], limit: int = 2) ->
     return count
 
 
-def _looks_like_article_feed_block(node: Tag) -> bool:
+def _looks_like_article_feed_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact blog-feed or related-article strips rendered as cards."""
 
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     if not text:
         return False
-    heading_count = len(headings := node.find_all(["h1", "h2", "h3"]))
-    image_count = len(node.find_all("img"))
     text_words = len(text.split())
+    if text_words > 260:
+        return False
+    heading_count = len(headings := node.find_all(["h1", "h2", "h3"]))
+    image_count = len(node.find_all("img", limit=2))
     marker_text = _marker_text(node)
     card_like_children = _count_card_like_children(node, headings)
     if "similar posts" in text and heading_count >= 2 and image_count >= 2 and text_words <= 260:
         return True
     if card_like_children >= 2 and heading_count >= 2 and image_count >= 2 and text_words <= 260:
         return True
-    article_count = len(node.find_all("article"))
+    article_count = len(node.find_all("article", limit=2))
     if article_count >= 2:
         return (
             any(
@@ -357,6 +556,7 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
                 for phrase in (
                     "latest",
                     "related",
+                    "continue reading",
                     "similar posts",
                     "more from",
                     "you may also like",
@@ -376,6 +576,9 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
             "more from",
             "you may also like",
             "recommended",
+            "continue reading",
+            "more stories",
+            "read next",
         )
     ):
         return text_words <= 30
@@ -387,23 +590,25 @@ def _looks_like_article_feed_block(node: Tag) -> bool:
     return False
 
 
-def _looks_like_promo_banner_block(node: Tag) -> bool:
+def _looks_like_promo_banner_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact marketing banners with repeated CTA links or buttons."""
 
-    text = node.get_text(" ", strip=True).lower()
-    if not text:
-        return False
     if node.name.lower() == "main":
         return False
-    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
-    paragraph_count = len(node.find_all("p"))
-    link_count = len(node.find_all("a"))
-    button_count = len(node.find_all("button"))
-    marker_text = _marker_text(node)
-    if len(text.split()) > 80:
+    text = _get_node_text(node, text_getter).lower()
+    if not text:
         return False
-    cta_phrases = (
+    marker_text = _marker_text(node)
+    specific_cta_phrases = (
         "book a demo",
+        "get a demo",
+        "request a demo",
+        "schedule a demo",
+        "contact us",
+        "talk to sales",
+        "ready to see",
+    )
+    cta_phrases = specific_cta_phrases + (
         "act now",
         "star on github",
         "start free",
@@ -418,7 +623,23 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
     )
     if not any(phrase in text for phrase in cta_phrases):
         return False
-    if link_count + button_count < 1:
+    has_specific_cta = any(phrase in text for phrase in specific_cta_phrases)
+    max_words = 90 if has_specific_cta else 40
+    text_words = len(text.split())
+    if text_words > max_words:
+        return False
+    if node.find(["a", "button"]) is None:
+        return False
+    has_button_like_link = any(
+        any("button" in str(token).lower() or str(token).lower().endswith("btn") for token in (link.get("class") or ()))
+        for link in node.find_all("a")
+    )
+    if (
+        has_specific_cta
+        and node.find(["h1", "h2", "h3", "h4", "h5", "h6"]) is None
+        and node.find("button") is None
+        and not has_button_like_link
+    ):
         return False
     if "login" in text and any(phrase in text for phrase in ("act now", "sign up", "register now", "start free")):
         return True
@@ -430,34 +651,37 @@ def _looks_like_promo_banner_block(node: Tag) -> bool:
         return True
     if "intro" in marker_text:
         return False
-    return heading_count <= 2 and paragraph_count <= 3 and len(text.split()) <= 40
+    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"], limit=3))
+    if heading_count > 2:
+        return False
+    paragraph_count = len(node.find_all("p", limit=4))
+    return paragraph_count <= 3
 
 
-def _looks_like_navigation_block(node: Tag) -> bool:
+def _looks_like_navigation_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact navigation, breadcrumb, and language-picker blocks."""
 
-    text = node.get_text(" ", strip=True).lower()
-    if not text:
-        return False
-    marker_text = _marker_text(node)
+    marker_text = _marker_text(node).replace("toc-visible", "tocvisible")
     if any(
         marker in marker_text
         for marker in ("breadcrumb", "breadcrumbs", "translation", "translations", "menu", "nav", "toc", "socials")
     ):
         return True
+    text = _get_node_text(node, text_getter).lower()
+    if not text:
+        return False
     if "other languages available" in text or "on this page" in text:
         return True
-    link_count = len(node.find_all("a"))
     word_count = len(text.split())
     if node.name.lower() == "nav":
-        return link_count >= 2 and word_count <= 40
+        return len(node.find_all("a", limit=2)) >= 2 and word_count <= 40
     return False
 
 
-def _looks_like_date_kicker(node: Tag) -> bool:
+def _looks_like_date_kicker(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect isolated article date lines in top-of-page headers."""
 
-    text = node.get_text(" ", strip=True)
+    text = _get_node_text(node, text_getter)
     if not text:
         return False
     if len(text.split()) > 3:
@@ -475,15 +699,17 @@ def _looks_like_date_kicker(node: Tag) -> bool:
     return any(token in _marker_text(parent) for token in ("header", "article"))
 
 
-def _looks_like_footer_block(node: Tag) -> bool:
+def _looks_like_footer_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact footer/legal blocks that should not appear in article output."""
 
-    text = node.get_text(" ", strip=True).lower()
-    if not text:
-        return False
+    if node.name.lower() == "footer":
+        return True
     marker_text = _marker_text(node)
     if any(marker in marker_text for marker in ("footer", "legal", "copyright")):
         return True
+    text = _get_node_text(node, text_getter).lower()
+    if not text:
+        return False
     if any(phrase in text for phrase in ("all rights reserved", "privacy settings", "modern slavery act statement")):
         return True
     return "©" in text and len(node.find_all("a")) >= 1
@@ -500,7 +726,7 @@ def _looks_like_hidden_block(node: Tag) -> bool:
     return any(str(token).lower() == "hidden" for token in classes)
 
 
-def _looks_like_tag_block(node: Tag) -> bool:
+def _looks_like_tag_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect compact tag lists made of tag permalink links only."""
 
     links = [child for child in node.find_all("a") if isinstance(child, Tag)]
@@ -517,12 +743,12 @@ def _looks_like_tag_block(node: Tag) -> bool:
         return False
     if not all(_is_tag_href(href) for href in hrefs):
         return False
-    text = node.get_text(" ", strip=True).lower()
+    text = _get_node_text(node, text_getter).lower()
     word_count = len(text.split())
     return word_count <= 40 or text.startswith("tags:") or text.startswith("tag:")
 
 
-def _looks_like_decorative_image_block(node: Tag) -> bool:
+def _looks_like_decorative_image_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect image-only hero or background wrappers that should not render as content."""
 
     if node.name in {"img", "picture"}:
@@ -532,19 +758,20 @@ def _looks_like_decorative_image_block(node: Tag) -> bool:
         return False
     if node.find(["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "table", "blockquote"]):
         return False
-    image_count = len(node.find_all("img"))
-    picture_count = len(node.find_all("picture"))
-    text_words = len(node.get_text(" ", strip=True).split())
-    return (image_count + picture_count) >= 1 and text_words <= 8
+    has_image = node.find(["img", "picture"]) is not None
+    text_words = len(_get_node_text(node, text_getter).split())
+    return has_image and text_words <= 8
 
 
-def _looks_like_link_chrome(node: Tag) -> bool:
+def _looks_like_link_chrome(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Detect dense menu or footer blocks dominated by links rather than prose."""
 
-    link_count = len(node.find_all("a"))
-    paragraph_count = len(node.find_all("p"))
-    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]))
-    word_count = len(node.get_text(" ", strip=True).split())
+    link_count = len(node.find_all("a", limit=40))
+    if link_count < 15:
+        return False
+    paragraph_count = len(node.find_all("p", limit=6))
+    heading_count = len(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"], limit=2))
+    word_count = len(_get_node_text(node, text_getter).split())
     if link_count >= 20 and paragraph_count <= 1 and heading_count <= 1 and word_count <= 160:
         return True
     if link_count >= 40 and paragraph_count <= 5 and word_count <= 260:
@@ -554,23 +781,24 @@ def _looks_like_link_chrome(node: Tag) -> bool:
     return False
 
 
-def _is_small_structural_block(node: Tag) -> bool:
+def _is_small_structural_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Limit structural cleanup to compact blocks so wrappers with body text survive."""
 
-    text_words = len(node.get_text(" ", strip=True).split())
     direct_blocks = sum(
         1
         for child in node.find_all(recursive=False)
         if isinstance(child, Tag) and child.name in {"p", "ul", "ol", "li", "figure", "div", "section", "article"}
     )
-    return text_words <= 120 and direct_blocks <= 4
+    if direct_blocks > 4:
+        return False
+    return len(_get_node_text(node, text_getter).split()) <= 120
 
 
-def _has_substantive_body_content(node: Tag) -> bool:
+def _has_substantive_body_content(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
     """Keep compact wrappers that still contain real article paragraphs."""
 
-    paragraph_count = len(node.find_all("p"))
-    text_words = len(node.get_text(" ", strip=True).split())
+    paragraph_count = len(node.find_all("p", limit=2))
+    text_words = len(_get_node_text(node, text_getter).split())
     return paragraph_count >= 2 and text_words >= 15
 
 
@@ -584,6 +812,28 @@ def _marker_text(node: Tag) -> str:
     return " ".join([str(token).lower() for token in classes] + [identifier])
 
 
+def _cached_text_getter(node: Tag) -> Callable[[], str]:
+    """Cache a node's text only for the current, non-mutating rule evaluation."""
+
+    text: str | None = None
+
+    def get_text() -> str:
+        nonlocal text
+        if text is None:
+            text = node.get_text(" ", strip=True)
+        return text
+
+    return get_text
+
+
+def _get_node_text(node: Tag, text_getter: Callable[[], str] | None) -> str:
+    """Get node text, reusing a caller's local cache when provided."""
+
+    if text_getter is not None:
+        return text_getter()
+    return node.get_text(" ", strip=True)
+
+
 def _noise_tokens(classes: tuple[str, ...] | list[str] | tuple[object, ...], identifier: str) -> set[str]:
     """Split class and id markers into stable tokens for noise matching."""
 
@@ -593,10 +843,13 @@ def _noise_tokens(classes: tuple[str, ...] | list[str] | tuple[object, ...], ide
         if not token:
             continue
         tokens.add(token)
-        tokens.update(part for part in re.split(r"[^a-z0-9]+", token) if part)
+        split_token = token.replace("toc-visible", "tocvisible")
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", split_token) if part)
     if identifier:
+        identifier = identifier.lower()
         tokens.add(identifier)
-        tokens.update(part for part in re.split(r"[^a-z0-9]+", identifier) if part)
+        split_identifier = identifier.replace("toc-visible", "tocvisible")
+        tokens.update(part for part in re.split(r"[^a-z0-9]+", split_identifier) if part)
     return tokens
 
 

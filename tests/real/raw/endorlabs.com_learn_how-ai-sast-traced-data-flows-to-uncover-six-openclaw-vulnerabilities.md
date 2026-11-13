@@ -3,10 +3,14 @@ title: "How AI SAST Traced Data Flows to Uncover Six OpenClaw Vulnerabilities | 
 source: "https://www.endorlabs.com/learn/how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities"
 canonical_url: "https://www.endorlabs.com/learn/how-ai-sast-traced-data-flows-to-uncover-six-openclaw-vulnerabilities"
 language: en
-domdown_version: 0.3.7
+domdown_version: 0.3.8
 image: "https://cdn.prod.website-files.com/6574c9e538a34feac8cec013/69950613b3fe01c993eb1ca5_AI%20SAST%20Traced%20Data%20Flows%20to%20Uncover%20Six%20OpenClaw%20Vulnerabilities.png"
 description: We discovered six vulnerabilities in OpenClaw using Endor Labs’ AI SAST data flow analysis and validated working exploits.
 ---
+# How AI SAST Traced Data Flows to Uncover Six OpenClaw Vulnerabilities
+
+We discovered six vulnerabilities in OpenClaw using Endor Labs’ AI SAST data flow analysis and validated working exploits.
+
 In our[previous post](https://www.endorlabs.com/learn/ai-sast-in-action-finding-real-vulnerabilities-in-openclaw), we discussed how [Endor Labs' AI SAST engine](https://www.endorlabs.com/learn/introducing-ai-sast-that-thinks-like-a-security-engineer) successfully identified seven exploitable vulnerabilities in [OpenClaw](https://openclaw.ai/) through systematic analysis and validation. Now that OpenClaw has published patches and security advisories, we can share the technical details of how agentic data flow analysis uncovered these issues and enabled proof-of-concept development.
 
 This post examines six disclosed vulnerabilities, walking through how the AI SAST engine traced data paths from user-controlled sources to dangerous sinks and how we validated each finding with working exploits.

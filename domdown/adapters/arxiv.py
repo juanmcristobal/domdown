@@ -47,6 +47,11 @@ class ArXivAdapter:
         _remove_selectors(context.document, ARXIV_REMOVE_SELECTORS)
         return context
 
+    def preprocess_for_criteria(self, context: PipelineContext) -> PipelineContext:
+        if context.options.base_url is None:
+            context.options = replace(context.options, base_url=f"https://{ARXIV_HOST}")
+        return context
+
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:
         """Prefer the paper title exposed in Open Graph metadata."""
 
@@ -54,6 +59,8 @@ class ArXivAdapter:
         if title and context.metadata is not None:
             context.metadata = replace(context.metadata, title=title)
         root = context.document.select_one("div#abs") if context.document is not None else None
+        if context.extraction_criteria is not None and not context.extraction_criteria.has_recorded_replay:
+            return context
         if isinstance(root, Tag):
             context.document = root
         return context
@@ -61,7 +68,8 @@ class ArXivAdapter:
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Clean arXiv-specific rendering artifacts after Markdown generation."""
 
-        context.markdown = _clean_markdown(context.markdown)
+        if context.extraction_criteria is None or context.extraction_criteria.has_recorded_replay:
+            context.markdown = _clean_markdown(context.markdown)
         return context
 
 

@@ -56,3 +56,46 @@ def test_srcset_helpers_ignore_invalid_descriptors() -> None:
 
     assert _best_srcset_candidate(" , /a.png foo, /b.png 2x") == "/b.png"
     assert _srcset_score(["bad"]) == 0.0
+
+
+def test_render_image_never_emits_inline_base64_and_keeps_its_alt_text() -> None:
+    """Embedded payloads must not leak into Markdown output."""
+
+    soup = BeautifulSoup(
+        '<img src="data:image/png;base64,AAAA" alt="Cloud access diagram" />',
+        "lxml",
+    )
+
+    assert render_image(soup.img, DomdownOptions()) == "Cloud access diagram"
+
+
+def test_render_image_skips_decorative_images_without_alternative_text() -> None:
+    """Unlabeled images without a caption are treated as decorative."""
+
+    soup = BeautifulSoup('<img src="https://example.com/pixel.png" />', "lxml")
+
+    assert render_image(soup.img, DomdownOptions()) == ""
+
+
+def test_render_image_ignores_data_srcset_when_a_usable_source_exists() -> None:
+    """A data URI in srcset should not mask a regular image URL."""
+
+    soup = BeautifulSoup(
+        '<img alt="Editorial figure" src="https://example.com/figure.png" '
+        'srcset="data:image/png;base64,AAAA 2x" />',
+        "lxml",
+    )
+
+    assert render_image(soup.img, DomdownOptions()) == "![Editorial figure](https://example.com/figure.png)"
+
+
+def test_render_image_uses_usable_candidate_after_inline_data_srcset_entry() -> None:
+    """A valid srcset candidate remains available after skipping an inline data payload."""
+
+    soup = BeautifulSoup(
+        '<img alt="Editorial figure" srcset="data:image/png;base64,AAAA 2x, '
+        'https://example.com/figure.png 1x" />',
+        "lxml",
+    )
+
+    assert render_image(soup.img, DomdownOptions()) == "![Editorial figure](https://example.com/figure.png)"
