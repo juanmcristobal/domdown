@@ -58,10 +58,11 @@ def extract_metadata(soup: BeautifulSoup, options: DomdownOptions) -> HtmlMetada
     meta_author = tuple(
         value for value in (meta_content(soup, selector) for selector in AUTHOR_META_SELECTORS) if value
     )
+    open_graph_username = meta_content(soup, "meta[property='og:author:username']")
     author_sources = (
         (meta_author, visible_author) if options.author_priority == "metadata" else (visible_author, meta_author)
     )
-    author = first_list(*author_sources)
+    author = (open_graph_username,) if open_graph_username else first_list(*author_sources)
     author = tuple(item for item in author if item and not looks_like_date(item) and not looks_like_url(item))
     published = first_meta_content(soup, PUBLISHED_SELECTORS)
     description = first_meta_content(soup, DESCRIPTION_SELECTORS)

@@ -23,6 +23,8 @@ class PipelineContext:
     warnings: list[str] = field(default_factory=list)
     matched_adapters: tuple[Any, ...] | None = None
     extraction_criteria: ExtractionCriteria | None = None
+    criteria_source: str = "discover"
+    site_criteria_scope: bool = False
     extraction_trace: ExtractionTrace | None = None
     extraction_metrics: dict[str, Any] = field(default_factory=dict)
     extraction_plan: ExtractionPlan | None = None

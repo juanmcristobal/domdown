@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from domdown import html_to_markdown
-from domdown.adapters import WikipediaAdapter
 
 REAL_TESTS_DIR = Path(__file__).resolve().parents[1] / "real"
 REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
@@ -61,10 +60,8 @@ def _case_param(case: RealExampleCase) -> pytest.ParameterSet:
 
 
 @pytest.mark.parametrize("case", [_case_param(case) for case in _wikipedia_cases()])
-def test_wikipedia_adapter_matches_the_curated_snapshot(case: RealExampleCase) -> None:
-    """Wikipedia pages should render to the curated Markdown snapshot."""
-
-    assert WikipediaAdapter().name == "wikipedia"
+def test_wikipedia_site_criteria_matches_the_curated_snapshot(case: RealExampleCase) -> None:
+    """Declarative Wikipedia criteria should render the curated Markdown snapshot."""
 
     actual = html_to_markdown(case.html_text())
     expected = case.markdown_text()

@@ -355,4 +355,8 @@ def _render_heading_text(node: Tag, options: DomdownOptions) -> str:
         rendered = render_inline(child, options)
         if rendered:
             parts.append(rendered)
-    return collapse_inline_text("".join(parts))
+    text = collapse_inline_text("".join(parts))
+    classes = node.get("class") or ()
+    if node.name.lower() == "h1" and "title" in classes and text.casefold().startswith("title:"):
+        return text.split(":", 1)[1].strip()
+    return text

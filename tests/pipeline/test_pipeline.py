@@ -15,6 +15,7 @@ def test_pipeline_declares_stages_in_execution_order() -> None:
 
     assert [stage.name for stage in pipeline.stages] == [
         "parse",
+        "prepare",
         "metadata",
         "clean",
         "preserve",
@@ -63,6 +64,7 @@ def test_apply_trace_records_selector_matches_changes_and_content_metrics() -> N
     decisions = trace["decisions"]
 
     assert trace["mode"] == "selector_apply"
+    assert trace["criteria_source"] == "explicit"
     assert decisions[0] == {
         "action": "apply-criteria",
         "include": ["article.story"],
@@ -331,7 +333,7 @@ def test_selector_apply_accepts_soupsieve_has_and_escaped_special_class_selector
     assert "Outside." not in result.markdown
 
 
-def test_selector_apply_runs_adapter_markdown_postprocessing() -> None:
+def test_selector_apply_matches_medium_site_criteria_without_adapter_postprocessing() -> None:
     html = """
     <html><head><meta property="og:site_name" content="Medium"></head><body>
       <article class="chosen"><p>Caller selected introduction.</p><h2>Selected heading</h2><p>Selected body.</p></article>
@@ -393,16 +395,19 @@ def test_discovered_criteria_replay_exactly_after_json_round_trip() -> None:
     assert discovered.criteria.generated
     assert discovered.trace.to_dict()["mode"] == "discover"
     assert replayed.trace.to_dict()["mode"] == "exact_replay"
+    assert discovered.trace.to_dict()["criteria_source"] == "discover"
+    assert replayed.trace.to_dict()["criteria_source"] == "discover"
 
     with pytest.raises(CriteriaError, match="same HTML"):
         pipeline.run(html + "<p>changed</p>", criteria=discovered.criteria)
 
 
-def test_discovered_medium_criteria_replay_after_adapter_preprocessing() -> None:
+def test_discovered_medium_site_criteria_replay_through_apply() -> None:
     html = """
-    <html><head><meta property="og:site_name" content="Medium"></head><body>
+    <html><head><meta property="og:site_name" content="Medium">
+      <link rel="canonical" href="https://medium.com/story"></head><body>
       <nav>site navigation</nav>
-      <article><h1>Story</h1><p>Editorial body text survives.</p></article>
+      <article><h1>Story</h1><p>3 min read</p><p>Editorial body text survives.</p></article>
     </body></html>
     """
     pipeline = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False))
@@ -411,7 +416,10 @@ def test_discovered_medium_criteria_replay_after_adapter_preprocessing() -> None
     replayed = pipeline.run(html, criteria=discovered.criteria.to_json())
 
     assert discovered.markdown == replayed.markdown
-    assert any(adapter["name"] == "medium" for adapter in discovered.trace.adapters)
+    assert "3 min read" not in discovered.markdown
+    assert discovered.trace.to_dict()["criteria_source"] == "site"
+    assert discovered.criteria.drop_text
+    assert discovered.trace.adapters == ()
 
 
 def test_manual_criteria_overrides_domain_adapter_removals() -> None:
@@ -486,7 +494,8 @@ def test_discovered_github_blob_criteria_replay_special_markdown_route() -> None
     replayed = pipeline.run(html, criteria=discovered.criteria.to_json())
 
     assert discovered.markdown == replayed.markdown
-    assert any(adapter["name"] == "github" for adapter in discovered.trace.adapters)
+    assert discovered.trace.to_dict()["criteria_source"] == "site"
+    assert "pre.domdown-raw-lines" in discovered.criteria.include[0]
 
 
 def test_editing_discovered_include_switches_to_explicit_selection() -> None:

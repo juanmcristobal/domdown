@@ -2,133 +2,35 @@ from __future__ import annotations
 
 import pytest
 
-from domdown._core import DomdownOptions, PipelineContext
 from domdown._pipeline import HtmlToMarkdownPipeline
-from domdown.adapters import (
-    CensysAdapter,
-    CyberScoopEditorialAdapter,
-    DarkReadingAdapter,
-    RailwayAdapter,
-    SecurityAffairsAdapter,
-    SecurityWeekAdapter,
-    TheRegisterAdapter,
-    WizAdapter,
-)
-from domdown.stages.parse import ParseStage
-
-
 @pytest.mark.parametrize(
-    ("adapter", "url", "selector", "attribute", "noise"),
+    ("url", "footer_heading", "promo"),
     [
-        (TheRegisterAdapter(), "https://www.theregister.com/2026/01/01/story/", "toplist", "class", "Top Stories"),
-        (
-            SecurityWeekAdapter(),
-            "https://www.securityweek.com/story/",
-            "widget_sw_widget_moves",
-            "class",
-            "People on the Move",
-        ),
-        (SecurityAffairsAdapter(), "https://securityaffairs.com/story/", "right-sidebar", "class", "Recent Articles"),
-        (CyberScoopEditorialAdapter(), "https://cyberscoop.com/story/", "latest-podcasts", "class", "Latest Podcasts"),
-        (CensysAdapter(), "https://censys.com/blog/story/", "header", "id", "Featured promotion"),
+        ("https://www.wiz.io/blog/story", "Continue reading", "Ready to see Wiz in action?"),
+        ("https://blog.railway.com/p/story", "Continue Reading...", "Recommended story"),
     ],
 )
-def test_editorial_domain_adapters_remove_only_known_modules(adapter, url, selector, attribute, noise) -> None:
-    html = f"""
-    <html><head>
-      <meta property="og:url" content="{url}" />
-    </head><body>
-      <header><p>Generic site header</p></header>
-      <main><article>
-        <h1>Editorial title</h1>
-        <p>Editorial body must remain, including its technical details.</p>
-        <table><tr><th>Setting</th><th>Value</th></tr><tr><td>Port</td><td>443</td></tr></table>
-        <p><a href="https://example.com/reference">Technical reference</a></p>
-        <aside {attribute}="{selector}">
-        <p>{noise}</p>
-        </aside>
-      </article></main>
-    </body></html>
-    """
-
-    result = HtmlToMarkdownPipeline(adapters=(adapter,)).run(html)
-
-    assert "Editorial title" in result.markdown
-    assert "Editorial body must remain" in result.markdown
-    assert "| Setting | Value |" in result.markdown
-    assert "Technical reference" in result.markdown
-    assert noise not in result.markdown
-    assert adapter.name in {item["name"] for item in result.trace.to_dict()["adapters"]}
-
-
-@pytest.mark.parametrize(
-    ("adapter", "url", "footer_heading", "promo"),
-    [
-        (WizAdapter(), "https://www.wiz.io/blog/story", "## Continue reading", "Ready to see Wiz in action?"),
-        (RailwayAdapter(), "https://blog.railway.com/p/story", "### Continue Reading...", "Recommended story"),
-    ],
-)
-def test_editorial_domain_adapters_trim_only_trailing_recommendations(adapter, url, footer_heading, promo) -> None:
+def test_site_criteria_remove_trailing_recommendations(url, footer_heading, promo) -> None:
     html = f"""
     <html><head><meta property="og:url" content="{url}" /></head><body>
       <article><h1>Editorial title</h1>
         <p>Editorial body remains.</p>
         <p><a href="https://example.com/reference">Reference link</a></p>
+        <section><h2>{footer_heading}</h2><p>{promo}</p></section>
       </article>
-      <section><h2>{footer_heading}</h2><p>{promo}</p></section>
     </body></html>
     """
 
-    result = HtmlToMarkdownPipeline(adapters=(adapter,)).run(html)
+    result = HtmlToMarkdownPipeline().run(html)
 
     assert "Editorial body remains." in result.markdown
     assert "Reference link" in result.markdown
     assert footer_heading not in result.markdown
     assert promo not in result.markdown
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
-def test_the_register_toplists_are_removed_after_root_selection() -> None:
-    html = """
-    <html><head>
-      <meta property="og:url" content="https://www.theregister.com/2026/story/" />
-    </head><body>
-      <main class="pageWidth">
-        <section id="main" class="main article">
-          <h1>Editorial article title</h1>
-          <div class="bodytext"><p>Editorial story.</p>
-            <p>References and findings belonging to the article remain intact.</p>
-          </div>
-        </section>
-        <div class="toplist"><h2>TOP STORIES</h2>
-          <p>Unrelated recommended story.</p>
-        </div>
-        <section class="related"><h2>Related stories</h2>
-          <article><h3>Another unrelated story</h3></article>
-        </section>
-        <div class="google-ad">REG AD</div>
-      </main>
-    </body></html>
-    """
-    context = ParseStage().run(PipelineContext(html=html, options=DomdownOptions()))
-    adapter = TheRegisterAdapter()
-
-    assert adapter.matches(context)
-    context = adapter.preprocess(context)
-    assert context.document.select_one(".toplist") is not None
-
-    context.document = context.document.select_one("main.pageWidth")
-    context = adapter.post_clean(context)
-
-    assert context.document.select_one(".toplist") is None
-    assert context.document.select_one("section.related") is None
-    assert context.document.select_one(".google-ad") is None
-    assert "Editorial article title" in context.document.get_text(" ", strip=True)
-    assert "References and findings belonging to the article remain intact." in context.document.get_text(
-        " ", strip=True
-    )
-
-
-def test_dark_reading_removes_author_bio_and_topic_tags() -> None:
+def test_dark_reading_site_criteria_remove_author_bio_and_topic_tags() -> None:
     html = """
     <html><head><meta property="og:url" content="https://www.darkreading.com/example" /></head>
     <body><div class="TwoColumnLayout-Content"><div class="ArticleBase-Body">
@@ -146,7 +48,7 @@ def test_dark_reading_removes_author_bio_and_topic_tags() -> None:
     </div></div></body></html>
     """
 
-    result = HtmlToMarkdownPipeline(adapters=(DarkReadingAdapter(),)).run(html)
+    result = HtmlToMarkdownPipeline().run(html)
 
     assert "Editorial body remains" in result.markdown
     assert "About the Author" not in result.markdown
@@ -167,12 +69,13 @@ def test_security_affairs_removes_social_footer_and_keeps_author_attribution() -
     </div></body></html>
     """
 
-    result = HtmlToMarkdownPipeline(adapters=(SecurityAffairsAdapter(),)).run(html)
+    result = HtmlToMarkdownPipeline().run(html)
 
     assert "Editorial article body remains." in result.markdown
     assert "Follow me on Twitter" not in result.markdown
     assert "@securityaffairs" not in result.markdown
     assert "Author attribution" in result.markdown
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
 def test_securityweek_removes_embedded_ad_after_root_selection() -> None:
@@ -186,15 +89,74 @@ def test_securityweek_removes_embedded_ad_after_root_selection() -> None:
     </article></main></body></html>
     """
 
-    result = HtmlToMarkdownPipeline(adapters=(SecurityWeekAdapter(),)).run(html)
+    result = HtmlToMarkdownPipeline().run(html)
 
     assert "Article title" in result.markdown
     assert "Editorial article body remains." in result.markdown
     assert "Advertisement. Scroll to continue reading." not in result.cleaned_html
     assert "Advertisement. Scroll to continue reading." not in result.markdown
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
-def test_cyberscoop_removes_advertisement_and_google_stickybar() -> None:
+def test_securityweek_selects_article_regions_without_social_or_sidebar_widgets() -> None:
+    html = """
+    <html><head><meta property="og:url" content="https://www.securityweek.com/example" /></head>
+    <body><article>
+      <header class="zox-post-head-wrap"><h1 class="zox-post-title">Article title</h1></header>
+      <div class="zox-post-body"><p>Article body.</p></div>
+      <ul class="zox-post-soc-list"><li><a href="#">Flipboard</a></li><li><a href="#">Reddit</a></li></ul>
+      <div class="zox-post-side-wrap"><div class="zox-side-widget widget_text">
+        <div class="sw-block-webinar"><div class="sw-webinar">
+          <a href="https://register.securityweek.com/ciso-forum">Virtual Event: CISO Forum 2026 Summit</a>
+          <p>Join as we bring together cybersecurity leaders.</p>
+          <a href="https://register.securityweek.com/ciso-forum">Register</a>
+        </div></div>
+      </div></div>
+    </article></body></html>
+    """
+
+    result = HtmlToMarkdownPipeline().run(html)
+    replayed = HtmlToMarkdownPipeline().run(html, criteria=result.criteria)
+
+    assert "Article title" in result.markdown
+    assert "Article body." in result.markdown
+    assert "Flipboard" not in result.markdown
+    assert "Reddit" not in result.markdown
+    assert "CISO Forum" not in result.markdown
+    assert "Join as we bring" not in result.markdown
+    assert "Register" not in result.markdown
+    assert replayed.document == result.document
+
+
+def test_securityweek_trims_trending_and_everything_after_it() -> None:
+    html = """
+    <html><head><meta property="og:url" content="https://www.securityweek.com/example" /></head>
+    <body><article><h1>Article title</h1>
+      <p>Editorial body remains before the recommendations.</p>
+      <p><strong>Related:</strong> <a href="https://securityweek.com/related/">Related article one.</a></p>
+      <p><strong>Related:</strong> <a href="https://securityweek.com/related/">Related article two.</a></p>
+      <p><strong>Related:</strong> <a href="https://securityweek.com/related/">Related article three.</a></p>
+      <p><strong>Related:</strong> <a href="https://securityweek.com/related/">Related article four.</a></p>
+      <h3>Trending</h3><h2>Trending recommendation.</h2>
+      <h2>More to read</h2><p>More recommendation content.</p>
+    </article></body></html>
+    """
+
+    result = HtmlToMarkdownPipeline().run(html)
+
+    assert "Editorial body remains before the recommendations." in result.markdown
+    assert "Related:" not in result.markdown
+    assert "Related article one." not in result.markdown
+    assert "Related article two." not in result.markdown
+    assert "Related article three." not in result.markdown
+    assert "Related article four." not in result.markdown
+    assert "Trending" not in result.markdown
+    assert "Trending recommendation." not in result.markdown
+    assert "More recommendation content." not in result.markdown
+    assert result.trace.to_dict()["criteria_source"] == "site"
+
+
+def test_cyberscoop_site_criteria_remove_advertisement_and_google_stickybar() -> None:
     html = """
     <html><head>
       <meta property="og:url" content="https://cyberscoop.com/story/" />
@@ -208,13 +170,14 @@ def test_cyberscoop_removes_advertisement_and_google_stickybar() -> None:
     </main></body></html>
     """
 
-    result = HtmlToMarkdownPipeline(adapters=(CyberScoopEditorialAdapter(),)).run(html)
+    result = HtmlToMarkdownPipeline().run(html)
 
     assert "Editorial title" in result.markdown
     assert "Article body remains." in result.markdown
     assert "Advertisement" not in result.markdown
     assert "Get our latest cybersecurity news first on Google." not in result.markdown
     assert "Click here!" not in result.markdown
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
 def test_opshiled_notice_page_is_treated_as_semantic_content() -> None:

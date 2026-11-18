@@ -8,7 +8,6 @@ import pytest
 
 from domdown import html_to_markdown
 from domdown._pipeline import HtmlToMarkdownPipeline
-from domdown.adapters import ArXivAdapter
 
 REAL_TESTS_DIR = Path(__file__).resolve().parents[1] / "real"
 REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
@@ -61,10 +60,10 @@ def _case_param(case: RealExampleCase) -> pytest.ParameterSet:
     return pytest.param(case, id=case.id)
 
 
-def test_arxiv_adapter_matches_abs_pages_and_cleans_title_chrome() -> None:
+def test_arxiv_site_criteria_matches_abs_pages_and_cleans_title_chrome() -> None:
     """ArXiv abstract pages should render the paper title and abstract cleanly."""
 
-    pipeline = HtmlToMarkdownPipeline(adapters=(ArXivAdapter(),))
+    pipeline = HtmlToMarkdownPipeline()
     html = """
         <html>
           <head>
@@ -99,8 +98,6 @@ def test_arxiv_adapter_matches_abs_pages_and_cleans_title_chrome() -> None:
 @pytest.mark.parametrize("case", [_case_param(case) for case in _arxiv_cases()])
 def test_arxiv_adapter_matches_the_curated_snapshot(case: RealExampleCase) -> None:
     """ArXiv abstract pages should render to the curated Markdown snapshot."""
-
-    assert ArXivAdapter().name == "arxiv"
 
     actual = html_to_markdown(case.html_text())
     expected = case.markdown_text()

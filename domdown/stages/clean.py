@@ -152,13 +152,13 @@ class CleanStage:
                 root = soup.select_one("[data-domdown-criteria-root]")
                 for match in matches:
                     root.append(deepcopy(match))
-            same_content_scope = not synthetic_root and (
+            same_content_scope = context.criteria_source == "site" or (not synthetic_root and (
                 criteria.shared_cleanup == "force"
                 or (
                     criteria.shared_cleanup == "auto"
                     and _looks_like_article_scope(root, context.extraction_metrics["before"])
                 )
-            )
+            ))
             context.selector_apply_shared_cleanup = same_content_scope
             root_was_excluded = False
             for selector in criteria.exclude:
@@ -238,7 +238,7 @@ class CleanStage:
             ),
             SKIP_TAGS,
             apply_extraction_heuristics=recorded_replay or same_content_scope,
-            drop_text_patterns=criteria.drop_text if not recorded_replay else (),
+            drop_text_patterns=criteria.drop_text,
         )
         context.selected_root_id = context.node_ids.get(id(root))
         context.document = root

@@ -225,6 +225,7 @@ class ExtractionTrace:
     replayable: bool = True
     limitations: tuple[str, ...] = ()
     mode: str = "discover"
+    criteria_source: str = "discover"
     content_metrics: dict[str, Any] | None = None
     warnings: tuple[str, ...] = ()
 
@@ -236,6 +237,7 @@ class ExtractionTrace:
             "node_references": list(self.node_references),
             "reproducibility": {"replayable": self.replayable, "limitations": list(self.limitations)},
             "mode": self.mode,
+            "criteria_source": self.criteria_source,
             "content_metrics": self.content_metrics or {},
             "warnings": list(self.warnings),
         }

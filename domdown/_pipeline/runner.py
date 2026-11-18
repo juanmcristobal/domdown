@@ -15,28 +15,7 @@ from .._core import (
     PipelineContext,
 )
 from .._version import DOMDOWN_VERSION
-from ..adapters import (
-    AdapterRegistry,
-    ArticleAdapter,
-    ArXivAdapter,
-    BleepingComputerAdapter,
-    CensysAdapter,
-    CyberScoopEditorialAdapter,
-    CyberSecurityNewsAdapter,
-    DailySecuAdapter,
-    DarkReadingAdapter,
-    GBHackersAdapter,
-    GitHubAdapter,
-    MediumAdapter,
-    RailwayAdapter,
-    SecurityAffairsAdapter,
-    SecurityWeekAdapter,
-    TheHackerNewsAdapter,
-    TheRegisterAdapter,
-    WikipediaAdapter,
-    WizAdapter,
-    build_default_registry,
-)
+from ..adapters import AdapterRegistry, ArticleAdapter, build_default_registry
 from ..stages.base import PipelineStage
 from ..stages.clean import CleanStage
 from ..stages.frontmatter import FrontmatterStage
@@ -45,6 +24,8 @@ from ..stages.metadata import MetadataStage
 from ..stages.parse import ParseStage
 from ..stages.postprocess import PostProcessStage
 from ..stages.preserve import PreserveStage
+from ..stages.prepare import PrepareDocumentStage
+from ..site_criteria import criteria_for_document
 
 
 @dataclass(slots=True)
@@ -59,30 +40,11 @@ class HtmlToMarkdownPipeline:
     def __post_init__(self) -> None:
         """Populate the default stage chain when none is supplied."""
 
-        if not self.adapters:
-            self.adapters = (
-                GitHubAdapter(),
-                MediumAdapter(),
-                BleepingComputerAdapter(),
-                TheRegisterAdapter(),
-                SecurityWeekAdapter(),
-                SecurityAffairsAdapter(),
-                CyberScoopEditorialAdapter(),
-                CensysAdapter(),
-                DarkReadingAdapter(),
-                WizAdapter(),
-                RailwayAdapter(),
-                CyberSecurityNewsAdapter(),
-                DailySecuAdapter(),
-                GBHackersAdapter(),
-                TheHackerNewsAdapter(),
-                ArXivAdapter(),
-                WikipediaAdapter(),
-            )
         self.adapter_registry = build_default_registry(self.adapters)
         if not self.stages:
             self.stages = (
                 ParseStage(),
+                PrepareDocumentStage(),
                 MetadataStage(),
                 CleanStage(),
                 PreserveStage(),
@@ -100,6 +62,7 @@ class HtmlToMarkdownPipeline:
         """Run the configured pipeline over raw HTML and return the result."""
 
         extraction_criteria = ExtractionCriteria.from_json(criteria) if criteria is not None else None
+        criteria_source = "explicit" if extraction_criteria is not None else "discover"
         document_sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
         if (
             extraction_criteria is not None
@@ -123,7 +86,7 @@ class HtmlToMarkdownPipeline:
         for stage in self.stages:
             context = stage.run(context)
             stage_name = getattr(stage, "name", "")
-            if stage_name == "parse":
+            if stage_name == "prepare":
                 context.node_refs = list(context.document.find_all(True))
                 context.node_ids = {id(node): index for index, node in enumerate(context.node_refs, start=1)}
                 context.node_descriptors = {
@@ -139,12 +102,24 @@ class HtmlToMarkdownPipeline:
                     limitation_hook = getattr(adapter, "criteria_limitations", None)
                     if limitation_hook is not None:
                         context.reproducibility_limitations.extend(limitation_hook(context))
+                site_criteria = criteria_for_document(context.document)
+                if extraction_criteria is None:
+                    if site_criteria is not None:
+                        extraction_criteria = site_criteria
+                        context.extraction_criteria = site_criteria
+                        context.extraction_plan = ExtractionPlan(site_criteria)
+                        context.criteria_source = "site"
+                        criteria_source = "site"
+                        context.site_criteria_scope = True
+                elif site_criteria is not None and _same_selector_operations(extraction_criteria, site_criteria):
+                    context.site_criteria_scope = True
+                    if extraction_criteria.has_recorded_replay:
+                        context.criteria_source = "site"
                 if extraction_criteria is None:
                     context = self.adapter_registry.preprocess(context)
-                else:
-                    if extraction_criteria.has_recorded_replay:
-                        context = self.adapter_registry.preprocess_for_criteria(context)
-                        _apply_recorded_adapter_removals(context, extraction_criteria.adapter_removed_node_ids)
+                elif extraction_criteria.has_recorded_replay:
+                    context = self.adapter_registry.preprocess_for_criteria(context)
+                    _apply_recorded_adapter_removals(context, extraction_criteria.adapter_removed_node_ids)
             elif stage_name == "metadata":
                 context = self.adapter_registry.refine_metadata(context)
             elif stage_name == "clean" and (
@@ -162,6 +137,13 @@ class HtmlToMarkdownPipeline:
             "discover"
             if extraction_criteria is None
             else "exact_replay" if extraction_criteria.has_recorded_replay else "selector_apply"
+        )
+        criteria_source = (
+            context.criteria_source
+            if context.criteria_source == "site"
+            else "discover"
+            if extraction_criteria is None or extraction_criteria.has_recorded_replay
+            else "explicit"
         )
         after_metrics = context.extraction_metrics.setdefault("after", {})
         after_metrics["words"] = len(context.markdown.split())
@@ -191,7 +173,7 @@ class HtmlToMarkdownPipeline:
             retained_ids = (
                 tuple(
                     sorted(
-                        {context.node_ids[id(context.document)]}
+                        {context.node_ids.get(id(context.document), context.selected_root_id)}
                         | {
                             context.node_ids[id(node)]
                             for node in context.document.find_all(True)
@@ -247,6 +229,46 @@ class HtmlToMarkdownPipeline:
                 replayable=criteria_result.replayable,
                 limitations=limitations,
                 mode=mode,
+                criteria_source=criteria_source,
+                content_metrics=context.extraction_metrics,
+                warnings=tuple(context.warnings),
+            )
+        elif context.criteria_source == "site" and not extraction_criteria.has_recorded_replay:
+            retained_ids = tuple(
+                sorted(
+                    {context.node_ids.get(id(context.document), context.selected_root_id)}
+                    | {
+                        context.node_ids[id(node)]
+                        for node in context.document.find_all(True)
+                        if id(node) in context.node_ids
+                    }
+                )
+            )
+            criteria_result = ExtractionCriteria(
+                include=extraction_criteria.include,
+                exclude=extraction_criteria.exclude,
+                unwrap=extraction_criteria.unwrap,
+                drop_text=extraction_criteria.drop_text,
+                document_sha256=document_sha256,
+                domdown_version=DOMDOWN_VERSION,
+                root_node_id=context.selected_root_id,
+                retained_node_ids=retained_ids,
+                generated=True,
+                limitations=tuple(context.reproducibility_limitations),
+                replayable=not context.reproducibility_limitations,
+            ).with_replay_key()
+            limitations = tuple(dict.fromkeys(context.reproducibility_limitations))
+            trace_result = ExtractionTrace(
+                selected_root=context.extraction_trace.selected_root if context.extraction_trace else None,
+                adapters=tuple({"name": adapter.name} for adapter in (context.matched_adapters or ())),
+                decisions=(
+                    *((context.extraction_trace.decisions) if context.extraction_trace else ()),
+                    *context.adapter_trace,
+                ),
+                replayable=not limitations,
+                limitations=limitations,
+                mode=mode,
+                criteria_source=criteria_source,
                 content_metrics=context.extraction_metrics,
                 warnings=tuple(context.warnings),
             )
@@ -281,6 +303,7 @@ class HtmlToMarkdownPipeline:
                 replayable=extraction_criteria.replayable and not limitations,
                 limitations=limitations,
                 mode=mode,
+                criteria_source=criteria_source,
                 content_metrics=context.extraction_metrics,
                 warnings=tuple(context.warnings),
             )
@@ -329,3 +352,16 @@ def _apply_recorded_adapter_removals(context: PipelineContext, node_ids: tuple[i
     for node in reversed(context.node_refs):
         if context.node_ids.get(id(node)) in wanted and node.parent is not None:
             node.decompose()
+
+
+def _same_selector_operations(left: ExtractionCriteria, right: ExtractionCriteria) -> bool:
+    """Compare the portable CSS operations independently from replay metadata."""
+
+    return (
+        left.include == right.include
+        and left.exclude == right.exclude
+        and left.unwrap == right.unwrap
+        and not left.include_fallback
+        and left.drop_text == right.drop_text
+        and left.shared_cleanup == "auto"
+    )

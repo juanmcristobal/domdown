@@ -11,7 +11,7 @@ import pytest
 from bs4 import BeautifulSoup
 
 from domdown import DomdownOptions, ExtractionCriteria, HtmlToMarkdownPipeline, html_to_markdown
-from domdown.adapters import github
+from domdown.stages import prepare as github_preparation
 
 from . import load_real_cases
 
@@ -32,7 +32,7 @@ def test_real_raw_automatic_discover_apply_are_exactly_equivalent(
     """Compare complete public documents separately from body-only Markdown fields."""
     if case_id == "node_release_tag_v2530":
         monkeypatch.setattr(
-            github, "_fetch_release_assets", lambda url: (_ for _ in ()).throw(OSError("network disabled"))
+            github_preparation, "_fetch_release_assets", lambda url: (_ for _ in ()).throw(OSError("network disabled"))
         )
 
     case = CASES[case_id]
@@ -77,7 +77,7 @@ def test_raw_discover_json_replay_is_exact(case_id: str, monkeypatch: pytest.Mon
     """Every manifest raw must survive a public JSON serialization/replay round trip."""
     if case_id == "node_release_tag_v2530":
         monkeypatch.setattr(
-            github, "_fetch_release_assets", lambda url: (_ for _ in ()).throw(OSError("network disabled"))
+            github_preparation, "_fetch_release_assets", lambda url: (_ for _ in ()).throw(OSError("network disabled"))
         )
     case = CASES[case_id]
     pipeline = _pipeline(case_id)
@@ -107,7 +107,7 @@ def test_bleepingcomputer_patch_tuesday_keeps_vulnerability_catalog() -> None:
     result = pipeline.run(case.html_text())
 
     cleaned = BeautifulSoup(result.cleaned_html, "lxml")
-    assert result.criteria.include == ("div.article_section",)
+    assert result.criteria.include == (".article_section, .articleBody, article",)
     assert cleaned.select_one(".articleBody") is not None
     assert len(cleaned.select(".articleBody tr")) >= 1300
     assert "1,235 flaws" in result.document
@@ -223,11 +223,20 @@ def test_real_socket_criteria_edits_remove_restore_change_root_unwrap_and_replac
         ("cybersecuritynews_azure_password_spray_attack", ".td-post-sharing", "Copy URL"),
     ],
 )
-def test_real_adapter_extraction_decisions_can_be_overridden(case_id: str, selector: str, marker: str) -> None:
+def test_real_extraction_decisions_can_be_overridden(case_id: str, selector: str, marker: str) -> None:
     case = CASES[case_id]
     pipeline = _pipeline(case_id)
     normal = pipeline.run(case.html_text())
-    assert normal.criteria.adapters
+    if case_id in {
+        "wikipedia_elliptic_curve_cryptography",
+        "cybersecuritynews_azure_password_spray_attack",
+        "bleepingcomputer_november_2026_patch_tuesday",
+        "dailysecu_sparrow_enterprise_procurement",
+        "arxiv_2603_28627",
+    }:
+        assert normal.trace.to_dict()["criteria_source"] == "site"
+    else:
+        assert normal.trace.to_dict()["criteria_source"] == "site"
     forced = pipeline.run(case.html_text(), criteria=ExtractionCriteria(include=(selector,), exclude=()))
     assert marker in forced.markdown
     assert marker not in normal.markdown
@@ -236,11 +245,39 @@ def test_real_adapter_extraction_decisions_can_be_overridden(case_id: str, selec
 def test_github_release_is_marked_non_replayable_without_frozen_external_resource(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(github, "_fetch_release_assets", lambda url: (_ for _ in ()).throw(OSError("network disabled")))
+    monkeypatch.setattr(
+        github_preparation,
+        "_fetch_release_assets",
+        lambda url: (_ for _ in ()).throw(OSError("network disabled")),
+    )
     case = CASES["node_release_tag_v2530"]
     result = _pipeline(case.id).run(case.html_text())
     assert not result.criteria.replayable
-    assert any("fetched externally" in limitation for limitation in result.criteria.limitations)
+    assert any("external" in limitation.lower() for limitation in result.criteria.limitations)
+
+
+def test_github_release_replay_refetches_assets_before_apply(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Replay uses the same preparation stage and retains available remote assets."""
+
+    calls: list[str] = []
+
+    def fetch(url: str) -> str:
+        calls.append(url)
+        return '<ul><li><a href="/example/project/archive/refs/tags/v1.zip">Source code</a></li></ul>'
+
+    monkeypatch.setattr(github_preparation, "_fetch_release_assets", fetch)
+    case = CASES["node_release_tag_v2530"]
+    pipeline = _pipeline(case.id)
+    html = case.html_text()
+
+    discovered = pipeline.run(html)
+    replayed = pipeline.run(html, criteria=ExtractionCriteria.from_json(discovered.criteria.to_json()))
+
+    assert len(calls) == 2
+    assert discovered.document == replayed.document
+    assert "### Assets" in replayed.markdown
+    assert "https://github.com/example/project/archive/refs/tags/v1.zip" in replayed.markdown
+    assert any("external" in limitation.lower() for limitation in discovered.criteria.limitations)
 
 
 def test_real_corpus_feature_coverage_and_securelist_absence() -> None:

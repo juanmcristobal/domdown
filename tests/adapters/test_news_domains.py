@@ -1,17 +1,8 @@
 from __future__ import annotations
 
 from domdown._pipeline import HtmlToMarkdownPipeline
-from domdown.adapters import (
-    BleepingComputerAdapter,
-    CyberSecurityNewsAdapter,
-    DailySecuAdapter,
-    GBHackersAdapter,
-    TheHackerNewsAdapter,
-)
-
-
-def test_dailysecu_adapter_removes_article_chrome_and_keeps_body() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(DailySecuAdapter(),))
+def test_dailysecu_site_criteria_removes_article_chrome_and_keeps_content() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -33,11 +24,12 @@ def test_dailysecu_adapter_removes_article_chrome_and_keeps_body() -> None:
 
     result = pipeline.run(html)
 
-    assert result.markdown == "Body paragraph."
+    assert result.markdown == "# Title\n\nBody paragraph."
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
-def test_bleepingcomputer_adapter_removes_sidebar_comments_and_promos() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(BleepingComputerAdapter(),))
+def test_bleepingcomputer_site_criteria_removes_sidebar_comments_and_promos() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -62,10 +54,11 @@ def test_bleepingcomputer_adapter_removes_sidebar_comments_and_promos() -> None:
     result = pipeline.run(html)
 
     assert result.markdown == "# Title\n\nBody paragraph."
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
-def test_bleepingcomputer_adapter_removes_wiz_campaign_banner_but_keeps_editorial_link() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(BleepingComputerAdapter(),))
+def test_bleepingcomputer_site_criteria_removes_wiz_campaign_banner_but_keeps_editorial_link() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -95,13 +88,13 @@ def test_bleepingcomputer_adapter_removes_wiz_campaign_banner_but_keeps_editoria
     assert "Wiz AI security banner" not in result.markdown
     assert "Forum-only response" not in result.cleaned_html
     assert "Forum-only response" not in result.markdown
-    assert result.criteria.adapter_removed_node_ids
+    assert result.trace.to_dict()["criteria_source"] == "site"
     replay = pipeline.run(html, criteria=result.criteria)
     assert replay.markdown == result.markdown
 
 
-def test_bleepingcomputer_adapter_keeps_non_campaign_wiz_links_and_images() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(BleepingComputerAdapter(),))
+def test_bleepingcomputer_site_criteria_keeps_editorial_wiz_links_and_images() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -122,8 +115,8 @@ def test_bleepingcomputer_adapter_keeps_non_campaign_wiz_links_and_images() -> N
     assert "https://www.bleepstatic.com/c/w/editorial-image.jpg" in result.markdown
 
 
-def test_cybersecuritynews_adapter_removes_social_header_and_related_modules() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(CyberSecurityNewsAdapter(),))
+def test_cybersecuritynews_site_criteria_removes_social_header_and_related_modules() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -147,10 +140,11 @@ def test_cybersecuritynews_adapter_removes_social_header_and_related_modules() -
     result = pipeline.run(html)
 
     assert result.markdown == "# Title\n\nBody paragraph."
+    assert result.trace.to_dict()["criteria_source"] == "site"
 
 
-def test_gbhackers_adapter_removes_tagdiv_chrome_and_keeps_the_article_body() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(GBHackersAdapter(),))
+def test_gbhackers_site_criteria_removes_tagdiv_chrome_and_keeps_article_content() -> None:
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -185,13 +179,14 @@ def test_gbhackers_adapter_removes_tagdiv_chrome_and_keeps_the_article_body() ->
     result = pipeline.run(html)
 
     assert result.markdown == (
+        "# Critical Progress Kemp LoadMaster Vulnerability Enables Pre-Auth Remote Code Execution\n\n"
         "Progress’s Kemp LoadMaster is at the center of a critical pre-authentication RCE vulnerability.\n\n"
         "The flaw allows unauthenticated attackers to run arbitrary shell commands."
     )
 
 
 def test_gbhackers_adapter_drops_follow_us_footer_copy() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(GBHackersAdapter(),))
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
@@ -216,7 +211,7 @@ def test_gbhackers_adapter_drops_follow_us_footer_copy() -> None:
 
 
 def test_thehackernews_adapter_removes_featured_resources_sidebar() -> None:
-    pipeline = HtmlToMarkdownPipeline(adapters=(TheHackerNewsAdapter(),))
+    pipeline = HtmlToMarkdownPipeline()
     html = """
     <html>
       <head>
