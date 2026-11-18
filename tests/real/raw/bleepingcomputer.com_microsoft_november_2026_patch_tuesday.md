@@ -19,10 +19,6 @@ tags:
 ---
 # Microsoft November 2026 Patch Tuesday fixes 1,235 flaws, Outlook zero-day
 
-By
-
-- [2](https://www.bleepingcomputer.com/news/microsoft/microsoft-november-2026-patch-tuesday-fixes-1-235-flaws-outlook-zero-day/#comments)
-
 ![Patch Tuesday](https://www.bleepstatic.com/content/hl-images/2024/10/08/patch_tuesday_microsoft.jpg)
 
 Today is Microsoft's November 2026 Patch Tuesday, with security updates addressing a record-breaking 1,235 flaws, including one actively exploited Microsoft Outlook zero-day vulnerability.

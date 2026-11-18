@@ -57,6 +57,28 @@ def test_bleepingcomputer_site_criteria_removes_sidebar_comments_and_promos() ->
     assert result.trace.to_dict()["criteria_source"] == "site"
 
 
+def test_bleepingcomputer_multi_include_replay_keeps_shared_cleanup() -> None:
+    pipeline = HtmlToMarkdownPipeline()
+    html = """
+    <html><head>
+      <meta property="og:site_name" content="BleepingComputer" />
+      <meta property="og:url" content="https://www.bleepingcomputer.com/news/security/example/" />
+    </head><body>
+      <header><h1>Article title</h1></header>
+      <div class="articleBody"><p>Body paragraph remains.</p>
+        <div class="comments-wrapper">Widget comments should be removed.</div>
+      </div>
+    </body></html>
+    """
+
+    discovered = pipeline.run(html)
+    replayed = pipeline.run(html, criteria=discovered.criteria)
+
+    assert discovered.criteria.include[:3] == (".article_section", "h1", "div.articleBody")
+    assert "Widget comments should be removed." not in discovered.markdown
+    assert replayed.document == discovered.document
+
+
 def test_bleepingcomputer_site_criteria_removes_wiz_campaign_banner_but_keeps_editorial_link() -> None:
     pipeline = HtmlToMarkdownPipeline()
     html = """

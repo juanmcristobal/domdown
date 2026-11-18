@@ -152,7 +152,7 @@ class CleanStage:
                 root = soup.select_one("[data-domdown-criteria-root]")
                 for match in matches:
                     root.append(deepcopy(match))
-            same_content_scope = context.criteria_source == "site" or (not synthetic_root and (
+            same_content_scope = context.criteria_source == "site" or context.site_criteria_scope or (not synthetic_root and (
                 criteria.shared_cleanup == "force"
                 or (
                     criteria.shared_cleanup == "auto"

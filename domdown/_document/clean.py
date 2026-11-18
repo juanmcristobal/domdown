@@ -41,9 +41,13 @@ def clean_root(
             comment.extract()
 
     for text_node in list(root.find_all(string=True)) if apply_extraction_heuristics else ():
+        value = str(text_node)
         if (
             isinstance(text_node, NavigableString)
-            and _looks_like_template_placeholder(str(text_node))
+            and (
+                _looks_like_template_placeholder(value)
+                or _looks_like_doctype_declaration(value)
+            )
             and not _is_within_code_block(text_node)
         ):
             text_node.extract()
@@ -204,6 +208,9 @@ def _remove_structural_chrome(root: Tag, text_getters: dict[int, Callable[[], st
         if _is_within_preserved_block(node):
             continue
         text_getter = _cached_text_getter(node, text_getters)
+        if _looks_like_pre_title_author_metadata(node, text_getter):
+            _decompose(node, text_getters)
+            continue
         if _looks_like_date_kicker(node, text_getter):
             _decompose(node, text_getters)
             continue
@@ -243,6 +250,37 @@ def _remove_article_header_cluster(root: Tag, text_getters: dict[int, Callable[[
             if isinstance(sibling, Tag):
                 _decompose(sibling, text_getters)
         _decompose(heading, text_getters)
+
+
+def _looks_like_pre_title_author_metadata(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
+    """Detect a compact avatar/name/date row immediately before an article title."""
+
+    if node.name in {"article", "main", "body", "html"}:
+        return False
+    if node.find("time") is None or node.find(["p", "ul", "ol", "table", "pre", "blockquote"]):
+        return False
+    images = node.find_all("img")
+    if len(images) != 1:
+        return False
+    alt = str(images[0].get("alt") or "").strip().lower()
+    if not any(marker in alt for marker in ("avatar", "profile picture", "profile photo")):
+        return False
+    text = _get_node_text(node, text_getter)
+    if not text or len(text.split()) > 16:
+        return False
+
+    # Require a following title at the same level, so avatar/date rows elsewhere
+    # in the article (for example, a quoted profile) remain untouched.
+    for sibling in node.next_siblings:
+        if isinstance(sibling, NavigableString) and not sibling.strip():
+            continue
+        if not isinstance(sibling, Tag):
+            continue
+        if sibling.name in {"h1", "h2"} or sibling.find(["h1", "h2"]):
+            return True
+        if sibling.find(["p", "ul", "ol", "table", "pre", "blockquote"]):
+            return False
+    return False
 
 
 def _looks_like_header_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
@@ -943,6 +981,17 @@ def _is_tag_href(href: str) -> bool:
     if href.startswith("#"):
         return True
     return "/tag/" in href or "/tags/" in href
+
+
+def _looks_like_doctype_declaration(text: str) -> bool:
+    """Detect stray DOCTYPE declarations pasted into body content."""
+
+    value = text.strip()
+    return bool(
+        value.startswith("<!DOCTYPE")
+        or value.startswith("<!doctype")
+        or value.startswith('html PUBLIC "-//')
+    )
 
 
 def _looks_like_template_placeholder(text: str) -> bool:

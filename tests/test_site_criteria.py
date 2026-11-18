@@ -10,7 +10,7 @@ from tests.real import load_real_cases
 
 def test_site_registry_uses_only_supported_rule_fields() -> None:
     assert set(SITE_CRITERIA) == {
-        "wikipedia", "the_register", "cyberscoop", "censys", "dark_reading",
+        "wikipedia", "the_register", "cyberscoop", "dark_reading",
         "securityweek", "security_affairs", "wiz", "railway", "gbhackers",
         "the_hacker_news", "cybersecurity_news", "bleepingcomputer", "dailysecu",
         "arxiv", "medium", "github",
@@ -123,13 +123,29 @@ def test_theregister_site_drop_text_is_exact_and_replays() -> None:
     assert replayed.markdown == discovered.markdown
 
 
-def test_censys_site_configuration_removes_header_inside_selected_main() -> None:
+def test_unconfigured_censys_article_uses_generic_discover_and_replays() -> None:
     html = """<html><head><link rel="canonical" href="https://censys.com/blog/post"></head>
-    <body><main><div id="header">Featured promotion</div><article><h1>Research</h1>
-    <p>Findings and mitigation guidance remain.</p></article></main></body></html>"""
+    <body><div id="wrap_all"><header>Platform navigation and Get Started Now</header>
+      <main class="template-page content">Header and footer chrome</main>
+      <div id="main"><section class="article-hero"><div class="article-hero__text">
+        <h1 id="article-title" class="article-hero__title">Research</h1></div></section>
+        <div class="article-layout"><div class="article-layout__contents">
+          <nav class="article-contents"><p>Jump to section:</p><ul class="article-contents__list">
+            <li><a href="#summary">Executive summary</a></li>
+          </ul></nav></div>
+          <article class="article-body"><div class="article-body__content">
+            <h2>Executive summary</h2><p>Findings and mitigation guidance remain.</p>
+          </div></article><aside class="article-sidebar">Subscribe to our blog</aside>
+        </div><section class="related-posts-header"><h2>Related Content</h2><p>Other articles</p></section>
+      </div>
+    </div></body></html>"""
     result = HtmlToMarkdownPipeline().run(html)
+    replayed = HtmlToMarkdownPipeline().run(html, criteria=result.criteria)
 
-    assert result.trace.to_dict()["criteria_source"] == "site"
+    assert result.trace.to_dict()["criteria_source"] == "discover"
     assert "Research" in result.markdown
     assert "Findings and mitigation guidance remain." in result.markdown
     assert "Featured promotion" not in result.markdown
+    assert "Subscribe to our blog" not in result.markdown
+    assert "Related Content" not in result.markdown
+    assert replayed.document == result.document
