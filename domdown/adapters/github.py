@@ -71,7 +71,9 @@ class GitHubAdapter:
             and context.document is not None
             and context.document.select_one("include-fragment[src*='/releases/expanded_assets/']") is not None
         ):
-            return ("GitHub release assets are fetched externally; exact replay requires the same frozen fragment resource.",)
+            return (
+                "GitHub release assets are fetched externally; exact replay requires the same frozen fragment resource.",
+            )
         return ()
 
     def preprocess(self, context: PipelineContext) -> PipelineContext:

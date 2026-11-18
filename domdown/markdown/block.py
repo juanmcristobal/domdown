@@ -164,6 +164,10 @@ def render_explicit_definition_list(node: Tag, options: DomdownOptions) -> str:
 def _looks_like_definition_list(node: Tag, options: DomdownOptions) -> bool:
     """Detect repeated label/value rows that can be normalized to <dl>."""
 
+    # Headings establish document structure; flattening their containing article
+    # into metadata rows can silently discard most of the prose.
+    if node.find(["h1", "h2", "h3", "h4", "h5", "h6"]) is not None:
+        return False
     if _contains_email_protection(node):
         return False
     if any(len(table.find_all("tr")) > 50 for table in node.find_all("table")):

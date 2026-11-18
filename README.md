@@ -186,14 +186,40 @@ assert replayed.markdown == discovered.markdown
 ```
 
 Criteria JSON uses schema version 1 and supports `include`, `exclude`, and
-`unwrap` CSS selector arrays. Generated criteria also carry document-specific
+`unwrap` CSS selector arrays. The pipeline has three operation modes:
+
+- **Discover** (`run(html)`): automatic root selection, cleanup heuristics, and
+  extraction adapter hooks.
+- **Exact replay** (`run(html, criteria=discovered.criteria)`): reuses recorded
+  node references from the same HTML and DomDown version. It reproduces the
+  discovered extraction, including applicable adapter hooks.
+- **Selector apply** (`run(html, criteria=manual_criteria)`): applies portable
+  selectors to the supplied document. Article-shaped selected roots receive
+  the shared cleanup heuristics and adapter hooks.
+
+Selector Apply uses `include`, `exclude`, and `unwrap` to choose and shape the
+content. A selected `article` or `main`, or a root with at least 50 words, one
+heading, and two paragraphs, receives `DomdownOptions.remove_selectors` (or the
+default removal selectors), cleanup heuristics, and matching adapter hooks. If
+it selects the same content as Discover with the same modifiers, the Markdown
+matches. Smaller or structurally different explicit selections preserve their
+selector override behavior and can produce different content by design.
+Portable selectors can also select different roots on other documents.
+Set `shared_cleanup="force"` on `ExtractionCriteria` to run cleanup and
+matching adapter hooks on an alternate selected root. Use `"off"` to suppress
+the shared heuristics even for an article-shaped root. The default `"auto"`
+enables cleanup for article-shaped selections and preserves smaller or
+structurally different selections.
+
+Generated criteria also carry document-specific
 node references so they can replay the exact nodes retained by the automatic
 pipeline, including adapter and heuristic removals. Those references apply to
 the same parsed HTML and DomDown version; they are not portable page selectors.
 Editing a selector invalidates the recorded replay and switches to explicit
 replace semantics.
 
-Manually authored criteria replace automatic extraction and adapter filtering:
+Manually authored criteria replace automatic root selection. Article-shaped
+selected content goes through the standard cleanup and adapter processing:
 
 ```python
 criteria = ExtractionCriteria(
@@ -210,9 +236,38 @@ matching an included root produces empty content. `unwrap` cannot target the
 included root. Parsing, URL preparation, semantic conversion, rendering, and
 frontmatter remain on the existing pipeline.
 
+For pages with more than one layout, `include_fallback` tries selectors in
+order and uses the first whose matched content reaches `min_words` (50 by
+default). Candidates are exclusive; they are not combined. If none reaches the
+threshold, Domdown uses the matched candidate with the most words. The original
+`include` array keeps its union behavior.
+
+`drop_text` accepts regular expressions matched against complete, stripped
+`NavigableString` nodes. This lets criteria remove standalone labels or
+placeholders that CSS cannot target while preserving those phrases inside
+ordinary prose. The built-in cleanup also removes standalone numbered markers
+such as `placeholder(#1)`. Cleanup detects a compact table of contents only
+when it is immediately after the first heading and consists of at least three
+in-page anchor links.
+
+Discover and exact replay report a `Possible empty shell` warning when an HTML
+source is at least 512 characters and the extraction contains fewer than 10
+words. Selector Apply reports the warning whenever an include matches but the
+rendered result contains fewer than 10 words, and reports the matched element
+count. If no include matches in a larger document, `CriteriaError` identifies
+an empty shell or stale selector as likely causes.
+
 GitHub release pages may fetch expanded assets from GitHub during conversion.
 Their trace marks replay as conditional on the same external fragment being
 available and unchanged.
+
+`result.trace.to_dict()` records the execution mode, selector match and mutation
+counts, warnings, and compact content metrics (words, headings, paragraphs,
+links, lists, tables, and code blocks before and after extraction). It does not
+store the source HTML; `before.words` counts selected source text and `after.words`
+counts rendered Markdown words. Zero-valued metric entries are omitted. CSS selectors operate on elements, so direct text nodes
+inside an included element cannot be targeted by `exclude` or `unwrap`; preserve
+them or wrap the unwanted text in an element and exclude that element.
 
 The convenience `html_to_markdown(html, options, *, criteria=...)` accepts the
 same override and continues to return a string. Use `HtmlToMarkdownPipeline`

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from bs4 import Comment, NavigableString, Tag
 
 from .._constants import BOILERPLATE_PHRASES, DEFAULT_REMOVE_SELECTORS, HEADER_MARKERS, NOISE_MARKERS, RELATED_PHRASES
+from .._core.selectors import normalize_selector
 
 _DEFAULT_REMOVE_CLASSES = frozenset(selector[1:] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("."))
 _DEFAULT_REMOVE_IDS = frozenset(selector[1:] for selector in DEFAULT_REMOVE_SELECTORS if selector.startswith("#"))
@@ -30,9 +31,11 @@ def clean_root(
     preserve_chrome: bool = False,
     *,
     apply_extraction_heuristics: bool = True,
+    drop_text_patterns: tuple[str, ...] = (),
 ) -> Tag:
     """Remove obvious noise and normalize lazy-loaded images in place."""
 
+    text_getters: dict[int, Callable[[], str]] = {}
     if apply_extraction_heuristics:
         for comment in root.find_all(string=lambda value: isinstance(value, Comment)):
             comment.extract()
@@ -45,6 +48,14 @@ def clean_root(
         ):
             text_node.extract()
 
+    if drop_text_patterns:
+        compiled_patterns = tuple(re.compile(pattern) for pattern in drop_text_patterns)
+        for text_node in list(root.find_all(string=True)):
+            if isinstance(text_node, NavigableString) and any(
+                pattern.fullmatch(str(text_node).strip()) for pattern in compiled_patterns
+            ):
+                text_node.extract()
+
     if remove_selectors == DEFAULT_REMOVE_SELECTORS:
         # These selectors only match tag names and attributes, so one DOM pass
         # can find every match before removals without changing selector results.
@@ -53,62 +64,66 @@ def clean_root(
             node.decompose()
     else:
         for selector in remove_selectors:
-            for node in root.select(selector):
+            for node in root.select(normalize_selector(selector)):
                 node.decompose()
 
     _promote_image_fallbacks(root)
     if not preserve_chrome and apply_extraction_heuristics:
         _mark_detached_article_title(root)
+        _remove_inline_toc(root, text_getters)
         for node in list(root.find_all(True)):
             if not isinstance(node, Tag) or getattr(node, "attrs", None) is None:
+                continue
+            if node.parent is None:
                 continue
             if _is_within_preserved_block(node):
                 continue
             if node.get("data-domdown-primary-title") == "true":
                 if node.parent is root:
                     _remove_pre_title_navigation(node, root)
+                    _invalidate_ancestor_text_getters(root, text_getters)
                 continue
             if node.name in skip_tags:
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
-            text_getter = _cached_text_getter(node)
+            text_getter = _cached_text_getter(node, text_getters)
             if _looks_like_hidden_block(node):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_cta_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_author_profile_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_testimonial_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_decorative_image_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_hero_chrome(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_metadata_bar(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_form_module(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_author_card_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_article_feed_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_promo_banner_block(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
                 continue
             if _looks_like_noise(node, text_getter) and not _has_substantive_body_content(node, text_getter):
-                node.decompose()
+                _decompose(node, text_getters)
 
-        _remove_structural_chrome(root)
+        _remove_structural_chrome(root, text_getters)
 
     for node in root.find_all(attrs={"data-domdown-primary-title": "true"}):
         node.attrs.pop("data-domdown-primary-title", None)
@@ -153,6 +168,8 @@ def _looks_like_noise(node: Tag, text_getter: Callable[[], str] | None = None) -
 
     if getattr(node, "attrs", None) is None:
         return False
+    if node.name in {"pre", "code"}:
+        return False
     if node.name == "a" and node.find("img") is not None:
         return False
     classes = node.get("class") or ()
@@ -174,22 +191,24 @@ def _looks_like_noise(node: Tag, text_getter: Callable[[], str] | None = None) -
     return text == "more" and bool(tokens & {"more", "share"})
 
 
-def _remove_structural_chrome(root: Tag) -> None:
+def _remove_structural_chrome(root: Tag, text_getters: dict[int, Callable[[], str]]) -> None:
     """Remove small header and related-link chrome blocks from the chosen root."""
 
-    _remove_article_header_cluster(root)
+    _remove_article_header_cluster(root, text_getters)
 
     for node in reversed(list(root.find_all(True))):
         if not isinstance(node, Tag) or node is root:
             continue
+        if node.parent is None:
+            continue
         if _is_within_preserved_block(node):
             continue
-        text_getter = _cached_text_getter(node)
+        text_getter = _cached_text_getter(node, text_getters)
         if _looks_like_date_kicker(node, text_getter):
-            node.decompose()
+            _decompose(node, text_getters)
             continue
         if _looks_like_footer_block(node, text_getter):
-            node.decompose()
+            _decompose(node, text_getters)
             continue
         if _is_small_structural_block(node, text_getter) and (
             _looks_like_header_block(node, text_getter)
@@ -202,10 +221,10 @@ def _remove_structural_chrome(root: Tag) -> None:
         ):
             if _has_substantive_body_content(node, text_getter):
                 continue
-            node.decompose()
+            _decompose(node, text_getters)
 
 
-def _remove_article_header_cluster(root: Tag) -> None:
+def _remove_article_header_cluster(root: Tag, text_getters: dict[int, Callable[[], str]]) -> None:
     """Remove blog header controls when their labels occur as one cluster."""
 
     headings = [node for node in root.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]) if isinstance(node, Tag)]
@@ -222,8 +241,8 @@ def _remove_article_header_cluster(root: Tag) -> None:
             if isinstance(sibling, Tag) and sibling.name.lower() in {"h1", "h2", "h3", "h4", "h5", "h6"}:
                 break
             if isinstance(sibling, Tag):
-                sibling.decompose()
-        heading.decompose()
+                _decompose(sibling, text_getters)
+        _decompose(heading, text_getters)
 
 
 def _looks_like_header_block(node: Tag, text_getter: Callable[[], str] | None = None) -> bool:
@@ -799,6 +818,8 @@ def _has_substantive_body_content(node: Tag, text_getter: Callable[[], str] | No
 
     paragraph_count = len(node.find_all("p", limit=2))
     text_words = len(_get_node_text(node, text_getter).split())
+    if node.name == "pre" or node.find("pre") is not None:
+        return text_words >= 3
     return paragraph_count >= 2 and text_words >= 15
 
 
@@ -812,8 +833,14 @@ def _marker_text(node: Tag) -> str:
     return " ".join([str(token).lower() for token in classes] + [identifier])
 
 
-def _cached_text_getter(node: Tag) -> Callable[[], str]:
-    """Cache a node's text only for the current, non-mutating rule evaluation."""
+def _cached_text_getter(
+    node: Tag,
+    cache: dict[int, Callable[[], str]] | None = None,
+) -> Callable[[], str]:
+    """Cache text getters across cleanup passes, invalidating them on edits."""
+
+    if cache is not None and id(node) in cache:
+        return cache[id(node)]
 
     text: str | None = None
 
@@ -823,7 +850,40 @@ def _cached_text_getter(node: Tag) -> Callable[[], str]:
             text = node.get_text(" ", strip=True)
         return text
 
+    if cache is not None:
+        cache[id(node)] = get_text
     return get_text
+
+
+def _invalidate_ancestor_text_getters(node: Tag | None, cache: dict[int, Callable[[], str]]) -> None:
+    while isinstance(node, Tag):
+        cache.pop(id(node), None)
+        node = node.parent if isinstance(node.parent, Tag) else None
+
+
+def _decompose(node: Tag, cache: dict[int, Callable[[], str]]) -> None:
+    parent = node.parent if isinstance(node.parent, Tag) else None
+    node.decompose()
+    _invalidate_ancestor_text_getters(parent, cache)
+
+
+def _remove_inline_toc(root: Tag, text_getters: dict[int, Callable[[], str]]) -> None:
+    """Drop an immediate post-heading navigation list made only of hash links."""
+
+    first_heading = root.find(["h1", "h2", "h3", "h4", "h5", "h6"])
+    if not isinstance(first_heading, Tag):
+        return
+    candidate = first_heading.find_next_sibling()
+    while isinstance(candidate, NavigableString) and not str(candidate).strip():
+        candidate = candidate.find_next_sibling()
+    if not isinstance(candidate, Tag):
+        return
+    if candidate.find(["p", "h1", "h2", "h3", "h4", "h5", "h6", "table", "pre", "blockquote"]):
+        return
+    links = candidate.find_all("a")
+    if len(links) < 3 or not all(str(link.get("href", "")).startswith("#") for link in links):
+        return
+    _decompose(candidate, text_getters)
 
 
 def _get_node_text(node: Tag, text_getter: Callable[[], str] | None) -> str:
@@ -886,6 +946,10 @@ def _is_tag_href(href: str) -> bool:
 
 
 def _looks_like_template_placeholder(text: str) -> bool:
-    """Detect standalone template placeholders such as {{cta}}."""
+    """Detect standalone template markers, including numbered placeholders."""
 
-    return bool(re.fullmatch(r"\s*\{\{\s*[a-z0-9_-]+\s*\}\}\s*", text.strip(), re.IGNORECASE))
+    value = text.strip()
+    return bool(
+        re.fullmatch(r"\{\{\s*[a-z0-9_-]+\s*\}\}", value, re.IGNORECASE)
+        or re.fullmatch(r"placeholder\(\s*#?\d+\s*\)", value, re.IGNORECASE)
+    )

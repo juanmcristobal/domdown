@@ -722,6 +722,32 @@ def test_clean_root_removes_standalone_template_placeholders() -> None:
     assert "More body." in text
 
 
+def test_clean_root_removes_standalone_numbered_placeholder_text() -> None:
+    soup = BeautifulSoup(
+        "<article><p>Keep article.</p>placeholder(#1)<p>Keep the next paragraph.</p></article>",
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "placeholder(#1)" not in text
+    assert "Keep article." in text
+    assert "Keep the next paragraph." in text
+
+
+def test_clean_root_preserves_code_blocks_inside_overlay_marked_wrappers() -> None:
+    soup = BeautifulSoup(
+        '<article><div class="bg-overlay/45"><pre>const answer = 42;</pre></div></article>',
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    assert cleaned.pre is not None
+    assert "const answer = 42;" in cleaned.get_text(" ", strip=True)
+
+
 def test_clean_root_removes_footer_legal_chrome() -> None:
     """Cleanup should drop legal footer text and keep the article body."""
 

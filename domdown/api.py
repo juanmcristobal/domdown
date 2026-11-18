@@ -1,8 +1,7 @@
 """Public entry points for HTML to Markdown conversion."""
 
-from ._core import DomdownOptions
+from ._core import DomdownOptions, ExtractionCriteria
 from ._pipeline import HtmlToMarkdownPipeline
-from ._core import ExtractionCriteria
 
 
 def html_to_markdown(

@@ -1,29 +1,38 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
 import re
+from dataclasses import dataclass, field
 from typing import Sequence
 
-from .._core import CriteriaError, DomdownOptions, ExtractionCriteria, ExtractionTrace, HtmlToMarkdownResult, PipelineContext, ExtractionPlan
+from .._core import (
+    CriteriaError,
+    DomdownOptions,
+    ExtractionCriteria,
+    ExtractionPlan,
+    ExtractionTrace,
+    HtmlToMarkdownResult,
+    PipelineContext,
+)
+from .._version import DOMDOWN_VERSION
 from ..adapters import (
     AdapterRegistry,
     ArticleAdapter,
     ArXivAdapter,
     BleepingComputerAdapter,
     CensysAdapter,
-    CyberSecurityNewsAdapter,
     CyberScoopEditorialAdapter,
-    DarkReadingAdapter,
+    CyberSecurityNewsAdapter,
     DailySecuAdapter,
+    DarkReadingAdapter,
     GBHackersAdapter,
     GitHubAdapter,
     MediumAdapter,
     RailwayAdapter,
     SecurityAffairsAdapter,
     SecurityWeekAdapter,
-    TheRegisterAdapter,
     TheHackerNewsAdapter,
+    TheRegisterAdapter,
     WikipediaAdapter,
     WizAdapter,
     build_default_registry,
@@ -36,7 +45,6 @@ from ..stages.metadata import MetadataStage
 from ..stages.parse import ParseStage
 from ..stages.postprocess import PostProcessStage
 from ..stages.preserve import PreserveStage
-from .._version import DOMDOWN_VERSION
 
 
 @dataclass(slots=True)
@@ -134,27 +142,66 @@ class HtmlToMarkdownPipeline:
                 if extraction_criteria is None:
                     context = self.adapter_registry.preprocess(context)
                 else:
-                    context = self.adapter_registry.preprocess_for_criteria(context)
                     if extraction_criteria.has_recorded_replay:
+                        context = self.adapter_registry.preprocess_for_criteria(context)
                         _apply_recorded_adapter_removals(context, extraction_criteria.adapter_removed_node_ids)
             elif stage_name == "metadata":
                 context = self.adapter_registry.refine_metadata(context)
-            elif stage_name == "clean" and extraction_criteria is None:
+            elif stage_name == "clean" and (
+                extraction_criteria is None
+                or (not extraction_criteria.has_recorded_replay and context.selector_apply_shared_cleanup)
+            ):
                 context = self.adapter_registry.post_clean(context)
-            elif stage_name == "postprocess":
+            elif stage_name == "postprocess" and (
+                extraction_criteria is None
+                or extraction_criteria.has_recorded_replay
+                or context.selector_apply_shared_cleanup
+            ):
                 context = self.adapter_registry.postprocess(context)
+        mode = (
+            "discover"
+            if extraction_criteria is None
+            else "exact_replay" if extraction_criteria.has_recorded_replay else "selector_apply"
+        )
+        after_metrics = context.extraction_metrics.setdefault("after", {})
+        after_metrics["words"] = len(context.markdown.split())
+        if after_metrics["words"] < 10:
+            if mode == "selector_apply":
+                include_decisions = context.extraction_trace.decisions if context.extraction_trace else ()
+                selection_result = next(
+                    (decision for decision in include_decisions if decision.get("action") == "include-result"),
+                    {},
+                )
+                matches = selection_result.get("matches", 0)
+                if matches:
+                    context.warnings.append(
+                        f"Possible empty shell: include matched {matches} elements but produced "
+                        f"{after_metrics['words']} words"
+                    )
+            elif len(html) >= 512:
+                context.warnings.append(
+                    f"Possible empty shell: {len(html)} HTML characters produced {after_metrics['words']} words"
+                )
+        before_words = context.extraction_metrics.get("before", {}).get("words", 0)
+        context.extraction_metrics["word_retention"] = (
+            round(after_metrics["words"] / before_words, 3) if before_words else None
+        )
         if extraction_criteria is None:
             selected_root = _node_selector(context.document)
-            retained_ids = tuple(
-                sorted(
-                    {context.node_ids[id(context.document)]}
-                    | {
-                        context.node_ids[id(node)]
-                        for node in context.document.find_all(True)
-                        if id(node) in context.node_ids
-                    }
+            retained_ids = (
+                tuple(
+                    sorted(
+                        {context.node_ids[id(context.document)]}
+                        | {
+                            context.node_ids[id(node)]
+                            for node in context.document.find_all(True)
+                            if id(node) in context.node_ids
+                        }
+                    )
                 )
-            ) if context.document is not None and id(context.document) in context.node_ids else ()
+                if context.document is not None and id(context.document) in context.node_ids
+                else ()
+            )
             adapters = tuple({"name": adapter.name} for adapter in (context.matched_adapters or ()))
             adapter_trace = tuple(context.adapter_trace)
             limitations = tuple(context.reproducibility_limitations)
@@ -164,12 +211,14 @@ class HtmlToMarkdownPipeline:
                 document_sha256=document_sha256,
                 domdown_version=DOMDOWN_VERSION,
                 adapter_removed_node_ids=tuple(
-                    sorted({
-                        node_id
-                        for operation in context.adapter_trace
-                        if operation.get("hook") == "preprocess"
-                        for node_id in operation.get("removed_node_ids", ())
-                    })
+                    sorted(
+                        {
+                            node_id
+                            for operation in context.adapter_trace
+                            if operation.get("hook") == "preprocess"
+                            for node_id in operation.get("removed_node_ids", ())
+                        }
+                    )
                 ),
                 limitations=limitations,
                 root_node_id=context.selected_root_id,
@@ -181,7 +230,11 @@ class HtmlToMarkdownPipeline:
                 selected_root=selected_root,
                 adapters=adapters,
                 decisions=(
-                    {"action": "select-root", "method": context.selected_strategy or "adapter-special", "selector": selected_root},
+                    {
+                        "action": "select-root",
+                        "method": context.selected_strategy or "adapter-special",
+                        "selector": selected_root,
+                    },
                     {"action": "clean-stage-discard", "node_ids": list(context.cleanup_removed_node_ids)},
                     *adapter_trace,
                 ),
@@ -193,11 +246,25 @@ class HtmlToMarkdownPipeline:
                 ),
                 replayable=criteria_result.replayable,
                 limitations=limitations,
+                mode=mode,
+                content_metrics=context.extraction_metrics,
+                warnings=tuple(context.warnings),
             )
         else:
             criteria_result = extraction_criteria
             limitations = tuple(dict.fromkeys((*extraction_criteria.limitations, *context.reproducibility_limitations)))
-            decisions = ({"action": "apply-criteria"},)
+            decisions = (
+                {
+                    "action": "apply-criteria",
+                    "include": list(extraction_criteria.include),
+                    "include_fallback": list(extraction_criteria.include_fallback),
+                    "min_words": extraction_criteria.min_words,
+                    "exclude": list(extraction_criteria.exclude),
+                    "unwrap": list(extraction_criteria.unwrap),
+                    "drop_text": list(extraction_criteria.drop_text),
+                    "shared_cleanup": extraction_criteria.shared_cleanup,
+                },
+            )
             if context.extraction_trace is not None:
                 decisions += context.extraction_trace.decisions
             decisions += tuple(context.adapter_trace)
@@ -207,10 +274,15 @@ class HtmlToMarkdownPipeline:
                     if context.extraction_trace is not None and context.extraction_trace.selected_root
                     else _node_selector(context.document)
                 ),
-                adapters=tuple({"name": adapter.name, "override": True} for adapter in (context.matched_adapters or ())),
+                adapters=tuple(
+                    {"name": adapter.name, "override": True} for adapter in (context.matched_adapters or ())
+                ),
                 decisions=decisions,
                 replayable=extraction_criteria.replayable and not limitations,
                 limitations=limitations,
+                mode=mode,
+                content_metrics=context.extraction_metrics,
+                warnings=tuple(context.warnings),
             )
         return HtmlToMarkdownResult(
             markdown=context.markdown,
@@ -246,9 +318,7 @@ def _trace_node_references(descriptors, cleanup_removed, adapter_trace, root_id)
     for item in adapter_trace:
         referenced.update(item.get("removed_node_ids", ()))
     return tuple(
-        {"node_id": node_id, **descriptors[node_id]}
-        for node_id in sorted(referenced)
-        if node_id in descriptors
+        {"node_id": node_id, **descriptors[node_id]} for node_id in sorted(referenced) if node_id in descriptors
     )
 
 

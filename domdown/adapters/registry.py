@@ -27,9 +27,7 @@ class AdapterRegistry:
             before = _present_node_ids(context)
             context = adapter.preprocess(context)
             removed = sorted(before - _present_node_ids(context))
-            context.adapter_trace.append(
-                {"name": adapter.name, "hook": "preprocess", "removed_node_ids": removed}
-            )
+            context.adapter_trace.append({"name": adapter.name, "hook": "preprocess", "removed_node_ids": removed})
         return context
 
     def preprocess_for_criteria(self, context: PipelineContext) -> PipelineContext:
@@ -50,9 +48,7 @@ class AdapterRegistry:
             context = hook(context)
             removed = sorted(before - _present_node_ids(context))
             if removed:
-                context.adapter_trace.append(
-                    {"name": adapter.name, "hook": "post_clean", "removed_node_ids": removed}
-                )
+                context.adapter_trace.append({"name": adapter.name, "hook": "post_clean", "removed_node_ids": removed})
         return context
 
     def refine_metadata(self, context: PipelineContext) -> PipelineContext:
@@ -64,9 +60,18 @@ class AdapterRegistry:
             context = adapter.refine_metadata(context)
             removed = sorted(before - _present_node_ids(context))
             if context.document is not before_document:
-                context.adapter_trace.append({"name": adapter.name, "hook": "refine_metadata", "selected_subtree": True, "removed_node_ids": removed})
+                context.adapter_trace.append(
+                    {
+                        "name": adapter.name,
+                        "hook": "refine_metadata",
+                        "selected_subtree": True,
+                        "removed_node_ids": removed,
+                    }
+                )
             elif removed:
-                context.adapter_trace.append({"name": adapter.name, "hook": "refine_metadata", "removed_node_ids": removed})
+                context.adapter_trace.append(
+                    {"name": adapter.name, "hook": "refine_metadata", "removed_node_ids": removed}
+                )
         return context
 
     def postprocess(self, context: PipelineContext) -> PipelineContext:

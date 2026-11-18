@@ -116,6 +116,39 @@ def test_bleepingcomputer_patch_tuesday_keeps_vulnerability_catalog() -> None:
     assert "ZeroYourHero" not in result.document
 
 
+def test_bushido_popular_post_previews_are_not_collapsed_to_read_more_links() -> None:
+    """Heading-bearing article cards must retain their available preview text."""
+    case = CASES["bushidotoken_blackbasta_leaks_lessons_from_ascension"]
+    result = _pipeline(case.id).run(case.html_text())
+
+    assert "Feedback from the infosec community about these projects" in result.markdown
+    assert "Logo credit: RedCanary" in result.markdown
+    assert "Who is RansomHub?" in result.markdown
+
+
+def test_unit42_clickfix_apply_preserves_nested_article_sections() -> None:
+    """Applying the real article root must not flatten its heading-led body into card links."""
+    case = CASES["unit42_preventing_clickfix_attack_vector"]
+    result = _pipeline(case.id).run(
+        case.html_text(),
+        criteria=ExtractionCriteria(include=("section.blog-contents",)),
+    )
+
+    assert "## Executive Summary" in result.markdown
+    assert "### NetSupport RAT Switches Up Its Loading" in result.markdown
+    assert "## Hunting for ClickFix Infections" in result.markdown
+    assert "msvcp140.dll" in result.markdown
+    assert len(result.markdown.split()) > 2_000
+
+
+def test_safedep_discover_preserves_shiki_code_blocks() -> None:
+    case = CASES["safedep_malicious_ixpresso_core_npm_rat"]
+    result = _pipeline(case.id).run(case.html_text())
+
+    assert result.markdown.count("```") == 10
+    assert result.trace.content_metrics["after"]["code_blocks"] == 5
+
+
 def test_chainstack_incident_post_ignores_header_menu_and_related_articles() -> None:
     """A large header menu must not outscore the editorial article body."""
     case = CASES["chainstack_security_incident_nov_2026"]
@@ -175,7 +208,7 @@ def test_real_socket_criteria_edits_remove_restore_change_root_unwrap_and_replac
     assert "article-body" not in unwrapped.cleaned_html
     assert unwrapped.markdown.count("compromised release") == 1
 
-    # D6: explicit empty exclusion list suppresses auto extraction filters.
+    # D6: a broader explicit root retains content outside Discover's root.
     all_body = pipeline.run(html, criteria=ExtractionCriteria(include=("body",), exclude=()))
     assert "Subscribe to our newsletter" in all_body.markdown
     assert "More security research from Socket" in all_body.markdown
@@ -212,7 +245,7 @@ def test_github_release_is_marked_non_replayable_without_frozen_external_resourc
 
 def test_real_corpus_feature_coverage_and_securelist_absence() -> None:
     raw_paths = list((Path(__file__).parent / "html").glob("*.html"))
-    assert len(raw_paths) == len(CASES) == 36
+    assert len(raw_paths) == len(CASES) == 37
 
     feature_cases = {
         "table": "oracle_cpu_october_2026",

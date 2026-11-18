@@ -5,7 +5,6 @@ from bs4 import Tag
 from .._core import PipelineContext
 from .domain import DeclarativeDomainAdapter, DomainAdapterSpec, make_domain_adapter
 
-
 THE_REGISTER_SPEC = DomainAdapterSpec(
     name="the-register",
     host_exact=("theregister.com",),

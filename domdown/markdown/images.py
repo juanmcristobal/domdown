@@ -21,10 +21,7 @@ def render_image(node: Tag, options: DomdownOptions) -> str:
     figure = node.find_parent("figure")
     caption = figure.find("figcaption").get_text(" ", strip=True) if figure and figure.find("figcaption") else ""
     has_editorial_context = bool(
-        figure
-        or node.find_parent("a")
-        or node.find_parent("article")
-        or node.find_parent("main")
+        figure or node.find_parent("a") or node.find_parent("article") or node.find_parent("main")
     )
     if not alt.strip() and not caption and not has_editorial_context:
         return ""

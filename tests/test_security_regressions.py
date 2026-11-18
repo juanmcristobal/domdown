@@ -147,7 +147,9 @@ def test_nested_card_feed_check_is_not_cubic() -> None:
     html = (
         "<article>"
         + f'<div class="xcardx">{"<b></b>" * 20}' * depth
-        + "<h2>x</h2><p>" + "word " * 230 + "</p>"
+        + "<h2>x</h2><p>"
+        + "word " * 230
+        + "</p>"
         + "</div>" * depth
         + "</article>"
     )

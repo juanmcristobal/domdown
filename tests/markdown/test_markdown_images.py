@@ -81,8 +81,7 @@ def test_render_image_ignores_data_srcset_when_a_usable_source_exists() -> None:
     """A data URI in srcset should not mask a regular image URL."""
 
     soup = BeautifulSoup(
-        '<img alt="Editorial figure" src="https://example.com/figure.png" '
-        'srcset="data:image/png;base64,AAAA 2x" />',
+        '<img alt="Editorial figure" src="https://example.com/figure.png" ' 'srcset="data:image/png;base64,AAAA 2x" />',
         "lxml",
     )
 
@@ -93,8 +92,7 @@ def test_render_image_uses_usable_candidate_after_inline_data_srcset_entry() -> 
     """A valid srcset candidate remains available after skipping an inline data payload."""
 
     soup = BeautifulSoup(
-        '<img alt="Editorial figure" srcset="data:image/png;base64,AAAA 2x, '
-        'https://example.com/figure.png 1x" />',
+        '<img alt="Editorial figure" srcset="data:image/png;base64,AAAA 2x, ' 'https://example.com/figure.png 1x" />',
         "lxml",
     )
 

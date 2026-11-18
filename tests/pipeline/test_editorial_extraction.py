@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from domdown import DomdownOptions, ExtractionCriteria, HtmlToMarkdownPipeline
 from domdown._document import choose_root, parse_html
 
-
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "editorial_template.html"
 
 

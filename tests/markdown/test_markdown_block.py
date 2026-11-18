@@ -419,6 +419,71 @@ def test_definition_list_heuristic_does_not_flatten_wrapped_tables() -> None:
     assert "<a href=" not in rendered
 
 
+def test_definition_list_heuristic_preserves_nested_article_sections() -> None:
+    """Nested editorial headings must prevent label rows from flattening an article."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <section><h2>Impact</h2><div><strong>Observed:</strong> several affected systems.</div></section>
+          <section><h3>Scope</h3><div><strong>Targets:</strong> enterprise environments.</div></section>
+          <section><h2>Response</h2><div><strong>Action:</strong> block the malicious traffic.</div></section>
+        </article>
+        """,
+        "lxml",
+    )
+
+    rendered = render_block(soup.article, DomdownOptions())
+
+    assert "## Impact" in rendered
+    assert "### Scope" in rendered
+    assert "## Response" in rendered
+    assert "Observed:" in rendered and "several affected systems." in rendered
+    assert "Targets:" in rendered and "enterprise environments." in rendered
+    assert "Action:" in rendered and "block the malicious traffic." in rendered
+    assert "- **Observed:**" not in rendered
+
+
+def test_definition_list_heuristic_preserves_mixed_headings_paragraphs_lists_and_links() -> None:
+    """A content container with mixed editorial blocks stays in document form."""
+
+    soup = BeautifulSoup(
+        """
+        <div>
+          <h2>Overview</h2><p>First paragraph with <a href="https://example.com">a source</a>.</p>
+          <ul><li>First point</li><li>Second point</li></ul>
+          <h3>Details</h3><p>Second paragraph.</p>
+        </div>
+        """,
+        "lxml",
+    )
+
+    rendered = render_block(soup.div, DomdownOptions())
+
+    assert "## Overview" in rendered
+    assert "### Details" in rendered
+    assert "First paragraph" in rendered
+    assert "[a source](https://example.com)" in rendered
+    assert "- First point" in rendered
+    assert "- Second point" in rendered
+    assert "Second paragraph." in rendered
+
+
+def test_definition_list_heuristic_preserves_direct_text_mixed_with_elements() -> None:
+    """Direct text is preserved around child blocks when the container is not a definition list."""
+
+    soup = BeautifulSoup(
+        "<div>Introductory prose<p>Paragraph body.</p>Closing prose</div>",
+        "lxml",
+    )
+
+    rendered = render_block(soup.div, DomdownOptions())
+
+    assert "Introductory prose" in rendered
+    assert "Paragraph body." in rendered
+    assert "Closing prose" in rendered
+
+
 def test_definition_list_anchor_with_malformed_url_falls_back_to_text() -> None:
     """Malformed URLs in metadata anchors should not crash markdown rendering."""
 

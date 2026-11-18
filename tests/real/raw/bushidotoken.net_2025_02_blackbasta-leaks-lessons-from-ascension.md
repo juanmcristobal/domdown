@@ -293,6 +293,26 @@ Lastly, these chat logs appear to prove that the West’s policies aimed at incr
 
 ### Popular posts from this blog
 
-- **Read more:** <a href="https://blog.bushidotoken.net/2025/05/ransomware-tool-matrix-project-updates.html" title="Ransomware Tool Matrix Project Updates: May 2025">Read more</a>
-- **Read more:** <a href="https://blog.bushidotoken.net/2023/05/raspberry-robin-global-usb-malware.html" title="Raspberry Robin: A global USB malware campaign providing access to ransomware operators">Read more</a>
-- **Read more:** <a href="https://blog.bushidotoken.net/2025/04/tracking-adversaries-evilcorp-ransomhub.html" title="Tracking Adversaries: EvilCorp, the RansomHub affiliate">Read more</a>
+### Ransomware Tool Matrix Project Updates: May 2025
+
+[![Image](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_BpTZksj9aZ67Y0MoiVTbyhuF2ZNK6mjoCeIlkF5MIjc7DlouoqPLYd-7XXsHgxT6Vytvvo-gY5b8JO3Ujab_8XLnSo1LbYrBUW78GrP2U8wx3ZT-B2ZwMGLO2aVCovVuIX3qZWYIN3X-GCw470E7tr2aiI0CPIgi9bkXbvDldhDL1hNZEc48rVTPyvxY/w144-h144-p-k-no-nu/OIG2.jpg)](https://blog.bushidotoken.net/2025/05/ransomware-tool-matrix-project-updates.html)
+
+Introduction This blog is a summary and analysis of recent additions to the Ransomware Tool Matrix (RTM) as well as the Ransomware Vulnerability Matrix (RVM) . Feedback from the infosec community about these projects has been overwhelmingly positive and many researchers have contacted me to tell me how helpful they have found these to be. It makes me happy to hear how doing something in my spare time can help stop ransomware attacks and cybercriminals from exploiting our society’s systems. And it is for that reason, I shall continue to maintain these projects as long as ransomware is still around. For anyone new to these projects, please read the descriptions on GitHub or feel free to watch my talk explaining the project at BSides London . Background on the current ransomware ecosystem as of May 2025 Following the impact of Operation Cronos against LockBit and the exit scam by ALPHV/BlackCat, the ransomware ecosystem has been even more unstable than usual. The e...
+
+[Read more](https://blog.bushidotoken.net/2025/05/ransomware-tool-matrix-project-updates.html)
+
+### Raspberry Robin: A global USB malware campaign providing access to ransomware operators
+
+[![Image](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjd_7gSbs89Orm2BQ22KJ76nRHlAoIyaj6Rph2DA0sQ2IaBIrPTmDZdn_9uHremHSL1vxAG9t1m-fg_Yqgova-eqexDrglh-rIRmXxXrvvmb0_h6dSJlqBsTRSCIhvTEweAprIcS8JYsBWdRni5xwMAG5SysOEnDAvzJwdRHZJVh0Jp2obgs43Ui4w7Yg/w144-h144-p-k-no-nu/RRobin_April2023.png)](https://blog.bushidotoken.net/2023/05/raspberry-robin-global-usb-malware.html)
+
+Logo credit: RedCanary Ever since it first appeared in late 2021, the Raspberry Robin malware campaign has been propagating globally. A number of threat intelligence reports by vendors such as RedCanary (who named it) and Microsoft (who track it as DEV-0856/Storm-0856) have covered the malware campaign in great detail. In fact, the list of blogs I do recommend to read to catch up on this threat are as follows: https://redcanary.com/blog/raspberry-robin https://www.microsoft.com/en-us/security/blog/2022/10/27/raspberry-robin-worm-part-of-larger-ecosystem-facilitating-pre-ransomware-activity https://blog.sekoia.io/raspberry-robins-botnet-second-life/ https://decoded.avast.io/janvojtesek/raspberry-robins-roshtyak-a-little-lesson-in-trickery/ https://research.checkpoint.com/2023/raspberry-robin-anti-evasion-how-to-exploit-analysis/ https://securityintelligence.com/posts/raspberry-robin-worm-dridex-malware/ https://blogs.cisco.com/security/raspberry-robin-highly-evasive-worm-sprea...
+
+[Read more](https://blog.bushidotoken.net/2023/05/raspberry-robin-global-usb-malware.html)
+
+### Tracking Adversaries: EvilCorp, the RansomHub affiliate
+
+[![Image](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgFkcaWuMGZFS94sVvmjcsdp-7Snf21Gv996hduezji7-BXsSqEu2FnMkGrsaPELdF4XihOeeSVhH265d7iFfxb-ZEmmBfjt1hyphenhyphentyMYYc4Gh5Pn_xcqZlaaOxZ2my_yTcoWJW-tq6lNFsJ7W4hX9c9nomMpmRPXz9t6s2-bdsVhwFcK1PxJqGYKtEWzL2GA/w144-h144-p-k-no-nu/EvilCorp_RansomHub.png)](https://blog.bushidotoken.net/2025/04/tracking-adversaries-evilcorp-ransomhub.html)
+
+Introduction This blog is part of a cyber threat intelligence (CTI) blog series called Tracking Adversaries that investigates prominent or new threat groups. The focus of this blog is EvilCorp, a sanctioned Russia-based cybercriminal enterprise known for launching ransomware attacks, and RansomHub, a prominent ransomware as a service (RaaS) operation run by Russian-speaking cybercriminals. These two threat groups have been linked together through cooperation on intrusions and IOCs and TTPs shared by multiple CTI sources. The implication of this link is critical due to RansomHub being the most active ransomware gang and is working with a well-known sanctioned affiliate. Who is RansomHub? Active since February 2024, RansomHub is a RaaS operation formerly known as Cyclops and Knight and is run by Russian-speaking adversaries. It is currently used by more and more cybercriminals that are ex-affiliates of other RaaS operations. This includes the ALPHV/BlackCat RaaS an...
+
+[Read more](https://blog.bushidotoken.net/2025/04/tracking-adversaries-evilcorp-ransomhub.html)

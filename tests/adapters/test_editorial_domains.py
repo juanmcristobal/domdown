@@ -21,7 +21,13 @@ from domdown.stages.parse import ParseStage
     ("adapter", "url", "selector", "attribute", "noise"),
     [
         (TheRegisterAdapter(), "https://www.theregister.com/2026/01/01/story/", "toplist", "class", "Top Stories"),
-        (SecurityWeekAdapter(), "https://www.securityweek.com/story/", "widget_sw_widget_moves", "class", "People on the Move"),
+        (
+            SecurityWeekAdapter(),
+            "https://www.securityweek.com/story/",
+            "widget_sw_widget_moves",
+            "class",
+            "People on the Move",
+        ),
         (SecurityAffairsAdapter(), "https://securityaffairs.com/story/", "right-sidebar", "class", "Recent Articles"),
         (CyberScoopEditorialAdapter(), "https://cyberscoop.com/story/", "latest-podcasts", "class", "Latest Podcasts"),
         (CensysAdapter(), "https://censys.com/blog/story/", "header", "id", "Featured promotion"),
@@ -62,9 +68,7 @@ def test_editorial_domain_adapters_remove_only_known_modules(adapter, url, selec
         (RailwayAdapter(), "https://blog.railway.com/p/story", "### Continue Reading...", "Recommended story"),
     ],
 )
-def test_editorial_domain_adapters_trim_only_trailing_recommendations(
-    adapter, url, footer_heading, promo
-) -> None:
+def test_editorial_domain_adapters_trim_only_trailing_recommendations(adapter, url, footer_heading, promo) -> None:
     html = f"""
     <html><head><meta property="og:url" content="{url}" /></head><body>
       <article><h1>Editorial title</h1>
@@ -119,7 +123,9 @@ def test_the_register_toplists_are_removed_after_root_selection() -> None:
     assert context.document.select_one("section.related") is None
     assert context.document.select_one(".google-ad") is None
     assert "Editorial article title" in context.document.get_text(" ", strip=True)
-    assert "References and findings belonging to the article remain intact." in context.document.get_text(" ", strip=True)
+    assert "References and findings belonging to the article remain intact." in context.document.get_text(
+        " ", strip=True
+    )
 
 
 def test_dark_reading_removes_author_bio_and_topic_tags() -> None:
