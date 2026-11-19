@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .metadata import HtmlMetadata
 from .criteria import ExtractionCriteria, ExtractionTrace
+from .metadata import HtmlMetadata
 
 
 @dataclass(frozen=True, slots=True)

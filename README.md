@@ -72,7 +72,7 @@ Output:
 ---
 title: Credential theft campaign expands
 source: "https://example.com/research/campaign"
-domdown_version: 0.3.8
+domdown_version: 0.3.9
 description: A concise security article.
 ---
 # Credential theft campaign expands
@@ -168,7 +168,7 @@ print(result.warnings)
 ## Discover and apply extraction criteria
 
 `HtmlToMarkdownPipeline.run()` returns Markdown together with an extraction
-criterion and a trace of active adapter and cleanup decisions:
+criterion and a trace of selection and cleanup decisions:
 
 ```python
 from domdown import DomdownOptions, ExtractionCriteria, HtmlToMarkdownPipeline
@@ -186,14 +186,65 @@ assert replayed.markdown == discovered.markdown
 ```
 
 Criteria JSON uses schema version 1 and supports `include`, `exclude`, and
-`unwrap` CSS selector arrays. Generated criteria also carry document-specific
+`unwrap` CSS selector arrays plus optional `drop_text` regular expressions.
+When no explicit criteria are passed, the
+pipeline first checks the built-in `SITE_CRITERIA` registry. A matching rule
+uses the same selector Apply engine and appears as `criteria_source="site"` in
+the trace; unmatched documents use automatic Discover and report
+`criteria_source="discover"`. Explicit criteria take precedence and report
+`criteria_source="explicit"`.
+
+The pipeline has three operation modes:
+
+- **Discover** (`run(html)`): automatic root selection, cleanup heuristics, and
+  generic document processing. Known sites first resolve a declarative rule
+  from `SITE_CRITERIA` and execute it through Apply.
+- **Exact replay** (`run(html, criteria=discovered.criteria)`): reuses recorded
+  node references from the same HTML and DomDown version. It reproduces the
+  discovered extraction, including generic preparation steps.
+- **Selector apply** (`run(html, criteria=manual_criteria)`): applies portable
+  selectors to the supplied document through the same Apply engine. Shared
+  cleanup applies to article-shaped roots. Preparation can normalize embedded
+  source content before selection, independently of the criteria source.
+
+`SITE_CRITERIA` contains declarative rules for all 17 supported sites:
+Wikipedia, The Register, BleepingComputer, SecurityWeek, Security Affairs,
+CyberScoop, Censys, Dark Reading, Wiz, Railway, Cybersecurity News, DailySecu,
+GBHackers, The Hacker News, arXiv, Medium, and GitHub. Rules can have multiple
+ordered `match` variants (for example, GitHub blob, issue, release, and
+security pages). A rule's extraction operations remain limited to `include`,
+`exclude`, `unwrap`, and `drop_text`; `match` identifies which portable rule
+applies to a document.
+
+GitHub document preparation reconstructs embedded `rawLines` and expands the
+release-assets fragment before Apply selects content. This is document
+normalization, not site-specific extraction. Release assets remain an external
+dependency: replay refetches the fragment and is only reproducible while the
+remote response remains available and unchanged. Medium rules can also match
+custom publication domains when the document advertises `og:site_name=Medium`.
+All site selection and cleanup is performed by Apply; unknown sites use
+automatic Discover. The generic adapter plugin API remains available for
+applications that supply their own adapters, but Domdown has no built-in
+site-specific extraction adapters.
+
+Selector Apply uses `include`, `exclude`, `unwrap`, and optional `drop_text` to
+choose and shape the content. Site rules use the same Apply engine as explicit
+criteria. A selected `article` or `main`, or a root with at least 50 words, one
+heading, and two paragraphs, receives `DomdownOptions.remove_selectors` (or the
+default removal selectors) and shared cleanup heuristics. Explicit selectors
+can select different roots on other documents. Set `shared_cleanup="force"` to
+run shared cleanup on an alternate selected root, or `"off"` to suppress it.
+The default `"auto"` enables cleanup for article-shaped selections.
+
+Generated criteria also carry document-specific
 node references so they can replay the exact nodes retained by the automatic
 pipeline, including adapter and heuristic removals. Those references apply to
 the same parsed HTML and DomDown version; they are not portable page selectors.
 Editing a selector invalidates the recorded replay and switches to explicit
 replace semantics.
 
-Manually authored criteria replace automatic extraction and adapter filtering:
+Manually authored criteria replace automatic root selection. Article-shaped
+selected content goes through the standard cleanup and adapter processing:
 
 ```python
 criteria = ExtractionCriteria(
@@ -210,9 +261,38 @@ matching an included root produces empty content. `unwrap` cannot target the
 included root. Parsing, URL preparation, semantic conversion, rendering, and
 frontmatter remain on the existing pipeline.
 
+For pages with more than one layout, `include_fallback` tries selectors in
+order and uses the first whose matched content reaches `min_words` (50 by
+default). Candidates are exclusive; they are not combined. If none reaches the
+threshold, Domdown uses the matched candidate with the most words. The original
+`include` array keeps its union behavior.
+
+`drop_text` accepts regular expressions matched against complete, stripped
+`NavigableString` nodes. This lets criteria remove standalone labels or
+placeholders that CSS cannot target while preserving those phrases inside
+ordinary prose. The built-in cleanup also removes standalone numbered markers
+such as `placeholder(#1)`. Cleanup detects a compact table of contents only
+when it is immediately after the first heading and consists of at least three
+in-page anchor links.
+
+Discover and exact replay report a `Possible empty shell` warning when an HTML
+source is at least 512 characters and the extraction contains fewer than 10
+words. Selector Apply reports the warning whenever an include matches but the
+rendered result contains fewer than 10 words, and reports the matched element
+count. If no include matches in a larger document, `CriteriaError` identifies
+an empty shell or stale selector as likely causes.
+
 GitHub release pages may fetch expanded assets from GitHub during conversion.
 Their trace marks replay as conditional on the same external fragment being
 available and unchanged.
+
+`result.trace.to_dict()` records the execution mode, selector match and mutation
+counts, warnings, and compact content metrics (words, headings, paragraphs,
+links, lists, tables, and code blocks before and after extraction). It does not
+store the source HTML; `before.words` counts selected source text and `after.words`
+counts rendered Markdown words. Zero-valued metric entries are omitted. CSS selectors operate on elements, so direct text nodes
+inside an included element cannot be targeted by `exclude` or `unwrap`; preserve
+them or wrap the unwanted text in an element and exclude that element.
 
 The convenience `html_to_markdown(html, options, *, criteria=...)` accepts the
 same override and continues to return a string. Use `HtmlToMarkdownPipeline`

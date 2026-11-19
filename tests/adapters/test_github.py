@@ -5,11 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-from bs4 import BeautifulSoup
 
-from domdown import html_to_markdown
-from domdown._core import DomdownOptions, HtmlMetadata, PipelineContext
-from domdown.adapters import GitHubAdapter, github
+from domdown import DomdownOptions, HtmlToMarkdownPipeline, html_to_markdown
+from domdown.stages import prepare as document_preparation
 
 REAL_TESTS_DIR = Path(__file__).resolve().parents[1] / "real"
 REAL_MANIFEST_PATH = REAL_TESTS_DIR / "manifest.json"
@@ -70,20 +68,23 @@ def _stub_release_assets(monkeypatch: pytest.MonkeyPatch) -> None:
         '2026-01-13T12:49:52Z</li><li><a href="/nodejs/node/archive/refs/tags/v25.3.0.tar.gz">'
         "Source code (tar.gz)</a> 2026-01-13T12:49:52Z</li></ul>"
     )
-    monkeypatch.setattr(github, "_fetch_release_assets", lambda url: fragment)
+    monkeypatch.setattr(document_preparation, "_fetch_release_assets", lambda url: fragment)
 
 
 @pytest.mark.parametrize("case", [_case_param(case) for case in _github_cases()])
-def test_github_adapter_matches_the_curated_snapshot(case: RealExampleCase, monkeypatch: pytest.MonkeyPatch) -> None:
-    """GitHub pages should render to the curated Markdown snapshot."""
+def test_github_site_criteria_matches_the_curated_snapshot(
+    case: RealExampleCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """GitHub selector rules and document preparation should match each snapshot."""
 
     if case.id == "node_release_tag_v2530":
         _stub_release_assets(monkeypatch)
 
-    assert GitHubAdapter().name == "github"
-    actual = html_to_markdown(case.html_text())
+    result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=True)).run(case.html_text())
+    actual = result.document
     expected = case.markdown_text()
 
+    assert result.trace.to_dict()["criteria_source"] == "site"
     assert actual == expected
 
 
@@ -114,12 +115,10 @@ def test_github_release_expands_lazy_asset_fragment(monkeypatch: pytest.MonkeyPa
     assert "https://github.com/nodejs/node/archive/refs/tags/v25.3.0.tar.gz" in actual
 
 
-def test_github_issue_adaptor_rewrites_body_and_author_from_metadata() -> None:
-    """Issue pages should narrow to the repository content and adopt the issue author."""
+def test_github_issue_rule_selects_body_and_uses_generic_author_metadata() -> None:
+    """Issue criteria select repository content; generic metadata reads the author."""
 
-    adapter = GitHubAdapter()
-    soup = BeautifulSoup(
-        """
+    html = """
         <html>
           <head>
             <meta property="og:site_name" content="GitHub" />
@@ -132,44 +131,27 @@ def test_github_issue_adaptor_rewrites_body_and_author_from_metadata() -> None:
             </div>
           </body>
         </html>
-        """,
-        "lxml",
-    )
-    context = PipelineContext(
-        html="",
-        options=DomdownOptions(),
-        document=soup,
-        metadata=HtmlMetadata(title="Issue title"),
-    )
-
-    context = adapter.refine_metadata(context)
-
-    assert context.document is not None
-    assert context.document.name == "div"
-    assert context.metadata is not None
-    assert context.metadata.author == ("octocat",)
+    """
+    result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(html)
+    assert result.metadata is not None
+    assert result.metadata.author == ("octocat",)
+    assert "Issue body." in result.markdown
 
 
-def test_github_security_page_detection_leaves_generic_pages_alone() -> None:
-    """Security pages should not be narrowed unless a dedicated branch matches."""
+def test_github_security_variant_uses_its_declarative_rule() -> None:
+    """Security advisory pages are matched by a distinct declarative rule."""
 
-    adapter = GitHubAdapter()
-    soup = BeautifulSoup(
-        """
+    html = """
         <html>
           <head>
             <meta property="og:site_name" content="GitHub" />
             <meta property="og:url" content="https://github.com/security/advisories/GHSA-1234" />
           </head>
-          <body>
+            <body><main>
             <article><h1>Advisory</h1><p>Body</p></article>
-          </body>
+            </main></body>
         </html>
-        """,
-        "lxml",
-    )
-    context = PipelineContext(html="", options=DomdownOptions(), document=soup)
-
-    context = adapter.refine_metadata(context)
-
-    assert context.document is soup
+    """
+    result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(html)
+    assert result.trace.to_dict()["criteria_source"] == "site"
+    assert "Advisory" in result.markdown

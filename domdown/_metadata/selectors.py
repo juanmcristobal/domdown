@@ -36,6 +36,7 @@ AUTHOR_VISIBLE_SELECTORS = (
 AUTHOR_META_SELECTORS = (
     "meta[name='author']",
     "meta[property='article:author']",
+    "meta[property='og:author:username']",
 )
 
 # Selectors for publication date metadata.

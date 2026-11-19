@@ -7,6 +7,7 @@ from .markdown import MarkdownStage
 from .metadata import MetadataStage
 from .parse import ParseStage
 from .postprocess import PostProcessStage
+from .prepare import PrepareDocumentStage
 from .preserve import PreserveStage
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "PipelineStage",
     "PostProcessStage",
     "PreserveStage",
+    "PrepareDocumentStage",
 ]

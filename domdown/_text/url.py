@@ -27,6 +27,8 @@ def resolve_url(url: str | None, base_url: str | None) -> str:
     url = safe_url(url)
     if not url:
         return ""
+    if url.startswith("#") and not base_url:
+        return url
     if base_url:
         try:
             return urljoin(base_url, url)

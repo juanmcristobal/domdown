@@ -291,6 +291,59 @@ def test_clean_root_removes_header_meta_and_related_link_blocks() -> None:
     assert "Body" in text
 
 
+def test_clean_root_removes_pre_title_avatar_author_and_date_row() -> None:
+    """Generic avatar/name/date chrome before a title should not enter article text."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <div class="flex items-center">
+            <img src="/avatar.png" alt="Avatar of Example Author" />
+            <span>Example Author</span>
+            <time datetime="2026-10-21">Oct 21, 2026</time>
+          </div>
+          <header><h1>Security Disclosure</h1></header>
+          <p>The article body remains intact.</p>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Example Author" not in text
+    assert "Oct 21, 2026" not in text
+    assert "Security Disclosure" in text
+    assert "The article body remains intact." in text
+
+
+def test_clean_root_preserves_avatar_and_date_content_outside_pre_title_row() -> None:
+    """The structural rule is limited to an avatar/date row directly before a title."""
+
+    soup = BeautifulSoup(
+        """
+        <article>
+          <h1>Security Disclosure</h1>
+          <div>
+            <img src="/avatar.png" alt="Avatar of Example Author" />
+            <span>Example Author</span>
+            <time datetime="2026-10-21">Oct 21, 2026</time>
+          </div>
+          <p>The article body remains intact.</p>
+        </article>
+        """,
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "Example Author" in text
+    assert "Oct 21, 2026" in text
+    assert "The article body remains intact." in text
+
+
 def test_clean_root_removes_article_category_blocks() -> None:
     """Cleanup should drop category wrappers that only repeat article metadata."""
 
@@ -720,6 +773,32 @@ def test_clean_root_removes_standalone_template_placeholders() -> None:
     assert "{{cta}}" not in text
     assert "Body." in text
     assert "More body." in text
+
+
+def test_clean_root_removes_standalone_numbered_placeholder_text() -> None:
+    soup = BeautifulSoup(
+        "<article><p>Keep article.</p>placeholder(#1)<p>Keep the next paragraph.</p></article>",
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+    text = cleaned.get_text(" ", strip=True)
+
+    assert "placeholder(#1)" not in text
+    assert "Keep article." in text
+    assert "Keep the next paragraph." in text
+
+
+def test_clean_root_preserves_code_blocks_inside_overlay_marked_wrappers() -> None:
+    soup = BeautifulSoup(
+        '<article><div class="bg-overlay/45"><pre>const answer = 42;</pre></div></article>',
+        "lxml",
+    )
+
+    cleaned = clean_root(soup.article, (), SKIP_TAGS)
+
+    assert cleaned.pre is not None
+    assert "const answer = 42;" in cleaned.get_text(" ", strip=True)
 
 
 def test_clean_root_removes_footer_legal_chrome() -> None:

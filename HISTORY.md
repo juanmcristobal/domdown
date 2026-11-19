@@ -1,6 +1,16 @@
 # History
 
 
+## 0.3.9 (2026-11-19)
+
+
+* Add declarative extraction criteria for supported sites and route known-site extraction through the shared Apply pipeline, while keeping Discover as the fallback for unknown sites.
+* Improve exact Discover-to-Apply replay, selector application diagnostics, and content-retention metrics.
+* Add reusable criteria operations for ordered include fallback and text filtering, and improve cleanup of article chrome and promotional content.
+* Improve preservation of article titles, body content, images, code, tables, and mixed document structures across real-world pages.
+* Expand regression and coverage tests for site criteria, replay, and extraction behavior.
+
+
 ## 0.3.8 (2026-11-13)
 
 

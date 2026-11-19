@@ -234,6 +234,13 @@
       "markdown": "raw/oracle.com_cpu_october_2026.md",
       "base_url": "https://www.oracle.com/security-alerts/cpuoct2026.html",
       "description": "Oracle Critical Patch Update with many risk-matrix tables and a product availability table nested in layout wrappers."
+    },
+    {
+      "id": "unit42_preventing_clickfix_attack_vector",
+      "html": "html/unit42.paloaltonetworks.com_preventing-clickfix-attack-vector.html",
+      "markdown": "raw/unit42.paloaltonetworks.com_preventing-clickfix-attack-vector.md",
+      "base_url": "https://unit42.paloaltonetworks.com/preventing-clickfix-attack-vector/",
+      "description": "Unit 42 ClickFix article with nested heading-led sections and related cards that expose false definition-list classification."
     }
   ]
 }

@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 from bs4 import Tag
 
 from .._core import PipelineContext
+from .._core.selectors import normalize_selector
 
 
 @dataclass(slots=True, frozen=True)
@@ -84,10 +85,6 @@ class DeclarativeDomainAdapter:
 
     def postprocess(self, context: PipelineContext) -> PipelineContext:
         """Apply generic Markdown cleanup rules configured for the domain."""
-
-        if context.extraction_criteria is not None and not context.extraction_criteria.has_recorded_replay:
-            return context
-
         context.markdown = _strip_markdown(
             context.markdown,
             trim_before_first_heading=self.spec.trim_before_first_heading,
@@ -133,7 +130,7 @@ def _page_host(document: Tag | None, selectors: tuple[str, ...]) -> str:
     if document is None:
         return ""
     for selector in selectors:
-        node = document.select_one(selector)
+        node = document.select_one(normalize_selector(selector))
         if not isinstance(node, Tag):
             continue
         url = str(node.get("href") or node.get("content") or "").strip()
@@ -182,7 +179,7 @@ def _remove_selectors(document: Tag | None, selectors: tuple[str, ...]) -> None:
     if document is None:
         return
     for selector in selectors:
-        for node in document.select(selector):
+        for node in document.select(normalize_selector(selector)):
             if isinstance(node, Tag):
                 node.decompose()
 

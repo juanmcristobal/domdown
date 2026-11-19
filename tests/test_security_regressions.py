@@ -8,11 +8,12 @@ import pytest
 
 from domdown import DomdownOptions, html_to_markdown
 from domdown._text import format_scalar, safe_url
-from domdown.adapters import github as github_adapter
+from domdown.stages import prepare as github_preparation
 
 GITHUB_RELEASE_PAGE = """
 <html><head>
 <meta property="og:site_name" content="GitHub">
+<meta property="og:url" content="https://github.com/example/repo/releases/tag/v1">
 <meta name="route-controller" content="releases">
 </head><body><article>
 <h1>Release</h1>
@@ -52,7 +53,7 @@ class _FakeOpener:
 
 def _install_opener(monkeypatch: pytest.MonkeyPatch, response: _FakeResponse) -> _FakeOpener:
     opener = _FakeOpener(response)
-    monkeypatch.setattr(github_adapter, "build_opener", lambda *handlers: opener)
+    monkeypatch.setattr(github_preparation, "build_opener", lambda *handlers: opener)
     return opener
 
 
@@ -147,7 +148,9 @@ def test_nested_card_feed_check_is_not_cubic() -> None:
     html = (
         "<article>"
         + f'<div class="xcardx">{"<b></b>" * 20}' * depth
-        + "<h2>x</h2><p>" + "word " * 230 + "</p>"
+        + "<h2>x</h2><p>"
+        + "word " * 230
+        + "</p>"
         + "</div>" * depth
         + "</article>"
     )

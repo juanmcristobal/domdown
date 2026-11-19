@@ -1,9 +1,18 @@
 from __future__ import annotations
 
-from ._core import CriteriaError, DomdownOptions, ExtractionCriteria, ExtractionPlan, ExtractionTrace, HtmlMetadata, HtmlToMarkdownResult
+from ._core import (
+    CriteriaError,
+    DomdownOptions,
+    ExtractionCriteria,
+    ExtractionPlan,
+    ExtractionTrace,
+    HtmlMetadata,
+    HtmlToMarkdownResult,
+)
 from ._pipeline import HtmlToMarkdownPipeline
 from ._version import DOMDOWN_VERSION
 from .api import html_to_markdown
+from .site_criteria import SITE_CRITERIA
 
 __version__ = DOMDOWN_VERSION
 
@@ -18,4 +27,5 @@ __all__ = [
     "ExtractionCriteria",
     "ExtractionPlan",
     "ExtractionTrace",
+    "SITE_CRITERIA",
 ]
