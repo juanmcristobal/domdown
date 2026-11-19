@@ -225,7 +225,11 @@ def test_techcrunch_criteria_extract_mavi_article_and_replay() -> None:
     assert result.trace.criteria_source == "site"
     assert result.trace.mode == "selector_apply"
     assert result.trace.adapters == ()
-    assert result.criteria.include == (".seamless-scroll-container",)
+    assert result.criteria.include == (
+        ".seamless-scroll-container",
+        "h1",
+        ".entry-content.wp-block-post-content",
+    )
     assert result.metadata.title == "MAVI bets on the AI boom creating demand for a new kind of accountant"
     assert result.metadata.author == ("Dominic-Madori Davis",)
     assert result.metadata.published.startswith("2026-09-28")
