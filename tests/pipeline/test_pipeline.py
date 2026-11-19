@@ -372,16 +372,29 @@ def test_explicit_include_can_retain_heuristically_removed_editorial_content() -
     assert "Editorially relevant section." not in result.markdown
 
 
-def test_apply_missing_include_is_an_error() -> None:
-    with pytest.raises(CriteriaError, match="matched no elements"):
-        HtmlToMarkdownPipeline().run("<p>text</p>", criteria={"schema_version": 1, "include": [".missing"]})
+def test_apply_missing_include_falls_back_to_automatic_content_selection() -> None:
+    result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(
+        "<html><body><nav>Navigation</nav><article><p>Useful article content.</p></article></body></html>",
+        criteria={"schema_version": 1, "include": [".missing"]},
+    )
+
+    assert result.markdown == "Useful article content."
+    assert "Explicit include selectors matched no elements; used automatic content selection" in result.warnings
 
 
 def test_unmatched_include_in_large_html_identifies_empty_shell_diagnosis() -> None:
-    html = "<html><body>" + (" " * 700) + "</body></html>"
+    html = "<html><body><nav>Navigation</nav><article><h1>Story</h1><p>" + ("Useful article content. " * 30) + "</p></article></body></html>"
 
-    with pytest.raises(CriteriaError, match="possible empty shell or stale selector"):
-        HtmlToMarkdownPipeline().run(html, criteria={"schema_version": 1, "include": ["#__next"]})
+    result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(
+        html,
+        criteria={"schema_version": 1, "include": ["#__next"]},
+    )
+
+    assert "Useful article content." in result.markdown
+    assert "Navigation" not in result.markdown
+    assert "Explicit include selectors matched no elements; used automatic content selection" in result.warnings
+    include_result = next(item for item in result.trace.decisions if item["action"] == "include-result")
+    assert include_result["status"] == "automatic-fallback"
 
 
 def test_discovered_criteria_replay_exactly_after_json_round_trip() -> None:

@@ -136,12 +136,49 @@ class CleanStage:
                     }
                 )
             if not matches:
-                if len(context.html) >= 512:
-                    raise CriteriaError(
-                        "Explicit include selectors matched no elements in a "
-                        f"{len(context.html)}-character HTML document; possible empty shell or stale selector"
-                    )
-                raise CriteriaError("Explicit include selectors matched no elements")
+                root = choose_root(document, context.options.prefer_article_body)
+                if _root_is_empty(root):
+                    fallback = _fallback_root(document, root)
+                    if fallback is not None:
+                        root.decompose()
+                        root = fallback
+                strategy = "include-selector-fallback"
+                if _looks_like_js_shell(root) and _body_has_more_content(document, root):
+                    body = document.body
+                    if body is not None:
+                        root.decompose()
+                        root = body
+                        strategy = "javascript-shell-body-fallback"
+                context.warnings.append(
+                    "Explicit include selectors matched no elements; used automatic content selection"
+                )
+                decisions.append(
+                    {
+                        "action": "include-result",
+                        "matches": 0,
+                        "status": "automatic-fallback",
+                        "method": strategy,
+                    }
+                )
+                context.extraction_metrics = {"before": _content_metrics(root)}
+                context.selected_strategy = strategy
+                context.selector_apply_shared_cleanup = False
+                context.document = root
+                context.extraction_trace = ExtractionTrace(
+                    selected_root=_css_path(root),
+                    decisions=tuple(decisions),
+                )
+                context.selected_root_id = context.node_ids.get(id(root))
+                context.document = clean_root(
+                    root,
+                    context.options.remove_selectors or DEFAULT_REMOVE_SELECTORS,
+                    SKIP_TAGS,
+                )
+                context.selected_root_id = context.node_ids.get(id(context.document))
+                context.cleaned_html = str(context.document)
+                context.extraction_metrics["after"] = _content_metrics(context.document, include_words=False)
+                _add_retention_ratio(context.extraction_metrics)
+                return context
             context.extraction_metrics = {"before": _aggregate_metrics(matches)}
             decisions.append({"action": "include-result", "matches": len(matches)})
             if len(matches) == 1:
