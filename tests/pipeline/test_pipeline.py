@@ -397,6 +397,16 @@ def test_unmatched_include_in_large_html_identifies_empty_shell_diagnosis() -> N
     assert include_result["status"] == "automatic-fallback"
 
 
+def test_unmatched_include_does_not_return_empty_content_when_automatic_fallback_is_empty() -> None:
+    html = "<html><body><div id='__next'></div>" + (" " * 700) + "</body></html>"
+
+    with pytest.raises(CriteriaError, match="Automatic content selection found no renderable text"):
+        HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(
+            html,
+            criteria={"schema_version": 1, "include": ["#__missing"]},
+        )
+
+
 def test_discovered_criteria_replay_exactly_after_json_round_trip() -> None:
     html = "<html><body><nav>Nav</nav><article class='articlebody'><p>Body</p><div class='related'>Related</div></article></body></html>"
     pipeline = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False))

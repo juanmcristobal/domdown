@@ -174,6 +174,10 @@ class CleanStage:
                     context.options.remove_selectors or DEFAULT_REMOVE_SELECTORS,
                     SKIP_TAGS,
                 )
+                if not context.document.get_text(" ", strip=True):
+                    raise CriteriaError(
+                        "Automatic content selection found no renderable text after explicit include selectors matched no elements"
+                    )
                 context.selected_root_id = context.node_ids.get(id(context.document))
                 context.cleaned_html = str(context.document)
                 context.extraction_metrics["after"] = _content_metrics(context.document, include_words=False)

@@ -352,7 +352,7 @@ SITE_CRITERIA["huggingface_blog"] = [
 SITE_CRITERIA["techcrunch_articles"] = [
     {
         "match": {"host": r"(?:www\.)?techcrunch\.com", "url": r"/\d{4}/\d{2}/\d{2}/"},
-        "include": [".seamless-scroll-container"],
+        "include": [".seamless-scroll-container", "h1", ".entry-content.wp-block-post-content"],
         "exclude": [
             ".article-hero__bottom",
             ".wp-block-tc23-author-card",
