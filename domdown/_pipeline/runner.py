@@ -16,6 +16,7 @@ from .._core import (
 )
 from .._version import DOMDOWN_VERSION
 from ..adapters import AdapterRegistry, ArticleAdapter, build_default_registry
+from ..site_criteria import criteria_for_document
 from ..stages.base import PipelineStage
 from ..stages.clean import CleanStage
 from ..stages.frontmatter import FrontmatterStage
@@ -23,9 +24,8 @@ from ..stages.markdown import MarkdownStage
 from ..stages.metadata import MetadataStage
 from ..stages.parse import ParseStage
 from ..stages.postprocess import PostProcessStage
-from ..stages.preserve import PreserveStage
 from ..stages.prepare import PrepareDocumentStage
-from ..site_criteria import criteria_for_document
+from ..stages.preserve import PreserveStage
 
 
 @dataclass(slots=True)
@@ -141,9 +141,7 @@ class HtmlToMarkdownPipeline:
         criteria_source = (
             context.criteria_source
             if context.criteria_source == "site"
-            else "discover"
-            if extraction_criteria is None or extraction_criteria.has_recorded_replay
-            else "explicit"
+            else "discover" if extraction_criteria is None or extraction_criteria.has_recorded_replay else "explicit"
         )
         after_metrics = context.extraction_metrics.setdefault("after", {})
         after_metrics["words"] = len(context.markdown.split())

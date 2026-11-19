@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from bs4 import BeautifulSoup
 
-from domdown import DomdownOptions, SITE_CRITERIA, CriteriaError, ExtractionCriteria, HtmlToMarkdownPipeline
+from domdown import SITE_CRITERIA, CriteriaError, DomdownOptions, ExtractionCriteria, HtmlToMarkdownPipeline
 from domdown.site_criteria import criteria_for_document
 from tests.real import load_real_cases
 
@@ -128,9 +128,7 @@ def test_google_blog_site_criteria_preserve_real_article_and_replay() -> None:
     """Google's article layout uses shared Apply criteria and omits its audio chrome."""
 
     url = "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/"
-    html = (Path(__file__).parent / "fixtures" / "blog_google_gemini_4_hydrogen.html").read_text(
-        encoding="utf-8"
-    )
+    html = (Path(__file__).parent / "fixtures" / "blog_google_gemini_4_hydrogen.html").read_text(encoding="utf-8")
     pipeline = HtmlToMarkdownPipeline(DomdownOptions(base_url=url))
 
     result = pipeline.run(html)
@@ -212,9 +210,7 @@ def test_huggingface_blog_criteria_extract_streamhouse_article_and_replay() -> N
 
 
 def test_huggingface_site_rule_is_scoped_to_blog_paths() -> None:
-    document = BeautifulSoup(
-        '<link rel="canonical" href="https://huggingface.co/models/example">', "lxml"
-    )
+    document = BeautifulSoup('<link rel="canonical" href="https://huggingface.co/models/example">', "lxml")
     assert criteria_for_document(document) is None
 
 
@@ -254,9 +250,7 @@ def test_techcrunch_site_rule_is_scoped_to_dated_article_paths() -> None:
 
 def test_deepmind_blog_criteria_extract_planning_article_and_replay() -> None:
     url = "https://deepmind.google/blog/speeding-up-planning-decisions-with-ai/"
-    html = (Path(__file__).parent / "fixtures" / "deepmind_speeding_up_planning.html").read_text(
-        encoding="utf-8"
-    )
+    html = (Path(__file__).parent / "fixtures" / "deepmind_speeding_up_planning.html").read_text(encoding="utf-8")
     pipeline = HtmlToMarkdownPipeline(DomdownOptions(base_url=url))
 
     result = pipeline.run(html)

@@ -72,7 +72,9 @@ def _stub_release_assets(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize("case", [_case_param(case) for case in _github_cases()])
-def test_github_site_criteria_matches_the_curated_snapshot(case: RealExampleCase, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_github_site_criteria_matches_the_curated_snapshot(
+    case: RealExampleCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """GitHub selector rules and document preparation should match each snapshot."""
 
     if case.id == "node_release_tag_v2530":

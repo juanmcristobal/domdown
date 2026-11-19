@@ -55,8 +55,7 @@ def test_choose_root_prefers_inner_content_container_inside_article_shell() -> N
 def test_choose_root_keeps_small_semantic_article() -> None:
     """A small but semantic content container should still win over the shell."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <main class="story-shell">
@@ -69,8 +68,7 @@ def test_choose_root_keeps_small_semantic_article() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -80,8 +78,7 @@ def test_choose_root_keeps_small_semantic_article() -> None:
 def test_choose_root_ignores_navigation_like_content_blocks() -> None:
     """Navigation-like blocks with 'content' in the class should not displace the shell."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <main>
@@ -93,8 +90,7 @@ def test_choose_root_ignores_navigation_like_content_blocks() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -106,8 +102,7 @@ def test_choose_root_ignores_navigation_like_content_blocks() -> None:
 def test_choose_root_skips_root_article_when_it_looks_like_chrome() -> None:
     """A root article that smells like chrome should be skipped in favor of a real shell."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <article class="navigation__feature">
@@ -119,8 +114,7 @@ def test_choose_root_skips_root_article_when_it_looks_like_chrome() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -130,8 +124,7 @@ def test_choose_root_skips_root_article_when_it_looks_like_chrome() -> None:
 def test_choose_root_prefers_the_more_content_dense_shell_when_multiple_candidates_match() -> None:
     """The selector tier should not force a smaller shell to win over a denser one."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <main>
@@ -146,8 +139,7 @@ def test_choose_root_prefers_the_more_content_dense_shell_when_multiple_candidat
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -157,8 +149,7 @@ def test_choose_root_prefers_the_more_content_dense_shell_when_multiple_candidat
 def test_choose_root_does_not_pick_body_when_a_real_content_shell_exists() -> None:
     """The fallback body should never beat a real article container."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body class="page-wrapper">
                 <main class="article-shell">
@@ -169,8 +160,7 @@ def test_choose_root_does_not_pick_body_when_a_real_content_shell_exists() -> No
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -181,8 +171,7 @@ def test_choose_root_does_not_pick_body_when_a_real_content_shell_exists() -> No
 def test_choose_root_ignores_cookie_consent_banners_when_article_body_is_nested() -> None:
     """Consent overlays should not win when the article body is nested deeper in the page."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="cli-modal-content cli-bar-popup">
@@ -211,8 +200,7 @@ def test_choose_root_ignores_cookie_consent_banners_when_article_body_is_nested(
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -223,8 +211,7 @@ def test_choose_root_ignores_cookie_consent_banners_when_article_body_is_nested(
 def test_choose_root_prefers_tagdiv_article_content_over_theme_wrapper() -> None:
     """TagDiv theme wrappers should not outrank the actual post content."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="td-theme-wrap">
@@ -240,8 +227,7 @@ def test_choose_root_prefers_tagdiv_article_content_over_theme_wrapper() -> None
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -253,8 +239,7 @@ def test_choose_root_prefers_tagdiv_article_content_over_theme_wrapper() -> None
 def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
     """Generic page wrappers with a nested main should not outrank the article shell."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="page_wrap">
@@ -279,8 +264,7 @@ def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -291,8 +275,7 @@ def test_choose_root_prefers_main_over_a_giant_page_wrapper() -> None:
 def test_choose_root_prefers_article_over_a_link_dense_shell() -> None:
     """Link-heavy generic shells should not beat the real article body."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="xf-content-height">
@@ -329,8 +312,7 @@ def test_choose_root_prefers_article_over_a_link_dense_shell() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -340,8 +322,7 @@ def test_choose_root_prefers_article_over_a_link_dense_shell() -> None:
 def test_choose_root_ignores_empty_toc_sidebars() -> None:
     """A compact table-of-contents sidebar should not win over the article body."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <article>
@@ -360,8 +341,7 @@ def test_choose_root_ignores_empty_toc_sidebars() -> None:
                 </article>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -372,8 +352,7 @@ def test_choose_root_ignores_empty_toc_sidebars() -> None:
 def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:
     """Paragraph-level nodes should not become the selected content root."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <main class="article-shell">
@@ -386,8 +365,7 @@ def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -397,8 +375,7 @@ def test_choose_root_stops_before_refining_into_a_bare_paragraph() -> None:
 def test_choose_root_does_not_refine_into_a_generic_layout_wrapper() -> None:
     """Generic layout wrappers should not win over the actual content shell."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <main>
@@ -411,8 +388,7 @@ def test_choose_root_does_not_refine_into_a_generic_layout_wrapper() -> None:
                 </main>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -422,8 +398,7 @@ def test_choose_root_does_not_refine_into_a_generic_layout_wrapper() -> None:
 def test_choose_root_prefers_semantic_article_over_layout_shell() -> None:
     """An article inside a bootstrap-like layout shell should beat the outer wrapper."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="container d-flex flex-column px-xxl-5">
@@ -451,8 +426,7 @@ def test_choose_root_prefers_semantic_article_over_layout_shell() -> None:
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -463,8 +437,7 @@ def test_choose_root_prefers_semantic_article_over_layout_shell() -> None:
 def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
     """A full page shell should not beat a semantic main content block."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="page">
@@ -487,8 +460,7 @@ def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -498,8 +470,7 @@ def test_choose_root_prefers_main_over_page_shell_wrappers() -> None:
 def test_choose_root_prefers_blog_content_over_tabbed_promotional_modules() -> None:
     """HubSpot-style tabbed marketing blocks should not outrank the article body."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
             <html>
               <body>
                 <div class="body-container container-fluid">
@@ -534,8 +505,7 @@ def test_choose_root_prefers_blog_content_over_tabbed_promotional_modules() -> N
                 </div>
               </body>
             </html>
-        """
-    )
+        """)
 
     root = choose_root(soup, prefer_article_body=True)
 
@@ -546,8 +516,7 @@ def test_choose_root_prefers_blog_content_over_tabbed_promotional_modules() -> N
 def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
     """Selection helpers should keep their shell and scoring branches reachable."""
 
-    soup = parse_html(
-        """
+    soup = parse_html("""
         <html>
           <body>
             <div class="wrapper">
@@ -568,8 +537,7 @@ def test_select_private_helpers_cover_shell_detection_and_scoring() -> None:
             </div>
           </body>
         </html>
-        """
-    )
+        """)
 
     selectors_true = _root_selectors(True)
     selectors_false = _root_selectors(False)

@@ -53,8 +53,7 @@ def test_medium_drop_text_removes_lab_preamble_without_dropping_prose() -> None:
     result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(html)
 
     assert result.markdown == (
-        "# User ID Controlled By Request Parameter With Password Disclosure\n\n"
-        "This lab has a user account page."
+        "# User ID Controlled By Request Parameter With Password Disclosure\n\n" "This lab has a user account page."
     )
 
 
@@ -136,8 +135,7 @@ def test_medium_byline_before_body_and_publication_footer_preserve_body() -> Non
     result = HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(html)
 
     assert result.markdown == (
-        "# I Pentested a Real CRM System\n\nDisclosure notice.\n\n"
-        "## Background\n\nThis is the real article body."
+        "# I Pentested a Real CRM System\n\nDisclosure notice.\n\n" "## Background\n\nThis is the real article body."
     )
 
 

@@ -4,7 +4,7 @@ source: "https://unit42.paloaltonetworks.com/preventing-clickfix-attack-vector/"
 site_name: Unit 42
 canonical_url: "https://unit42.paloaltonetworks.com/preventing-clickfix-attack-vector/"
 language: en-US
-domdown_version: 0.3.8
+domdown_version: 0.3.9
 image: "https://unit42.paloaltonetworks.com/wp-content/uploads/2025/07/11_Cybercrime_Category_1920x900.jpg"
 author:
   - "Rem Dudas, Noa Dekel"

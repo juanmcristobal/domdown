@@ -3,6 +3,8 @@ from __future__ import annotations
 import pytest
 
 from domdown._pipeline import HtmlToMarkdownPipeline
+
+
 @pytest.mark.parametrize(
     ("url", "footer_heading", "promo"),
     [

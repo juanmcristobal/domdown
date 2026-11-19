@@ -221,12 +221,9 @@ def test_definition_list_helpers_cover_explicit_labels_and_anchor_rows() -> None
     )
 
     assert _looks_like_definition_list(soup.div, DomdownOptions()) is True
-    assert (
-        render_definition_list(soup.div, DomdownOptions())
-        == """- **Platforms:** Windows
+    assert render_definition_list(soup.div, DomdownOptions()) == """- **Platforms:** Windows
 - **Version Permalink:** <a href="/versions/v19/techniques/T1055/004/">Version Permalink</a>
 - **Version:** 2.0"""
-    )
 
 
 def test_definition_list_anchor_rows_strip_nested_card_markup() -> None:
@@ -504,12 +501,9 @@ def test_definition_list_anchor_with_malformed_url_falls_back_to_text() -> None:
         "lxml",
     )
 
-    assert (
-        render_block(soup.div, DomdownOptions())
-        == """- **Version Permalink:** Version Permalink
+    assert render_block(soup.div, DomdownOptions()) == """- **Version Permalink:** Version Permalink
 - **Version:** 2.0
 - **Created:** 14 January 2020"""
-    )
 
 
 def test_render_container_collapses_empty_children() -> None:

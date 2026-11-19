@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from domdown._pipeline import HtmlToMarkdownPipeline
+
+
 def test_dailysecu_site_criteria_removes_article_chrome_and_keeps_content() -> None:
     pipeline = HtmlToMarkdownPipeline()
     html = """

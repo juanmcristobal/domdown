@@ -44,10 +44,7 @@ def clean_root(
         value = str(text_node)
         if (
             isinstance(text_node, NavigableString)
-            and (
-                _looks_like_template_placeholder(value)
-                or _looks_like_doctype_declaration(value)
-            )
+            and (_looks_like_template_placeholder(value) or _looks_like_doctype_declaration(value))
             and not _is_within_code_block(text_node)
         ):
             text_node.extract()
@@ -987,11 +984,7 @@ def _looks_like_doctype_declaration(text: str) -> bool:
     """Detect stray DOCTYPE declarations pasted into body content."""
 
     value = text.strip()
-    return bool(
-        value.startswith("<!DOCTYPE")
-        or value.startswith("<!doctype")
-        or value.startswith('html PUBLIC "-//')
-    )
+    return bool(value.startswith("<!DOCTYPE") or value.startswith("<!doctype") or value.startswith('html PUBLIC "-//'))
 
 
 def _looks_like_template_placeholder(text: str) -> bool:
