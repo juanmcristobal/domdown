@@ -104,6 +104,15 @@ _SITE_RULES_BY_HOST: dict[str, dict[str, list[str]]] = {
         "exclude": ['h3:-soup-contains("Continue Reading..."), h3:-soup-contains("Continue Reading...") ~ *'],
         "unwrap": [],
     },
+    r"(?:www\.)?blog\.google": {
+        "include": ["article.uni-article-wrapper"],
+        "exclude": [
+            ".audio-player-tts",
+            ".uni-article-hero__authors-actions",
+            'p:has(> i:-soup-contains("Last updated"))',
+        ],
+        "unwrap": [],
+    },
     r"(?:www\.)?gbhackers\.com": {
         "include": ["article"],
         "exclude": [
@@ -252,6 +261,7 @@ _SITE_NAMES_BY_HOST = {
     r"(?:www\.)?securityaffairs\.com": "security_affairs",
     r"(?:www\.)?wiz\.io": "wiz",
     r"(?:[a-z0-9-]+\.)*railway\.com": "railway",
+    r"(?:www\.)?blog\.google": "google_blog",
     r"(?:www\.)?gbhackers\.com": "gbhackers",
     r"(?:[a-z0-9-]+\.)*thehackernews\.com": "the_hacker_news",
     r"(?:www\.)?cybersecuritynews\.com": "cybersecurity_news",
@@ -327,6 +337,47 @@ _GITHUB_SITE_RULES = [
     },
 ]
 SITE_CRITERIA["github"] = _GITHUB_SITE_RULES
+SITE_CRITERIA["huggingface_blog"] = [
+    {
+        "match": {"host": r"(?:www\.)?huggingface\.co", "url": r"/blog/"},
+        "include": [".blog-content"],
+        "exclude": [
+            ".blog-content > div.mb-4",
+            '.blog-content > div:has(span:-soup-contains("Published"))',
+            ".blog-content > div.not-prose",
+        ],
+        "unwrap": [],
+    }
+]
+SITE_CRITERIA["techcrunch_articles"] = [
+    {
+        "match": {"host": r"(?:www\.)?techcrunch\.com", "url": r"/\d{4}/\d{2}/\d{2}/"},
+        "include": [".seamless-scroll-container"],
+        "exclude": [
+            ".article-hero__bottom",
+            ".wp-block-tc23-author-card",
+            ".wp-block-techcrunch-social-share",
+            ".affiliate-disclaimer-text",
+            ".seamless-scroll",
+            ".wp-block-tc23-post-relevant-terms",
+        ],
+        "unwrap": [],
+    }
+]
+SITE_CRITERIA["deepmind_blog"] = [
+    {
+        "match": {"host": r"(?:www\.)?deepmind\.google", "url": r"/blog/"},
+        "include": ["main#page-content"],
+        "exclude": [
+            ".cover__text--eyebrow__container",
+            ".cover__text--authors",
+            ".cover__button-group",
+            ".share-list",
+        ],
+        "unwrap": [],
+        "drop_text": [r"Your browser does not support the video tag\."],
+    }
+]
 
 
 def criteria_for_document(document: Tag | None) -> ExtractionCriteria | None:
