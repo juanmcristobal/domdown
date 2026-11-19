@@ -4,7 +4,7 @@ source: "https://chainstack.com/security-incident-nov-2026/"
 site_name: Chainstack
 canonical_url: "https://chainstack.com/security-incident-nov-2026/"
 language: en-US
-domdown_version: 0.3.9
+domdown_version: 0.3.10
 image: "https://chainstack.com/wp-content/uploads/2026/11/Chainstack-Incident-report.png"
 author:
   - "Chainstack"
