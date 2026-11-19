@@ -62,7 +62,7 @@ build-test-image: ## build domdown-test docker image
 	docker build --tag domdown-test:latest .
 
 coverage: ## check code coverage quickly with the default Python
-	python -m coverage run --source domdown -m pytest
+	python scripts/run_tests_parallel.py tests/ -- --cov=domdown
 	python -m coverage report -m
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html

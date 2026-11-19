@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,6 +30,9 @@ def _parse_args() -> tuple[int, list[str]]:
     args, pytest_args = parser.parse_known_args()
     if pytest_args and pytest_args[0] == "--":
         pytest_args = pytest_args[1:]
+    if "--" in pytest_args:
+        separator = pytest_args.index("--")
+        pytest_args = pytest_args[:separator] + pytest_args[separator + 1 :]
     if args.workers < 1:
         parser.error("--workers must be at least 1")
     if any(arg == "--basetemp" or arg.startswith("--basetemp=") for arg in pytest_args):
@@ -37,7 +41,8 @@ def _parse_args() -> tuple[int, list[str]]:
 
 
 def _collect_node_ids(pytest_args: list[str], env: dict[str, str]) -> list[str]:
-    command = [sys.executable, "-m", "pytest", *pytest_args, "--collect-only", "-q"]
+    collect_args = [arg for arg in pytest_args if arg != "--cov-append" and not arg.startswith("--cov")]
+    command = [sys.executable, "-m", "pytest", *collect_args, "--collect-only", "-q"]
     result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True)
     if result.returncode:
         sys.stdout.write(result.stdout)
@@ -86,6 +91,10 @@ def _make_shards(node_ids: list[str], workers: int) -> list[list[str]]:
 
 
 def _run_shard(index: int, nodes: list[str], pytest_args: list[str], base_temp: Path, env: dict[str, str]):
+    shard_env = env.copy()
+    coverage_dir = env.get("COVERAGE_SHARD_DIR")
+    if coverage_dir:
+        shard_env["COVERAGE_FILE"] = str(Path(coverage_dir) / f".coverage.{index + 1}")
     command = [
         sys.executable,
         "-m",
@@ -95,19 +104,30 @@ def _run_shard(index: int, nodes: list[str], pytest_args: list[str], base_temp: 
         f"--basetemp={base_temp / f'worker-{index + 1}'}",
         *nodes,
     ]
-    return index, nodes, subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True)
+    return index, nodes, subprocess.run(command, cwd=ROOT, env=shard_env, text=True, capture_output=True)
 
 
 def main() -> int:
     workers, pytest_args = _parse_args()
     env = os.environ.copy()
     env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    coverage_enabled = "--cov" in pytest_args or any(arg.startswith("--cov=") for arg in pytest_args)
+    if coverage_enabled:
+        env["COVERAGE_FILE"] = str(ROOT / ".coverage")
+        pytest_args.extend(("--cov-append", "-p", "pytest_cov"))
+    else:
+        pytest_args = [arg for arg in pytest_args if arg != "--cov-append"]
     node_ids = _collect_node_ids(pytest_args, env)
     shards = _make_shards(node_ids, workers)
     print(f"Collected {len(node_ids)} tests; running {len(shards)} shards")
     started = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix="domdown-pytest-") as temp_dir:
         base_temp = Path(temp_dir)
+        coverage_dir = ROOT / ".coverage-shards"
+        if coverage_enabled:
+            shutil.rmtree(coverage_dir, ignore_errors=True)
+            coverage_dir.mkdir()
+            env["COVERAGE_SHARD_DIR"] = str(coverage_dir)
         results = []
         with ThreadPoolExecutor(max_workers=len(shards)) as executor:
             futures = [
@@ -121,6 +141,21 @@ def main() -> int:
                 print(f"\n--- shard {index + 1}/{len(shards)} ({len(nodes)} tests) exit={completed.returncode} ---")
                 sys.stdout.write(completed.stdout)
                 sys.stderr.write(completed.stderr)
+        if coverage_enabled:
+            coverage_files = sorted(str(path) for path in coverage_dir.glob(".coverage.*"))
+            if coverage_files:
+                combine = subprocess.run(
+                    [sys.executable, "-m", "coverage", "combine", "--keep", *coverage_files],
+                    cwd=ROOT,
+                    env=env,
+                    text=True,
+                    capture_output=True,
+                )
+                sys.stdout.write(combine.stdout)
+                sys.stderr.write(combine.stderr)
+                if combine.returncode:
+                    return combine.returncode
+            shutil.rmtree(coverage_dir, ignore_errors=True)
     elapsed = time.perf_counter() - started
     failed = [result for result in results if result[2].returncode]
     print(f"\n{len(node_ids)} tests across {len(shards)} shards in {elapsed:.2f}s")
