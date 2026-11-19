@@ -397,14 +397,41 @@ def test_unmatched_include_in_large_html_identifies_empty_shell_diagnosis() -> N
     assert include_result["status"] == "automatic-fallback"
 
 
-def test_unmatched_include_does_not_return_empty_content_when_automatic_fallback_is_empty() -> None:
-    html = "<html><body><div id='__next'></div>" + (" " * 700) + "</body></html>"
+def test_unmatched_include_retries_whole_document_when_heuristic_selection_is_empty(monkeypatch) -> None:
+    html = """
+    <html><body>
+      <div id="heuristic-shell"><div class="heuristic-empty">Latest topics navigation</div></div>
+      <main><h1>Article title</h1><div class="entry-content"><p>Article text survives the whole document fallback.</p>
+        <aside class="related-content"><p>Related stories are excluded.</p></aside>
+      </div></main>
+    </body></html>
+    """
+    from domdown.stages import clean as clean_stage
 
-    with pytest.raises(CriteriaError, match="Automatic content selection found no renderable text"):
-        HtmlToMarkdownPipeline(DomdownOptions(emit_frontmatter=False)).run(
-            html,
-            criteria={"schema_version": 1, "include": ["#__missing"]},
-        )
+    monkeypatch.setattr(
+        clean_stage,
+        "choose_root",
+        lambda document, _prefer_article_body: document.select_one("#heuristic-shell"),
+    )
+
+    result = HtmlToMarkdownPipeline(
+        DomdownOptions(emit_frontmatter=False, remove_selectors=(".heuristic-empty",))
+    ).run(
+        html,
+        criteria={
+            "schema_version": 1,
+            "include": [".missing"],
+            "exclude": [".related-content"],
+        },
+    )
+
+    assert "Article title" in result.markdown
+    assert "Article text survives" in result.markdown
+    assert "Latest topics navigation" not in result.markdown
+    assert "Related stories are excluded" not in result.markdown
+    include_result = next(item for item in result.trace.decisions if item["action"] == "include-result")
+    assert include_result["status"] == "whole-document-fallback"
+    assert include_result["method"] == "whole-document-cleanup-fallback"
 
 
 def test_discovered_criteria_replay_exactly_after_json_round_trip() -> None:

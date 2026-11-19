@@ -136,6 +136,7 @@ class CleanStage:
                     }
                 )
             if not matches:
+                unmodified_document = deepcopy(document)
                 root = choose_root(document, context.options.prefer_article_body)
                 if _root_is_empty(root):
                     fallback = _fallback_root(document, root)
@@ -152,14 +153,13 @@ class CleanStage:
                 context.warnings.append(
                     "Explicit include selectors matched no elements; used automatic content selection"
                 )
-                decisions.append(
-                    {
-                        "action": "include-result",
-                        "matches": 0,
-                        "status": "automatic-fallback",
-                        "method": strategy,
-                    }
-                )
+                fallback_decision = {
+                    "action": "include-result",
+                    "matches": 0,
+                    "status": "automatic-fallback",
+                    "method": strategy,
+                }
+                decisions.append(fallback_decision)
                 context.extraction_metrics = {"before": _content_metrics(root)}
                 context.selected_strategy = strategy
                 context.selector_apply_shared_cleanup = False
@@ -175,8 +175,58 @@ class CleanStage:
                     SKIP_TAGS,
                 )
                 if not context.document.get_text(" ", strip=True):
-                    raise CriteriaError(
-                        "Automatic content selection found no renderable text after explicit include selectors matched no elements"
+                    root = unmodified_document.body or unmodified_document
+                    context.extraction_metrics["before"] = _content_metrics(root)
+                    for selector in criteria.exclude:
+                        excluded = ([] if not _matches(root, selector) else [root]) + list(
+                            root.select(normalize_selector(selector))
+                        )
+                        for node in _unique_outermost(excluded):
+                            node.clear() if node is root else node.decompose()
+                        decisions.append(
+                            {
+                                "action": "exclude",
+                                "selector": selector,
+                                "matches": len(excluded),
+                                "status": "applied" if excluded else "no-matches",
+                            }
+                        )
+                    for selector in criteria.unwrap:
+                        unwrap_nodes = ([] if not _matches(root, selector) else [root]) + list(
+                            root.select(normalize_selector(selector))
+                        )
+                        if root in unwrap_nodes:
+                            raise CriteriaError("unwrap cannot target the selected include root")
+                        for node in unwrap_nodes:
+                            node.unwrap()
+                        decisions.append(
+                            {
+                                "action": "unwrap",
+                                "selector": selector,
+                                "matches": len(unwrap_nodes),
+                                "status": "applied" if unwrap_nodes else "no-matches",
+                            }
+                        )
+                    context.document = clean_root(
+                        root,
+                        context.options.remove_selectors or DEFAULT_REMOVE_SELECTORS,
+                        SKIP_TAGS,
+                    )
+                    if not context.document.get_text(" ", strip=True):
+                        raise CriteriaError(
+                            "Whole-document fallback found no renderable text after automatic content selection was empty"
+                        )
+                    strategy = "whole-document-cleanup-fallback"
+                    context.warnings[-1] = (
+                        "Explicit include selectors matched no elements; automatic selection was empty, "
+                        "so used the whole document with cleanup"
+                    )
+                    fallback_decision["status"] = "whole-document-fallback"
+                    fallback_decision["method"] = strategy
+                    context.selected_strategy = strategy
+                    context.extraction_trace = ExtractionTrace(
+                        selected_root=_css_path(context.document),
+                        decisions=tuple(decisions),
                     )
                 context.selected_root_id = context.node_ids.get(id(context.document))
                 context.cleaned_html = str(context.document)
